@@ -1,0 +1,131 @@
+export const openSubplansState = {
+  expandedPlanIds: new Set(),
+
+  subplansMemory: new Map(),
+
+  clear() {
+    this.expandedPlanIds.clear();
+    this.subplansMemory.clear();
+  },
+};
+
+export function generateId() {
+  if (window.crypto?.randomUUID) {
+    return window.crypto.randomUUID();
+  }
+
+  function getRandomHex(length) {
+    let result = "";
+    const chars = "0123456789abcdef";
+    for (let i = 0; i < length; i++) {
+      result += chars[Math.floor(Math.random() * 16)];
+    }
+    return result;
+  }
+
+  const timestamp = getRandomHex(32).toString(16).padStart(12, "0");
+  const randomPart = getRandomHex(8);
+
+  const timeLow = timestamp.slice(0, 8);
+  const timeMid = timestamp.slice(8, 12);
+  const timeHiAndVersion = "4" + getRandomHex(3);
+  const clockSeqHiAndReserved = getRandomHex(3);
+  const node = getRandomHex(6) + randomPart.slice(0, 6);
+
+  return `${timeLow}-${timeMid}-${timeHiAndVersion}-${clockSeqHiAndReserved}-${node}`;
+}
+
+export function processTagPipeline(componentItems = [], existingTags = []) {
+  const updatedGlobalTags = [...existingTags];
+  const assignedTagIds = [];
+
+  componentItems.forEach((item) => {
+    const isNewFlag = typeof item === "object" && (item.isNew || !item.id);
+    const itemTitle = typeof item === "object" ? item.name || item.title : item;
+
+    if (!itemTitle) return;
+
+    let match = updatedGlobalTags.find(
+      (t) => t.name.toLowerCase() === itemTitle.trim().toLowerCase(),
+    );
+
+    if (isNewFlag && !match) {
+      const newTag = {
+        id: crypto.randomUUID(),
+        name: itemTitle.trim(),
+      };
+      updatedGlobalTags.push(newTag);
+      assignedTagIds.push(newTag.id);
+    } else if (match) {
+      assignedTagIds.push(match.id);
+    } else if (typeof item === "object" && item.id) {
+      assignedTagIds.push(item.id);
+    }
+  });
+
+  return {
+    assignedTagIds,
+    updatedGlobalTags,
+  };
+}
+
+export function mapTagIdsToObjects(tagIds = [], globalTags = []) {
+  if (!Array.isArray(tagIds)) return [];
+  return tagIds
+    .map((id) => globalTags.find((t) => t.id === id))
+    .filter(Boolean);
+}
+
+export function formatDate(date) {
+  if (!(date instanceof Date) || isNaN(date.getTime())) {
+    date = new Date();
+  }
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
+
+export function todayISO() {
+  return formatDate(new Date());
+}
+
+export function isOverdue(dueDateStr, status) {
+  if (!dueDateStr || status === "done") return false;
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const due = new Date(dueDateStr);
+  due.setHours(0, 0, 0, 0);
+
+  return due < today;
+}
+
+export function getDaysRemaining(dueDateStr) {
+  if (!dueDateStr) return null;
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const due = new Date(dueDateStr);
+  due.setHours(0, 0, 0, 0);
+
+  const diffTime = due.getTime() - today.getTime();
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+  return diffDays;
+}
+
+export function calculateSubplanProgress(subplans = []) {
+  if (!Array.isArray(subplans) || subplans.length === 0) {
+    return { completedCount: 0, totalCount: 0, percentage: 0 };
+  }
+
+  const completedCount = subplans.filter((st) => st.completed).length;
+  const totalCount = subplans.length;
+  const percentage = Math.round((completedCount / totalCount) * 100);
+
+  return { completedCount, totalCount, percentage };
+}
