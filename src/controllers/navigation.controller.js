@@ -2,7 +2,7 @@ import { StateManager, state } from "@/models/state.model.js";
 
 import { AnalyticsController } from "./analytics.controller.js";
 import { GlobalLoaderService } from "@/services/loader.service.js";
-import { PlanController } from "./plan.controller.js";
+import { PlansController } from "./plans.controller.js";
 
 export class NavigationController {
   static tagKeyBuffer = "";
@@ -16,31 +16,82 @@ export class NavigationController {
   }
 
   static setupNavigationListeners() {
-    document.getElementById("nav-plans")?.addEventListener("click", () => {
-      this.setActiveTab("plans");
-      PlanController.updateTabStyles(state.activeTab);
+    const navButtons = ["plans", "analytics", "settings"];
+
+    navButtons.forEach((v) => {
+      const desktopBtn = document.getElementById(`nav-${v}`);
+      const mobileBtn = document.getElementById(`mobile-${v}`);
+
+      const handleNav = () => {
+        if (state.currentView === v) return;
+
+        const viewNames = {
+          plans: "Plans Dashboard",
+          analytics: "Analytical Metrics",
+          settings: "System Settings",
+        };
+
+        GlobalLoaderService.show(`Navigating to ${viewNames[v]}...`);
+
+        setTimeout(() => {
+          try {
+            this.setActiveTab(v);
+          } finally {
+            GlobalLoaderService.hide();
+          }
+        }, 30);
+      };
+
+      desktopBtn?.addEventListener("click", handleNav);
+      mobileBtn?.addEventListener("click", handleNav);
     });
-    document.getElementById("nav-analytics")?.addEventListener("click", () => {
-      this.setActiveTab("analytics");
+  }
+
+  static setActiveTab(tabType = "plans") {
+    StateManager.setView(tabType);
+    this.updateNavigationDOM(tabType);
+    this.showSection(tabType);
+
+    if (tabType === "plans") {
+      PlansController.refreshUI();
+      PlansController.updateTabStyles(state.activeTab);
+    } else if (tabType === "analytics") {
+      AnalyticsController.dispatchRender(StateManager.getPlans());
+    }
+  }
+
+  static updateNavigationDOM(currentView) {
+    const views = ["plans", "analytics", "settings"];
+
+    views.forEach((v) => {
+      const desktopBtn = document.getElementById(`nav-${v}`);
+      const mobileBtn = document.getElementById(`mobile-${v}`);
+
+      if (currentView === v) {
+        desktopBtn?.classList.replace("text-secondary", "text-brand/80");
+        desktopBtn?.classList.add("shadow-brand/10", "active");
+        mobileBtn?.classList.replace("text-secondary", "text-brand/80");
+        mobileBtn?.classList.add("active");
+      } else {
+        desktopBtn?.classList.replace("text-brand/80", "text-secondary");
+        desktopBtn?.classList.remove("shadow-brand/10", "active");
+        mobileBtn?.classList.replace("text-brand/80", "text-secondary");
+        mobileBtn?.classList.remove("active");
+      }
     });
-    document.getElementById("nav-settings")?.addEventListener("click", () => {
-      this.setActiveTab("settings");
+  }
+
+  static showSection(sectionType) {
+    document.querySelectorAll('section[id$="-view"]').forEach((section) => {
+      section.classList.add("hidden");
+      section.classList.remove("flex");
     });
 
-    document.getElementById("mobile-plans")?.addEventListener("click", () => {
-      this.setActiveTab("plans");
-      PlanController.updateTabStyles(state.activeTab);
-    });
-    document
-      .getElementById("mobile-analytics")
-      ?.addEventListener("click", () => {
-        this.setActiveTab("analytics");
-      });
-    document
-      .getElementById("mobile-settings")
-      ?.addEventListener("click", () => {
-        this.setActiveTab("settings");
-      });
+    const activeSection = document.getElementById(`${sectionType}-view`);
+    if (activeSection) {
+      activeSection.classList.remove("hidden");
+      activeSection.classList.add("flex");
+    }
   }
 
   static setupKeyboardShortcuts() {
@@ -75,60 +126,34 @@ export class NavigationController {
       };
 
       if (event.altKey) {
-        if (key === "b") {
-          dispatchAsyncClick("scroll-to-top-btn");
-          return;
-        }
-        if (key === "c") {
-          dispatchAsyncClick("btn-toggle-plan-form");
-          return;
-        }
-        if (key === "t") {
-          dispatchAsyncClick("theme-toggle");
-          return;
-        }
-        if (key === "n") {
-          dispatchAsyncClick("menu-toggle");
-          return;
-        }
+        if (key === "b") return dispatchAsyncClick("scroll-to-top-btn");
+        if (key === "c") return dispatchAsyncClick("btn-toggle-plan-form");
+        if (key === "t") return dispatchAsyncClick("theme-toggle");
+        if (key === "n") return dispatchAsyncClick("menu-toggle");
+        if (key === "a") return dispatchAsyncClick("tab-active");
+        if (key === "d") return dispatchAsyncClick("tab-completed");
+        if (key === "x") return dispatchAsyncClick("tab-archived");
+
         if (key === "r") {
           event.preventDefault();
-
           GlobalLoaderService.show("Redirecting to purge terminal...");
-
           setTimeout(() => {
             try {
               this.setActiveTab("settings");
               const resetBtn =
                 document.getElementById("trigger-reset-btn") ||
                 document.querySelector('[id*="reset"]');
-
-              setTimeout(() => resetBtn.click(), 10);
+              setTimeout(() => resetBtn?.click(), 10);
             } finally {
               GlobalLoaderService.hide();
             }
           }, 50);
           return;
         }
-        if (key === "a") {
-          dispatchAsyncClick("tab-active");
-          return;
-        }
-        if (key === "d") {
-          dispatchAsyncClick("tab-completed");
-          return;
-        }
-        if (key === "x") {
-          dispatchAsyncClick("tab-archived");
-          return;
-        }
-        // NavigationController.js
 
         if (["1", "2", "3"].includes(event.key)) {
           const currentSection = document.querySelector("section:not(.hidden)");
-          if (!currentSection) return;
-
-          if (currentSection.id === "analytics-view") {
+          if (currentSection?.id === "analytics-view") {
             const chartViewButtons = Array.from(
               document.querySelectorAll(
                 "#heatmap-mobile-menu button, #chart-view-switcher button, button[data-view]",
@@ -148,29 +173,12 @@ export class NavigationController {
         }
       }
 
-      if (event.shiftKey) {
-        if (["t", "a", "s"].includes(key)) {
-          event.preventDefault();
-
-          const viewNames = {
-            t: "Plans Dashboard",
-            a: "Analytical Metrics",
-            s: "System Settings",
-          };
-          const targetTab =
-            key === "t" ? "plans" : key === "a" ? "analytics" : "settings";
-
-          GlobalLoaderService.show(`Navigating to ${viewNames[key]}...`);
-
-          setTimeout(() => {
-            try {
-              this.setActiveTab(targetTab);
-            } finally {
-              GlobalLoaderService.hide();
-            }
-          }, 40);
-          return;
-        }
+      if (event.shiftKey && ["p", "a", "s"].includes(key)) {
+        event.preventDefault();
+        const targetTab =
+          key === "p" ? "plans" : key === "a" ? "analytics" : "settings";
+        this.setActiveTab(targetTab);
+        return;
       }
 
       if (key === "/") {
@@ -185,16 +193,13 @@ export class NavigationController {
         return;
       }
 
-      if (event.key === "?") {
-        dispatchAsyncClick("help-toggle");
-        return;
-      }
+      if (event.key === "?") return dispatchAsyncClick("help-toggle");
 
       if (
         ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"].includes(event.key)
       ) {
         const currentSection = document.querySelector("section:not(.hidden)");
-        if (currentSection && currentSection.id === "plans-view") {
+        if (currentSection?.id === "plans-view") {
           event.preventDefault();
           this.queueTagShortcutKey(event.key);
         }
@@ -203,9 +208,7 @@ export class NavigationController {
   }
 
   static queueTagShortcutKey(digit) {
-    if (this.tagKeyTimeoutId) {
-      clearTimeout(this.tagKeyTimeoutId);
-    }
+    if (this.tagKeyTimeoutId) clearTimeout(this.tagKeyTimeoutId);
 
     if (this.tagKeyBuffer.length >= 2) {
       this.tagKeyBuffer = digit;
@@ -235,9 +238,7 @@ export class NavigationController {
     });
 
     const targetButton = tagButtons[index];
-    if (targetButton) {
-      setTimeout(() => targetButton.click(), 10);
-    }
+    if (targetButton) setTimeout(() => targetButton.click(), 10);
   }
 
   static closeAllActiveModals() {
@@ -255,37 +256,6 @@ export class NavigationController {
           modal.classList.add("hidden");
       }
     });
-  }
-
-  static handleViewSwitch(view) {
-    StateManager.setView(view);
-    PlanController.refreshUI();
-  }
-
-  static setActiveTab(tabType) {
-    document.querySelectorAll(".nav-item").forEach((btn) => {
-      btn.classList.remove("active");
-    });
-    document.getElementById(`nav-${tabType}`)?.classList.add("active");
-
-    document.querySelectorAll(".mobile-nav-btn").forEach((btn) => {
-      btn.classList.remove("active");
-    });
-    document.getElementById(`mobile-${tabType}`)?.classList.add("active");
-
-    this.handleViewSwitch(tabType);
-    this.showSection(tabType);
-
-    if (tabType === "analytics") {
-      AnalyticsController.dispatchRender(StateManager.getPlans());
-    }
-  }
-
-  static showSection(sectionType) {
-    document.querySelectorAll('section[id$="-view"]').forEach((section) => {
-      section.classList.add("hidden");
-    });
-    document.getElementById(`${sectionType}-view`)?.classList.remove("hidden");
   }
 
   static setDefaultActive() {

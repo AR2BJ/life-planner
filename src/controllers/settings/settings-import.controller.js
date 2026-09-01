@@ -3,8 +3,7 @@ import { generateId, todayISO } from "@/utils/helpers";
 
 import { GlobalLoaderService } from "@/services/loader.service";
 import { NotificationService } from "@/services/notification.service.js";
-import { PlanController } from "../plan.controller.js";
-import { SettingsTagController } from "./settings-tag.controller.js";
+import { PlansController } from "../plans.controller.js";
 import { renderPlanList } from "@/views/plans/plan-list.renderer.js";
 
 export const SettingsImportController = {
@@ -104,8 +103,7 @@ export const SettingsImportController = {
 
           renderPlanList(StateManager.getFilteredPlans(), state.activeTab);
 
-          PlanController.refreshUI();
-          SettingsTagController.renderTagsList();
+          PlansController.refreshUI();
 
           NotificationService.show({
             type: "success",

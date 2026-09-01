@@ -1,55 +1,69 @@
-import { formatDate } from "@/utils/helpers.js";
+import { generateId, todayISO } from "@/utils/helpers.js";
 
-export const STORAGE_KEY = "plan_manager";
+export const STORAGE_KEY = "life_planner";
 export const STORAGE_VERSION = 1;
 
-function normalizeTag(tag) {
-  if (typeof tag === "string") {
-    return { id: crypto.randomUUID(), name: tag.trim() };
-  }
+function normalizeGoal(goal) {
   return {
-    id: String(tag.id || crypto.randomUUID()),
-    name: String(tag.name || tag.title || "").trim(),
-  };
-}
-
-function normalizePlan(plan) {
-  return {
-    id: String(plan.id || crypto.randomUUID()),
-    title: plan.title || "Untitled Plan",
-    description: plan.description || "",
-    status: plan.status || "todo",
-    priority: plan.priority || "low",
-    dueDate: plan.dueDate || null,
-    createdAt: plan.createdAt || formatDate(new Date()),
-    updatedAt: plan.updatedAt || formatDate(new Date()) || null,
-    completedAt: plan.completedAt || null,
-    estimatedMinutes: Number(plan.estimatedMinutes) || 0,
-    archived: Boolean(plan.archived),
-    tags: Array.isArray(plan.tags)
-      ? plan.tags.map((t) => (typeof t === "object" ? t.id : String(t)))
-      : [],
-    subplans: Array.isArray(plan.subplans)
-      ? plan.subplans.map((st) => ({
-          id: String(st.id || crypto.randomUUID()),
-          title: st.title || "",
-          completed: Boolean(st.completed),
-          createdAt: st.createdAt || plan.createdAt || formatDate(new Date()),
-          updatedAt:
-            st.updatedAt || plan.createdAt || formatDate(new Date()) || null,
+    id: String(goal.id || generateId()),
+    title: goal.title || "Untitled Goal",
+    description: goal.description || "",
+    status: goal.status || "todo",
+    priority: goal.priority || "low",
+    category: goal.category || "general",
+    timeframe: goal.timeframe || "short_term",
+    dueDate: goal.dueDate || null,
+    createdAt: goal.createdAt || todayISO(),
+    updatedAt: goal.updatedAt || todayISO(),
+    completedAt: goal.completedAt || null,
+    archived: Boolean(goal.archived),
+    milestones: Array.isArray(goal.milestones)
+      ? goal.milestones.map((m) => ({
+          id: String(m.id || generateId()),
+          title: m.title || "",
+          completed: Boolean(m.completed),
+          createdAt: m.createdAt || todayISO(),
         }))
       : [],
   };
 }
 
+function normalizeDailyLog(log) {
+  return {
+    id: String(log.id || generateId()),
+    date: log.date || todayISO(),
+    content: log.content || "",
+    category: log.category || "journal",
+    mood: log.mood || "neutral",
+    createdAt: log.createdAt || todayISO(),
+    updatedAt: log.updatedAt || todayISO(),
+  };
+}
+
+function normalizeTemplate(template) {
+  return {
+    id: String(template.id || generateId()),
+    title: template.title || "Untitled Template",
+    description: template.description || "",
+    category: template.category || "workflow",
+    createdAt: template.createdAt || todayISO(),
+  };
+}
+
 function migrateData(data) {
-  const plans = Array.isArray(data.plans) ? data.plans : [];
-  const tags = Array.isArray(data.tags) ? data.tags : [];
+  const goals = Array.isArray(data.goals)
+    ? data.goals
+    : Array.isArray(data.plans)
+      ? data.plans
+      : [];
+  const dailyLogs = Array.isArray(data.dailyLogs) ? data.dailyLogs : [];
+  const templates = Array.isArray(data.templates) ? data.templates : [];
 
   return {
     version: STORAGE_VERSION,
-    tags: tags.map(normalizeTag),
-    plans: plans.map(normalizePlan),
+    goals: goals.map(normalizeGoal),
+    dailyLogs: dailyLogs.map(normalizeDailyLog),
+    templates: templates.map(normalizeTemplate),
   };
 }
 
@@ -59,8 +73,9 @@ export function saveToStorage(data) {
       STORAGE_KEY,
       JSON.stringify({
         version: STORAGE_VERSION,
-        tags: data.tags || [],
-        plans: data.plans || [],
+        goals: data.goals || [],
+        dailyLogs: data.dailyLogs || [],
+        templates: data.templates || [],
       }),
     );
   } catch (error) {

@@ -1,13 +1,4 @@
-export const openSubplansState = {
-  expandedPlanIds: new Set(),
-
-  subplansMemory: new Map(),
-
-  clear() {
-    this.expandedPlanIds.clear();
-    this.subplansMemory.clear();
-  },
-};
+import { GOAL_UNIT_OPTIONS } from "./constants/options-value.constants";
 
 export function generateId() {
   if (window.crypto?.randomUUID) {
@@ -35,47 +26,6 @@ export function generateId() {
   return `${timeLow}-${timeMid}-${timeHiAndVersion}-${clockSeqHiAndReserved}-${node}`;
 }
 
-export function processTagPipeline(componentItems = [], existingTags = []) {
-  const updatedGlobalTags = [...existingTags];
-  const assignedTagIds = [];
-
-  componentItems.forEach((item) => {
-    const isNewFlag = typeof item === "object" && (item.isNew || !item.id);
-    const itemTitle = typeof item === "object" ? item.name || item.title : item;
-
-    if (!itemTitle) return;
-
-    let match = updatedGlobalTags.find(
-      (t) => t.name.toLowerCase() === itemTitle.trim().toLowerCase(),
-    );
-
-    if (isNewFlag && !match) {
-      const newTag = {
-        id: crypto.randomUUID(),
-        name: itemTitle.trim(),
-      };
-      updatedGlobalTags.push(newTag);
-      assignedTagIds.push(newTag.id);
-    } else if (match) {
-      assignedTagIds.push(match.id);
-    } else if (typeof item === "object" && item.id) {
-      assignedTagIds.push(item.id);
-    }
-  });
-
-  return {
-    assignedTagIds,
-    updatedGlobalTags,
-  };
-}
-
-export function mapTagIdsToObjects(tagIds = [], globalTags = []) {
-  if (!Array.isArray(tagIds)) return [];
-  return tagIds
-    .map((id) => globalTags.find((t) => t.id === id))
-    .filter(Boolean);
-}
-
 export function formatDate(date) {
   if (!(date instanceof Date) || isNaN(date.getTime())) {
     date = new Date();
@@ -91,41 +41,19 @@ export function todayISO() {
   return formatDate(new Date());
 }
 
-export function isOverdue(dueDateStr, status) {
-  if (!dueDateStr || status === "done") return false;
-
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  const due = new Date(dueDateStr);
-  due.setHours(0, 0, 0, 0);
-
-  return due < today;
+export function parseFormattedNumber(val) {
+  if (!val) return 0;
+  return parseFloat(val.toString().replace(/,/g, "")) || 0;
 }
 
-export function getDaysRemaining(dueDateStr) {
-  if (!dueDateStr) return null;
-
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  const due = new Date(dueDateStr);
-  due.setHours(0, 0, 0, 0);
-
-  const diffTime = due.getTime() - today.getTime();
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-  return diffDays;
+export function formatNumberWithCommas(val) {
+  if (!val && val !== 0) return "";
+  const cleanNum = val.toString().replace(/\D/g, "");
+  if (!cleanNum) return "";
+  return parseInt(cleanNum, 10).toLocaleString("en-US");
 }
 
-export function calculateSubplanProgress(subplans = []) {
-  if (!Array.isArray(subplans) || subplans.length === 0) {
-    return { completedCount: 0, totalCount: 0, percentage: 0 };
-  }
-
-  const completedCount = subplans.filter((st) => st.completed).length;
-  const totalCount = subplans.length;
-  const percentage = Math.round((completedCount / totalCount) * 100);
-
-  return { completedCount, totalCount, percentage };
+export function getUnitConfig(unitId) {
+  const found = GOAL_UNIT_OPTIONS.find((u) => u.id === unitId);
+  return found || { max: 100000, defaultValue: 100 };
 }

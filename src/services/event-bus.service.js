@@ -14,7 +14,16 @@ class EventBusService {
 
   emit(event, data) {
     if (this.events[event]) {
-      this.events[event].forEach((callback) => callback(data));
+      this.events[event].forEach((callback) => {
+        try {
+          callback(data);
+        } catch (error) {
+          console.error(
+            `Error executing listener for event "${event}":`,
+            error,
+          );
+        }
+      });
     }
   }
 }

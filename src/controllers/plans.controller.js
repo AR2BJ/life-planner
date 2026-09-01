@@ -1,3 +1,8 @@
+import {
+  DAILY_LOG_CATEGORIES,
+  GOAL_CATEGORIES,
+  TEMPLATE_CATEGORIES,
+} from "@/utils/constants/options-value.constants.js";
 import { StateManager, state } from "@/models/state.model.js";
 
 import { AnalyticsController } from "./analytics.controller.js";
@@ -10,28 +15,24 @@ import { GlobalLoaderService } from "@/services/loader.service.js";
 import { HeaderComponent } from "@/components/shared/header.component.js";
 import { InfoModalComponent } from "@/components/modals/info-modal.component.js";
 import { MobileNavComponent } from "@/components/layout/mobile-nav.component.js";
-import { PlanActionController } from "./plans/plan-action.controller.js";
-import { PlanFormController } from "./plans/plan-form.controller.js";
+import { PlansActionController } from "./plans/plans-action.controller.js";
+import { PlansFormController } from "./plans/plans-form.controller.js";
 import { PlansView } from "@/views/plans-view.js";
 import { SettingsArchiveController } from "./settings/settings-archive.controller.js";
-import { SettingsTagController } from "./settings/settings-tag.controller.js";
 import { SettingsViewComponent } from "@/components/features/settings/settings-view.component.js";
 import { eventBus } from "@/services/event-bus.service.js";
-import { openSubplansState } from "@/utils/helpers.js";
 import { renderPlanList } from "@/views/plans/plan-list.renderer.js";
-import { renderTagFilterBar } from "@/views/plans/tag-bar.renderer.js";
 
-export const PlanController = {
+export const PlansController = {
   init() {
     StateManager.init();
     this.renderComponent();
 
     this.initFilterAutocompletes();
-
     this.refreshUI();
 
-    PlanFormController.init(this);
-    PlanActionController.init(this);
+    PlansFormController.init(this);
+    PlansActionController.init(this);
 
     SettingsArchiveController.runAutoArchivePipeline();
 
@@ -107,7 +108,6 @@ export const PlanController = {
         },
       );
 
-      // Set initial value
       if (state.dateFilter) {
         this.dateFilterAutocomplete.setValue(state.dateFilter);
       }
@@ -168,7 +168,6 @@ export const PlanController = {
         },
       );
 
-      // Set initial value
       if (state.sortBy) {
         this.sortAutocomplete.setValue(state.sortBy);
       }
@@ -197,27 +196,86 @@ export const PlanController = {
   },
 
   subscribeToDataChanges() {
-    eventBus.subscribe("store:changed", ({ plans, tags }) => {
+    eventBus.subscribe("store:changed", ({ plans }) => {
       state.plans = plans;
-      state.tags = tags;
-
       this.refreshUI();
     });
   },
 
+  getCategoriesForTab(tab) {
+    switch (tab) {
+      case "goals":
+        return GOAL_CATEGORIES;
+      case "daily":
+        return DAILY_LOG_CATEGORIES;
+      case "templates":
+        return TEMPLATE_CATEGORIES;
+      default:
+        return GOAL_CATEGORIES;
+    }
+  },
+
+  getSelectedCategoryForTab(tab) {
+    if (tab === "goals") return state.goalsUI?.selectedCategory || "all";
+    if (tab === "daily") return state.dailyLogsUI?.selectedCategory || "all";
+    if (tab === "templates")
+      return state.templatesUI?.selectedCategory || "all";
+    return state.selectedCategory || "all";
+  },
+
+  renderCategories() {
+    const container = document.getElementById("category-filter-scroll");
+    if (!container) return;
+
+    const currentTab = state.activeTab || "goals";
+    const categories = this.getCategoriesForTab(currentTab);
+    const activeCategory = this.getSelectedCategoryForTab(currentTab);
+
+    const allButtonHtml = `
+      <button
+        data-tag="all"
+        class="tag-filter-btn h-8 shrink-0 whitespace-nowrap rounded-lg px-3.5 text-xs font-semibold transition cursor-pointer ${
+          activeCategory === "all"
+            ? "bg-brand/80 text-white shadow-brand/10"
+            : "bg-surface-2 hover:bg-surface-3 text-secondary hover:text-color"
+        }"
+      >
+        All ${currentTab.charAt(0).toUpperCase() + currentTab.slice(1)}
+      </button>
+    `;
+
+    const categoriesHtml = categories
+      .map((cat) => {
+        const isActive = activeCategory === cat.id;
+        const activeClasses = isActive
+          ? "bg-brand/80 text-white shadow-brand/10"
+          : "bg-surface-2 hover:bg-surface-3 text-secondary hover:text-color";
+
+        return `
+          <button
+            data-tag="${cat.id}"
+            class="tag-filter-btn flex items-center gap-1.5 h-8 shrink-0 whitespace-nowrap rounded-lg px-3.5 text-xs font-semibold transition cursor-pointer ${activeClasses}"
+          >
+            ${cat.icon ? `<i class="${cat.icon.replace("fa-solid", "fa-regular")} text-[11px]"></i>` : ""}
+            <span>${cat.name}</span>
+          </button>
+        `;
+      })
+      .join("");
+
+    container.innerHTML = allButtonHtml + categoriesHtml;
+  },
+
   refreshUI() {
+    this.renderCategories();
+
     const allPlans = StateManager.getPlans();
     const filteredPlans = StateManager.getFilteredPlans();
 
     renderPlanList(filteredPlans, state.activeTab);
-
     AnalyticsController.dispatchRender(allPlans);
-    this.updateNavigationDOM();
 
-    PlanFormController.refreshUI();
-    SettingsTagController.renderTagsList();
-
-    renderTagFilterBar();
+    PlansFormController.refreshUI();
   },
 
   bindMenuToggle() {
@@ -271,6 +329,7 @@ export const PlanController = {
   },
 
   bindStaticEvents() {
+    // 1. Tag Filters
     const tagFilterBtn = document.getElementById("plan-filter-scroll");
     if (tagFilterBtn) {
       tagFilterBtn.addEventListener("click", (e) => {
@@ -283,13 +342,12 @@ export const PlanController = {
       });
     }
 
+    // 2. Select Elements fallback
     const sortSelect = document.getElementById("plan-sort-select");
     if (sortSelect) {
       sortSelect.value = state.sortBy || "priority";
-
       sortSelect.addEventListener("change", (e) => {
         GlobalLoaderService.show("Sorting plans...");
-
         setTimeout(() => {
           try {
             StateManager.setSortBy(e.target.value);
@@ -304,10 +362,8 @@ export const PlanController = {
     const dateFilterSelect = document.getElementById("plan-date-filter-select");
     if (dateFilterSelect) {
       dateFilterSelect.value = state.dateFilter || "all";
-
       dateFilterSelect.addEventListener("change", (e) => {
         GlobalLoaderService.show("Filtering plans by date...");
-
         setTimeout(() => {
           try {
             StateManager.setDateFilter(e.target.value);
@@ -319,6 +375,7 @@ export const PlanController = {
       });
     }
 
+    // 3. Toggle Form Visibility
     const toggleFormBtn = document.getElementById("btn-toggle-plan-form");
     const formContainer = document.getElementById("plan-form-container");
     const formChevron = document.getElementById("form-chevron");
@@ -335,6 +392,7 @@ export const PlanController = {
       });
     }
 
+    // 4. Search Handler
     const searchInput = document.getElementById("search-plans");
     const clearBtn = document.getElementById("clear-search-btn");
     const searchContainer = searchInput?.closest(".group\\/search");
@@ -370,7 +428,6 @@ export const PlanController = {
 
       searchInput.addEventListener("input", (e) => {
         GlobalLoaderService.show("Searching plans...");
-
         setTimeout(() => {
           try {
             StateManager.setSearchQuery(e.target.value);
@@ -390,14 +447,11 @@ export const PlanController = {
         e.stopPropagation();
 
         GlobalLoaderService.show("Clearing search...");
-
         setTimeout(() => {
           try {
             searchInput.value = "";
             StateManager.setSearchQuery("");
-
             setTimeout(() => searchInput.focus(), 100);
-
             this.refreshUI();
             evaluateSearchState();
           } finally {
@@ -407,9 +461,10 @@ export const PlanController = {
       });
     }
 
-    const activeBtn = document.getElementById("tab-active");
-    const completedBtn = document.getElementById("tab-completed");
-    const archivedBtn = document.getElementById("tab-archived");
+    // 5. Internal Sub-Tabs Handling (Goals / Daily Logs / Templates)
+    const goalsBtn = document.getElementById("tab-goals");
+    const dailyBtn = document.getElementById("tab-daily");
+    const templatesBtn = document.getElementById("tab-templates");
 
     const handleTabClick = (targetTab, loaderText) => {
       if (state.activeTab === targetTab) return;
@@ -425,14 +480,14 @@ export const PlanController = {
       }, 30);
     };
 
-    activeBtn?.addEventListener("click", () =>
-      handleTabClick("active", "Switching to Active Plans..."),
+    goalsBtn?.addEventListener("click", () =>
+      handleTabClick("goals", "Switching to Goals Planner..."),
     );
-    completedBtn?.addEventListener("click", () =>
-      handleTabClick("completed", "Loading Completed Plans..."),
+    dailyBtn?.addEventListener("click", () =>
+      handleTabClick("daily", "Loading Daily Tracker..."),
     );
-    archivedBtn?.addEventListener("click", () =>
-      handleTabClick("archived", "Loading Archived Plans..."),
+    templatesBtn?.addEventListener("click", () =>
+      handleTabClick("templates", "Loading Routine Templates..."),
     );
 
     const navButtons = ["plans", "analytics", "settings"];
@@ -448,8 +503,6 @@ export const PlanController = {
         setTimeout(() => {
           try {
             StateManager.setView(v);
-
-            openSubplansState.expandedPlanIds.clear();
 
             navButtons.forEach((nav) => {
               const dEl = document.getElementById(`nav-${nav}`);
@@ -472,31 +525,7 @@ export const PlanController = {
       mobileBtn?.addEventListener("click", handleNav);
     });
 
-    const planListContainer = document.getElementById("plan-list");
-
-    planListContainer?.addEventListener("click", (e) => {
-      const toggleBtn = e.target.closest(".toggle-subplans-btn");
-      if (!toggleBtn) return;
-
-      const planId = toggleBtn.dataset.planId;
-      const container = document.getElementById(`subplans-container-${planId}`);
-      const chevron = toggleBtn.querySelector(".subplan-chevron");
-
-      if (container) {
-        const isHidden = container.classList.contains("hidden");
-
-        if (isHidden) {
-          container.classList.remove("hidden");
-          chevron?.classList.add("rotate-180");
-          openSubplansState.expandedPlanIds.add(planId);
-        } else {
-          container.classList.add("hidden");
-          chevron?.classList.remove("rotate-180");
-          openSubplansState.expandedPlanIds.delete(planId);
-        }
-      }
-    });
-
+    // 7. Modal Help Handlers
     const helpToggle = document.getElementById("help-toggle");
     const helpModal = document.getElementById("help-modal");
     const closeHelpModal = document.getElementById("close-help-modal");
@@ -506,7 +535,6 @@ export const PlanController = {
     const openHelp = (defaultTab = "safeguard") => {
       if (helpModal) helpModal.classList.replace("hidden", "flex");
 
-      // Function to switch tabs inside the help modal
       const switchHelpTab = (tabName) => {
         const btnSafeguard = document.getElementById("tab-help-safeguard");
         const btnShortcuts = document.getElementById("tab-help-shortcuts");
@@ -520,30 +548,24 @@ export const PlanController = {
         if (!btnSafeguard || !btnShortcuts) return;
 
         if (tabName === "safeguard") {
-          // Safeguard Active State
           btnSafeguard.className =
             "flex-1 py-2 text-xs font-bold rounded-lg bg-brand text-white transition cursor-pointer";
           btnShortcuts.className =
             "flex-1 py-2 text-xs font-bold rounded-lg text-secondary hover:text-color transition cursor-pointer";
-
-          contentSafeguard.classList.remove("hidden");
-          contentShortcuts.classList.add("hidden");
+          contentSafeguard?.classList.remove("hidden");
+          contentShortcuts?.classList.add("hidden");
         } else if (tabName === "shortcuts") {
-          // Shortcuts Active State
           btnShortcuts.className =
             "flex-1 py-2 text-xs font-bold rounded-lg bg-brand text-white transition cursor-pointer";
           btnSafeguard.className =
             "flex-1 py-2 text-xs font-bold rounded-lg text-secondary hover:text-color transition cursor-pointer";
-
-          contentShortcuts.classList.remove("hidden");
-          contentSafeguard.classList.add("hidden");
+          contentShortcuts?.classList.remove("hidden");
+          contentSafeguard?.classList.add("hidden");
         }
       };
 
-      // Set initial tab state upon opening
       switchHelpTab(defaultTab);
 
-      // Bind click listeners for help modal tabs
       const btnSafeguard = document.getElementById("tab-help-safeguard");
       const btnShortcuts = document.getElementById("tab-help-shortcuts");
 
@@ -574,8 +596,8 @@ export const PlanController = {
     btnCloseHelp?.addEventListener("click", closeHelp);
     helpBackdrop?.addEventListener("click", closeHelp);
 
+    // 8. Scroll To Top Button
     const scrollTopBtn = document.getElementById("scroll-to-top-btn");
-
     if (scrollTopBtn) {
       let isVisible = false;
       let hideTimeout;
@@ -593,20 +615,18 @@ export const PlanController = {
               scrollTopBtn.classList.add("opacity-100", "scale-100");
             });
           }
-        } else {
-          if (isVisible) {
-            isVisible = false;
-            requestAnimationFrame(() => {
-              scrollTopBtn.classList.remove("opacity-100", "scale-100");
-              scrollTopBtn.classList.add("opacity-0", "scale-75");
-            });
+        } else if (isVisible) {
+          isVisible = false;
+          requestAnimationFrame(() => {
+            scrollTopBtn.classList.remove("opacity-100", "scale-100");
+            scrollTopBtn.classList.add("opacity-0", "scale-75");
+          });
 
-            hideTimeout = setTimeout(() => {
-              if (!isVisible) {
-                scrollTopBtn.classList.replace("flex", "hidden");
-              }
-            }, 200);
-          }
+          hideTimeout = setTimeout(() => {
+            if (!isVisible) {
+              scrollTopBtn.classList.replace("flex", "hidden");
+            }
+          }, 200);
         }
       });
 
@@ -615,6 +635,7 @@ export const PlanController = {
       });
     }
 
+    // 9. Theme Listener
     if (window.currentThemeListener) {
       document.removeEventListener("themeChanged", window.currentThemeListener);
     }
@@ -626,10 +647,33 @@ export const PlanController = {
   },
 
   handleTabSwitch(tab) {
-    openSubplansState.expandedPlanIds.clear();
     StateManager.setTab(tab);
     this.updateTabStyles(tab);
+    this.switchFormTabVisibility(tab);
     this.refreshUI();
+  },
+
+  switchFormTabVisibility(tab) {
+    const fields = document.querySelectorAll(".plan-tab-fields");
+    fields.forEach((field) => {
+      if (field.dataset.tabFields === tab) {
+        field.classList.remove("hidden");
+        field.classList.add("flex");
+      } else {
+        field.classList.add("hidden");
+        field.classList.remove("flex");
+      }
+    });
+
+    const formToggleTitle = document.getElementById("form-toggle-title");
+    if (formToggleTitle) {
+      const titles = {
+        goals: "Create New Goal",
+        daily: "Create New Daily Log",
+        templates: "Create New Template",
+      };
+      formToggleTitle.textContent = titles[tab] || "Create New Item";
+    }
   },
 
   toggleModal(modalId, show) {
@@ -644,71 +688,42 @@ export const PlanController = {
     }
   },
 
-  updateNavigationDOM() {
-    const views = ["plans", "analytics", "settings"];
-    const currentView = state.currentView;
-
-    views.forEach((v) => {
-      const el = document.getElementById(`${v}-view`);
-      if (el) {
-        if (currentView === v) el.classList.replace("hidden", "flex");
-        else el.classList.replace("flex", "hidden");
-      }
-
-      const desktopBtn = document.getElementById(`nav-${v}`);
-      const mobileBtn = document.getElementById(`mobile-${v}`);
-
-      if (currentView === v) {
-        desktopBtn?.classList.replace("text-secondary", "text-brand/80");
-        desktopBtn?.classList.add("shadow-brand/10", "active");
-        mobileBtn?.classList.replace("text-secondary", "text-brand/80");
-        mobileBtn?.classList.add("active");
-      } else {
-        desktopBtn?.classList.replace("text-brand/80", "text-secondary");
-        desktopBtn?.classList.remove("shadow-brand/10", "active");
-        mobileBtn?.classList.replace("text-brand/80", "text-secondary");
-        mobileBtn?.classList.remove("active");
-      }
-    });
-
-    requestAnimationFrame(() => {
-      if (currentView === "plans") {
-        this.updateTabStyles(state.activeTab);
-      }
-    });
-  },
-
   setupTabIndicatorObserver() {
-    const activeBtn = document.getElementById("tab-active");
-    const completedBtn = document.getElementById("tab-completed");
-    const archivedBtn = document.getElementById("tab-archived");
+    const goalsBtn = document.getElementById("tab-goals");
+    const dailyBtn = document.getElementById("tab-daily");
+    const templatesBtn = document.getElementById("tab-templates");
 
-    if (!activeBtn || !completedBtn || !archivedBtn) return;
+    if (!goalsBtn || !dailyBtn || !templatesBtn) return;
 
     if (!window.planTabResizeObserver) {
       window.planTabResizeObserver = new ResizeObserver(() => {
         requestAnimationFrame(() => {
-          this.updateTabStyles(state.activeTab);
+          this.updateTabStyles(state.activeTab || "goals");
         });
       });
     }
 
     window.planTabResizeObserver.disconnect();
-    window.planTabResizeObserver.observe(activeBtn);
-    window.planTabResizeObserver.observe(completedBtn);
-    window.planTabResizeObserver.observe(archivedBtn);
+    window.planTabResizeObserver.observe(goalsBtn);
+    window.planTabResizeObserver.observe(dailyBtn);
+    window.planTabResizeObserver.observe(templatesBtn);
   },
 
   updateTabStyles(tab) {
     const indicator = document.getElementById("tab-indicator");
-    const activeBtn = document.getElementById("tab-active");
-    const completedBtn = document.getElementById("tab-completed");
-    const archivedBtn = document.getElementById("tab-archived");
+    const goalsBtn = document.getElementById("tab-goals");
+    const dailyBtn = document.getElementById("tab-daily");
+    const templatesBtn = document.getElementById("tab-templates");
 
-    if (!indicator || !activeBtn || !completedBtn || !archivedBtn) return;
+    if (!indicator || !goalsBtn || !dailyBtn || !templatesBtn) return;
 
-    const buttons = [activeBtn, completedBtn, archivedBtn];
-    const activeIndex = { active: 0, completed: 1, archived: 2 }[tab] ?? 0;
+    const buttons = [goalsBtn, dailyBtn, templatesBtn];
+    const activeIndex =
+      {
+        goals: 0,
+        daily: 1,
+        templates: 2,
+      }[tab] ?? 0;
     const targetBtn = buttons[activeIndex];
 
     const buttonWidth =
@@ -741,15 +756,9 @@ export const PlanController = {
 
     buttons.forEach((btn, idx) => {
       if (idx === activeIndex) {
-        btn.classList.replace(
-          "text-secondary",
-          "text-(--color-btn-primary-text)",
-        );
+        btn.classList.replace("text-secondary", "text-white");
       } else {
-        btn.classList.replace(
-          "text-(--color-btn-primary-text)",
-          "text-secondary",
-        );
+        btn.classList.replace("text-white", "text-secondary");
       }
     });
   },

@@ -25,7 +25,7 @@ export const DesktopNavComponent = {
             class="nav-item justify-center shadow-brand/10"
             title="Plans"
           >
-            <i class="fa-regular fa-list text-xl"></i>
+            <i class="fa-regular fa-clipboard-list text-xl"></i>
           </button>
 
           <button

@@ -1,5 +1,5 @@
 {
-  "name": "plan-manager",
+  "name": "life-planner",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -10,7 +10,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/AR2BJ/plan-manager.git"
+    "url": "git+https://github.com/AR2BJ/life-planner.git"
   },
   "keywords": [],
   "author": "AR2BJ",
@@ -18,9 +18,9 @@
   "type": "module",
   "private": true,
   "bugs": {
-    "url": "https://github.com/AR2BJ/plan-manager/issues"
+    "url": "https://github.com/AR2BJ/life-planner/issues"
   },
-  "homepage": "https://github.com/AR2BJ/plan-manager#readme",
+  "homepage": "https://github.com/AR2BJ/life-planner#readme",
   "devDependencies": {
     "vite": "^8.1.1",
     "vite-plugin-pwa": "^1.3.0"

@@ -1,17 +1,22 @@
-import { PlanItemComponent } from "@/components/features/plans/plan-item.component";
-
-export function renderPlanList(plans, activeTab = "active") {
+export function renderPlanList(items, activeTab = "goals") {
   const container = document.getElementById("plan-list");
   const countBadge = document.getElementById("plan-count-badge");
 
   if (!container) return;
 
   if (countBadge) {
-    const totalCount = plans.length;
+    const totalCount = items.length;
+    const labels = {
+      goals: totalCount === 1 ? "goal" : "goals",
+      daily: totalCount === 1 ? "daily log" : "daily logs",
+      templates: totalCount === 1 ? "template" : "templates",
+    };
+
+    const currentLabel = labels[activeTab] || "items";
+
     countBadge.innerHTML = `
       <p class="text-secondary font-semibold text-sm p-0.5">
-        <span class="text-brand/80 font-extrabold">${totalCount}</span>&nbsp;
-        ${totalCount === 1 || totalCount === 0 ? "plan" : "plans"}
+        <span class="text-brand/80 font-extrabold">${totalCount}</span>&nbsp;${currentLabel}
       </p>
     `;
   }
@@ -19,56 +24,41 @@ export function renderPlanList(plans, activeTab = "active") {
   container.innerHTML = "";
 
   const emptyStateConfig = {
-    active: {
-      icon: "<i class='fa-regular fa-clipboard-list-check text-brand/60'></i>",
-      title: "No active plans",
-      description: "You're all caught up! Create a new plan to get started.",
+    goals: {
+      icon: "<i class='fa-regular fa-bullseye-arrow text-brand/60'></i>",
+      title: "No goals created yet",
+      description: "Define long-term objectives and track your journey.",
     },
-    completed: {
-      icon: "<i class='fa-regular fa-circle-check text-brand/60'></i>",
-      title: "No completed plans",
-      description: "Mark plans as finished to track your progress here.",
+    daily: {
+      icon: "<i class='fa-regular fa-calendar-day text-brand/60'></i>",
+      title: "No daily log entries",
+      description: "Log your daily progress, thoughts, and habits.",
     },
-    archived: {
-      icon: "<i class='fa-regular fa-box-open text-brand/60'></i>",
-      title: "No archived plans",
-      description:
-        "Plans moved to archive will appear here for record-keeping.",
+    templates: {
+      icon: "<i class='fa-regular fa-layer-group text-brand/60'></i>",
+      title: "No templates created",
+      description: "Save reusable planning structures and frameworks.",
     },
   };
 
-  const currentEmptyState =
-    emptyStateConfig[activeTab] || emptyStateConfig.active;
+  if (items.length === 0) {
+    const currentEmpty = emptyStateConfig[activeTab] || emptyStateConfig.goals;
 
-  if (plans.length === 0) {
     container.innerHTML = `
-      <div
-        class="min-h-80 bg-surface border border-dashed border-border rounded-2xl p-16 text-center"
-      >
-        <div class="text-6xl mb-6">${currentEmptyState.icon}</div>
-        <h2 class="text-2xl font-bold text-color">
-          ${currentEmptyState.title}
-        </h2>
-        <p class="mt-3 text-secondary max-w-sm mx-auto">
-          ${currentEmptyState.description}
-        </p>
+      <div class="min-h-72 bg-surface border border-dashed border-border rounded-2xl p-12 text-center flex flex-col items-center justify-center">
+        <div class="text-5xl mb-4 text-brand/70">${currentEmpty.icon}</div>
+        <h2 class="text-xl font-bold text-color">${currentEmpty.title}</h2>
+        <p class="mt-2 text-sm text-secondary max-w-sm mx-auto">${currentEmpty.description}</p>
       </div>
     `;
     return;
   }
 
-  const isArchived = activeTab === "archived";
-
-  plans.forEach((plan) => {
-    const item = document.createElement("div");
-    item.className =
-      "bg-surface border border-border/70 hover:border-border/90 rounded-2xl p-5 transition duration-200 shadow-xs hover:shadow-md";
-
-    item.innerHTML = PlanItemComponent.render(plan, {
-      isArchived,
-      activeTab,
-    });
-
-    container.appendChild(item);
+  items.forEach((item) => {
+    const wrapper = document.createElement("div");
+    wrapper.className =
+      "bg-surface border border-border/70 hover:border-border/90 rounded-2xl p-5 transition duration-200 shadow-xs";
+    wrapper.innerHTML = `<div class="text-sm font-semibold text-color">${item.title || item.name || "Untitled"}</div>`;
+    container.appendChild(wrapper);
   });
 }

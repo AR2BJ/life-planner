@@ -1,19 +1,45 @@
-import { loadFromStorage, saveToStorage } from "./storage.model.js";
+import {
+  DAILY_LOG_CATEGORIES,
+  GOAL_CATEGORIES,
+  TEMPLATE_CATEGORIES,
+} from "@/utils/constants/options-value.constants.js";
+import {
+  STORAGE_KEY,
+  loadFromStorage,
+  saveToStorage,
+} from "./storage.model.js";
 
 import { eventBus } from "@/services/event-bus.service.js";
 
 export const state = {
-  plans: [],
-  tags: [],
-  lastDeletedPlan: null,
-  activeTab: "active",
+  // Domain Data
+  goals: [],
+  dailyLogs: [],
+  templates: [],
+
+  // Navigation State
+  activeTab: "goals",
   currentView: "plans",
-  selectedTag: "all",
-  currentPriority: "low",
-  currentStatus: "todo",
-  dateFilter: "all",
-  sortBy: "priority",
-  searchQuery: "",
+
+  // Sub-UI States per domain
+  goalsUI: {
+    selectedCategory: "all",
+    currentPriority: "all",
+    currentStatus: "all",
+    dateFilter: "all",
+    sortBy: "priority",
+    searchQuery: "",
+  },
+  dailyLogsUI: {
+    selectedCategory: "all",
+    searchQuery: "",
+  },
+  templatesUI: {
+    selectedCategory: "all",
+    searchQuery: "",
+  },
+
+  lastDeletedItem: null,
 };
 
 export const StateManager = {
@@ -28,14 +54,16 @@ export const StateManager = {
   reloadFromStorage(notify = true) {
     const saved = loadFromStorage();
     if (saved) {
-      state.plans = saved.plans || [];
-      state.tags = saved.tags || [];
+      state.goals = saved.goals || [];
+      state.dailyLogs = saved.dailyLogs || [];
+      state.templates = saved.templates || [];
     } else {
-      state.plans = [];
-      state.tags = [];
+      state.goals = [];
+      state.dailyLogs = [];
+      state.templates = [];
     }
 
-    this._rawCache = localStorage.getItem("plan_manager") || "";
+    this._rawCache = localStorage.getItem(STORAGE_KEY) || "";
 
     if (notify) {
       this.dispatchStateEvents();
@@ -43,20 +71,21 @@ export const StateManager = {
   },
 
   dispatchStateEvents() {
-    eventBus.emit("store:plans:changed", state.plans);
-    eventBus.emit("store:tags:changed", state.tags);
-    eventBus.emit("store:changed", { plans: state.plans, tags: state.tags });
+    eventBus.emit("store:goals:changed", state.goals);
+    eventBus.emit("store:daily:changed", state.dailyLogs);
+    eventBus.emit("store:templates:changed", state.templates);
+    eventBus.emit("store:changed", state);
   },
 
   setupReactiveEngine() {
     window.addEventListener("storage", (event) => {
-      if (event.key === "plan_manager") {
+      if (event.key === STORAGE_KEY) {
         this.reloadFromStorage(true);
       }
     });
 
     setInterval(() => {
-      const currentRaw = localStorage.getItem("plan_manager") || "";
+      const currentRaw = localStorage.getItem(STORAGE_KEY) || "";
       if (currentRaw !== this._rawCache) {
         this._rawCache = currentRaw;
         this.reloadFromStorage(true);
@@ -64,93 +93,136 @@ export const StateManager = {
     }, 300);
   },
 
-  getPlans() {
-    return state.plans;
+  // Dynamic Category Getters
+  getCategoriesForTab(tab = state.activeTab) {
+    if (tab === "goals") return GOAL_CATEGORIES;
+    if (tab === "daily") return DAILY_LOG_CATEGORIES;
+    if (tab === "templates") return TEMPLATE_CATEGORIES;
+    return [];
   },
 
-  getTags() {
-    return state.tags;
+  // Getters
+  getPlansTab() {
+    return state.activeTab;
+  },
+
+  getGoals() {
+    return state.goals;
+  },
+
+  getDailyLogs() {
+    return state.dailyLogs;
+  },
+
+  getTemplates() {
+    return state.templates;
+  },
+
+  getPlans(tab = state.activeTab) {
+    if (tab === "goals") return state.goals;
+    if (tab === "daily") return state.dailyLogs;
+    if (tab === "templates") return state.templates;
+    return [...state.goals, ...state.dailyLogs, ...state.templates];
   },
 
   getFilteredPlans() {
-    let list = this.getPlans();
+    const tab = state.activeTab;
 
-    if (state.activeTab === "active") {
-      list = list.filter((plan) => !plan.archived && plan.status !== "done");
-    } else if (state.activeTab === "completed") {
-      list = list.filter((plan) => !plan.archived && plan.status === "done");
-    } else if (state.activeTab === "archived") {
-      list = list.filter((plan) => plan.archived);
-    }
+    if (tab === "goals") {
+      let list = [...state.goals];
+      const ui = state.goalsUI;
 
-    if (state.selectedTag && state.selectedTag !== "all") {
-      list = list.filter((plan) => plan.tags.includes(state.selectedTag));
-    }
+      if (ui.activeTab === "active") {
+        list = list.filter((g) => !g.archived && g.status !== "done");
+      } else if (ui.activeTab === "completed") {
+        list = list.filter((g) => !g.archived && g.status === "done");
+      } else if (ui.activeTab === "archived") {
+        list = list.filter((g) => g.archived);
+      }
 
-    if (state.activeTab === "active" && state.currentStatus !== "todo") {
-      list = list.filter((plan) => plan.status === state.currentStatus);
-    }
+      if (ui.selectedCategory && ui.selectedCategory !== "all") {
+        list = list.filter((g) => g.category === ui.selectedCategory);
+      }
 
-    if (state.currentPriority && state.currentPriority !== "low") {
-      list = list.filter((plan) => plan.priority === state.currentPriority);
-    }
+      if (ui.currentStatus && ui.currentStatus !== "all") {
+        list = list.filter((g) => g.status === ui.currentStatus);
+      }
 
-    if (state.dateFilter && state.dateFilter !== "all") {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
+      if (ui.currentPriority && ui.currentPriority !== "all") {
+        list = list.filter((g) => g.priority === ui.currentPriority);
+      }
 
-      const todayStr = today.toISOString().split("T")[0];
-
-      list = list.filter((plan) => {
-        if (state.dateFilter === "no_date") return !plan.dueDate;
-        if (!plan.dueDate) return false;
-
-        const planDate = new Date(plan.dueDate + "T00:00:00");
-
-        if (state.dateFilter === "today") return plan.dueDate === todayStr;
-        if (state.dateFilter === "overdue")
-          return planDate < today && plan.status !== "done";
-        if (state.dateFilter === "this_week") {
-          const nextWeek = new Date(today);
-          nextWeek.setDate(today.getDate() + 7);
-          return planDate >= today && planDate <= nextWeek;
-        }
-
-        return true;
-      });
-    }
-
-    if (state.searchQuery) {
-      const query = state.searchQuery.toLowerCase().trim();
-      list = list.filter((plan) => {
-        const title = (plan.title || "").toLowerCase();
-        const description = (plan.description || "").toLowerCase();
-
-        const tagsMatch = plan.tags?.some((tagId) => {
-          const tagObj = state.tags.find((t) => t.id === tagId);
-          return tagObj ? tagObj.name.toLowerCase().includes(query) : false;
+      if (ui.dateFilter && ui.dateFilter !== "all") {
+        const todayStr = new Date().toISOString().split("T")[0];
+        list = list.filter((g) => {
+          if (!g.dueDate) return ui.dateFilter === "no_date";
+          const dueStr = g.dueDate.split("T")[0];
+          if (ui.dateFilter === "today") return dueStr === todayStr;
+          if (ui.dateFilter === "overdue")
+            return dueStr < todayStr && g.status !== "done";
+          return true;
         });
+      }
 
-        return (
-          title.includes(query) || description.includes(query) || tagsMatch
-        );
-      });
+      if (ui.searchQuery) {
+        const query = ui.searchQuery.toLowerCase().trim();
+        list = list.filter((g) => {
+          const title = (g.title || "").toLowerCase();
+          const description = (g.description || "").toLowerCase();
+          return title.includes(query) || description.includes(query);
+        });
+      }
+
+      return this.sortGoals(list, ui.sortBy);
+    } else if (tab === "daily") {
+      let list = [...state.dailyLogs];
+      const ui = state.dailyLogsUI;
+
+      if (ui.selectedCategory && ui.selectedCategory !== "all") {
+        list = list.filter((l) => l.category === ui.selectedCategory);
+      }
+
+      if (ui.searchQuery) {
+        const query = ui.searchQuery.toLowerCase().trim();
+        list = list.filter((l) => {
+          const title = (l.title || "").toLowerCase();
+          const content = (l.content || "").toLowerCase();
+          return title.includes(query) || content.includes(query);
+        });
+      }
+
+      return list;
+    } else if (tab === "templates") {
+      let list = [...state.templates];
+      const ui = state.templatesUI;
+
+      if (ui.selectedCategory && ui.selectedCategory !== "all") {
+        list = list.filter((t) => t.category === ui.selectedCategory);
+      }
+
+      if (ui.searchQuery) {
+        const query = ui.searchQuery.toLowerCase().trim();
+        list = list.filter((t) => {
+          const title = (t.title || "").toLowerCase();
+          const description = (t.description || "").toLowerCase();
+          return title.includes(query) || description.includes(query);
+        });
+      }
+
+      return list;
     }
 
-    return this.sortPlans(list, state.sortBy);
+    return [];
   },
 
-  sortPlans(plans, sortBy) {
+  sortGoals(goals, sortBy) {
     const priorityWeight = { high: 3, medium: 2, low: 1 };
-    const statusWeight = { blocked: 4, in_progress: 3, todo: 2, done: 1 };
 
-    return [...plans].sort((a, b) => {
+    return [...goals].sort((a, b) => {
       if (sortBy === "priority")
         return (
           (priorityWeight[b.priority] || 0) - (priorityWeight[a.priority] || 0)
         );
-      if (sortBy === "status")
-        return (statusWeight[b.status] || 0) - (statusWeight[a.status] || 0);
       if (sortBy === "dueDate") {
         if (!a.dueDate) return 1;
         if (!b.dueDate) return -1;
@@ -161,45 +233,60 @@ export const StateManager = {
     });
   },
 
-  setDateFilter(filter) {
-    state.dateFilter = filter;
+  // Setters & State Modifiers
+
+  setGoals(goals) {
+    state.goals = goals;
+    eventBus.emit("store:goals:changed", state.goals);
   },
 
-  setSelectedTag(tag) {
-    state.selectedTag = tag;
+  setDailyLogs(dailyLogs) {
+    state.dailyLogs = dailyLogs;
+    eventBus.emit("store:daily:changed", state.dailyLogs);
   },
 
-  setPriority(priority) {
-    state.currentPriority = priority;
-  },
-
-  setStatus(status) {
-    state.currentStatus = status;
-  },
-
-  setSortBy(sortBy) {
-    state.sortBy = sortBy;
+  setTemplates(templates) {
+    state.templates = templates;
+    eventBus.emit("store:templates:changed", state.templates);
   },
 
   setTab(tab) {
     state.activeTab = tab;
   },
 
+  setSortBy(sortBy) {
+    state.goalsUI.sortBy = sortBy;
+  },
+
+  setDateFilter(filter) {
+    state.goalsUI.dateFilter = filter;
+  },
+
+  setSearchQuery(query) {
+    const tab = state.activeTab;
+    if (tab === "goals") state.goalsUI.searchQuery = query;
+    else if (tab === "daily") state.dailyLogsUI.searchQuery = query;
+    else if (tab === "templates") state.templatesUI.searchQuery = query;
+  },
+
+  setSelectedCategoryForTab(tab, category) {
+    if (tab === "goals") state.goalsUI.selectedCategory = category;
+    else if (tab === "daily") state.dailyLogsUI.selectedCategory = category;
+    else if (tab === "templates") state.templatesUI.selectedCategory = category;
+  },
+
   setView(view) {
     state.currentView = view;
   },
 
-  setSearchQuery(query) {
-    state.searchQuery = query;
-  },
+  save() {
+    saveToStorage({
+      goals: state.goals,
+      dailyLogs: state.dailyLogs,
+      templates: state.templates,
+    });
 
-  save(plans = state.plans, tags = state.tags) {
-    state.plans = plans;
-    state.tags = tags;
-
-    saveToStorage({ plans: state.plans, tags: state.tags });
-
-    this._rawCache = localStorage.getItem("plan_manager") || "";
+    this._rawCache = localStorage.getItem(STORAGE_KEY) || "";
     this.dispatchStateEvents();
   },
 };

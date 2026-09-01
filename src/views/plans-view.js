@@ -3,7 +3,7 @@ export const PlansView = {
     return `
       <section
         id="plans-view"
-        class="hidden w-full min-w-0 flex-col"
+        class="w-full min-w-0 flex-col"
       >
         <div
           class="mb-6 flex flex-wrap sm:flex-nowrap gap-4 justify-center sm:justify-between items-center w-full"
@@ -17,24 +17,27 @@ export const PlansView = {
             ></div>
 
             <button
-              id="tab-active"
+              id="tab-goals"
+              data-tab="goals"
               class="relative z-10 flex-1 w-full rounded-t-xl py-2 text-sm font-medium text-(--color-btn-primary-text) transition cursor-pointer text-center xs:w-27 xs:rounded-l-xl xs:rounded-tr-none"
             >
-              Active
+              Goals
             </button>
 
             <button
-              id="tab-completed"
+              id="tab-daily"
+              data-tab="daily"
               class="relative z-10 flex-1 w-full rounded-none py-2 text-sm font-medium text-secondary transition cursor-pointer text-center xs:w-27"
             >
-              Completed
+              Daily Logs
             </button>
 
             <button
-              id="tab-archived"
+              id="tab-templates"
+              data-tab="templates"
               class="relative z-10 flex-1 w-full rounded-b-xl py-2 text-sm font-medium text-secondary transition cursor-pointer text-center xs:w-27 xs:rounded-r-xl xs:rounded-t-none"
             >
-              Archived
+              Templates
             </button>
           </div>
 
@@ -47,8 +50,8 @@ export const PlansView = {
             <input
               type="text"
               id="search-plans"
-              placeholder="Search plans...."
-              class="w-full ps-10 pe-10 py-3 text-sm rounded-xl border border-border bg-surface text-color placeholder:text-muted/70 focus:outline-none focus:border-brand/50 transition-all shadow-sm"
+              placeholder="Search items..."
+              class="w-full ps-10 pe-10 py-2.5 text-sm rounded-xl border border-border bg-surface text-color placeholder:text-muted/70 focus:outline-none focus:border-brand/50 transition-all shadow-sm"
             />
 
             <div
@@ -56,7 +59,7 @@ export const PlansView = {
             >
               <button
                 id="clear-search-btn"
-                class="hidden opacity-0 scale-75 h-5 w-5 cursor-pointer items-center justify-center rounded-full border border-border bg-surface-2 hover:bg-surface-4 text-secondary hover:text-color transition-all duration-200 ease-out"
+                class="hidden opacity-0 scale-75 h-5 w-5 cursor-pointer items-center justify-center rounded-full border border-border bg-surface-2 hover:bg-surface-4 text-secondary hover:text-color transition-all duration-200"
                 title="Clear Search"
               >
                 <i class="fa-regular fa-xmark text-[10px]"></i>
@@ -73,11 +76,11 @@ export const PlansView = {
         </div>
 
         <div
-          id="plans"
-          class="w-full min-w-0"
+          id="create-form-wrapper"
+          class="w-full min-w-0 mb-6"
         >
           <div
-            class="mb-6 flex flex-col rounded-xl border border-border bg-surface transition-all overflow-hidden shadow-sm"
+            class="flex flex-col rounded-xl border border-border bg-surface transition-all overflow-hidden shadow-sm"
           >
             <button
               id="btn-toggle-plan-form"
@@ -85,7 +88,11 @@ export const PlansView = {
             >
               <div class="flex items-center gap-2">
                 <i class="fa-regular fa-square-plus text-brand/80"></i>
-                <span class="text-sm">Create New Plan</span>
+                <span
+                  id="form-toggle-title"
+                  class="text-sm font-medium"
+                  >Create New Goal</span
+                >
               </div>
               <div
                 id="form-chevron"
@@ -101,55 +108,115 @@ export const PlansView = {
               id="plan-form-container"
               class="hidden p-5 bg-surface-2/20 animate-slide-down flex-col gap-4 rounded-b-2xl border-t border-border"
             >
-              <div class="w-full grid grid-cols-1 gap-4 lg:grid-cols-3">
-                <div class="w-full min-w-0 lg:col-span-2">
-                  <label
-                    for="plan-title-input"
-                    class="mb-1.5 block ps-3 text-xs font-semibold text-secondary"
-                  >
-                    Title
-                    <span class="text-red-700"> *</span>
-                  </label>
-                  <input
-                    id="plan-title-input"
-                    type="text"
-                    placeholder="E.g., Implement OAuth2 authentication flow"
-                    class="h-11 w-full rounded-xl border border-border bg-surface-2 px-4 text-sm text-color placeholder:text-secondary/70 transition focus:border-brand/80 focus:outline-none"
-                  />
-                </div>
-
-                <div class="w-full">
-                  <div id="create-datepicker-container"></div>
-                </div>
-              </div>
-
-              <div class="w-full">
+              <div class="flex flex-col gap-1.5">
                 <label
-                  for="plan-desc-input"
+                  for="create-plan-title"
                   class="mb-1.5 block ps-3 text-xs font-semibold text-secondary"
                 >
-                  Description
+                  Title
+                  <span class="text-red-700"> *</span>
                 </label>
+                <input
+                  id="create-plan-title"
+                  type="text"
+                  placeholder="Enter title..."
+                  class="h-11 w-full rounded-xl border border-border bg-surface-2 px-4 text-sm text-color placeholder:text-secondary/70 transition focus:border-brand/80 focus:outline-none"
+                />
+              </div>
+
+              <div class="flex flex-col gap-1.5">
+                <label
+                  for="create-plan-desc"
+                  class="mb-1.5 block ps-3 text-xs font-semibold text-secondary"
+                  >Description</label
+                >
                 <textarea
-                  id="plan-desc-input"
+                  id="create-plan-desc"
                   rows="2"
-                  placeholder="Add detailed acceptance criteria or execution notes..."
+                  placeholder="Enter description or content..."
                   class="w-full scrollbar-thin scrollbar-thumb-surface rounded-xl border border-border bg-surface-2 p-3 text-sm text-color placeholder:text-secondary/70 transition focus:border-brand/80 focus:outline-none resize-none"
                 ></textarea>
               </div>
 
-              <div class="w-full grid grid-cols-1 gap-4 md:grid-cols-2">
-                <div class="w-full">
-                  <div id="create-priority-wrapper"></div>
+              <div
+                id="create-goals-fields"
+                class="plan-tab-fields flex flex-col gap-4"
+                data-tab-fields="goals"
+              >
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div class="flex flex-col gap-1.5">
+                    <div
+                      id="create-goal-category-autocomplete"
+                      class="w-full"
+                    ></div>
+                  </div>
+                  <div class="flex flex-col gap-1.5">
+                    <div
+                      id="create-goal-timeframe-autocomplete"
+                      class="w-full"
+                    ></div>
+                  </div>
                 </div>
-
-                <div class="w-full">
-                  <div id="create-status-wrapper"></div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div class="flex flex-col gap-1.5">
+                    <label
+                      for="create-goal-target"
+                      class="mb-1 block ps-3 text-xs font-semibold text-secondary"
+                      >Target Value</label
+                    >
+                    <input
+                      id="create-goal-target"
+                      type="text"
+                      inputmode="numeric"
+                      pattern="[0-9]*"
+                      value="100"
+                      maxlength="18"
+                      placeholder="e.g. 100"
+                      autocomplete="off"
+                      class="h-11 w-full rounded-xl border border-border bg-surface-2 px-4 text-sm text-color placeholder:text-secondary/70 focus:border-brand/80 focus:outline-none"
+                    />
+                  </div>
+                  <div class="flex flex-col gap-1.5">
+                    <div
+                      id="create-goal-unit-autocomplete"
+                      class="w-full"
+                    ></div>
+                  </div>
                 </div>
               </div>
 
-              <div class="w-full relative">
-                <div id="plan-tags-container"></div>
+              <div
+                id="create-daily-fields"
+                class="plan-tab-fields hidden flex-col gap-4"
+                data-tab-fields="daily"
+              >
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div class="flex flex-col gap-1.5">
+                    <div
+                      id="create-daily-category-autocomplete"
+                      class="w-full"
+                    ></div>
+                  </div>
+                  <div class="flex flex-col gap-1.5">
+                    <div
+                      id="create-daily-datepicker-container"
+                      class="w-full"
+                    ></div>
+                  </div>
+                </div>
+              </div>
+
+              <div
+                id="create-template-fields"
+                class="plan-tab-fields hidden flex-col gap-4"
+                data-tab-fields="templates"
+              >
+                <div class="flex flex-col gap-1.5">
+                  <div
+                    id="create-template-category-autocomplete"
+                    class="w-full"
+                  ></div>
+                </div>
               </div>
 
               <div
@@ -157,98 +224,76 @@ export const PlansView = {
               >
                 <p class="flex items-center gap-1.5 text-xs text-secondary">
                   <i class="fa-regular fa-circle-info text-brand/80"></i>
-                  Plans can be filtered using tag labels and priority tiers.
+                  Plans can be categorized and filtered by target metrics.
                 </p>
                 <button
                   id="add-plan-btn"
                   class="flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-brand/80 px-5 text-sm font-semibold text-white shadow-lg shadow-brand/10 transition hover:bg-(--color-brand-hover) cursor-pointer sm:w-auto"
                 >
-                  <i class="fa-regular fa-plus"></i> Add Plan
+                  <i class="fa-regular fa-plus"></i>
+                  <span id="add-plan-btn-text">Add Goal</span>
                 </button>
               </div>
             </div>
           </div>
+        </div>
 
-          <div
-            id="plan-filters-bar"
-            class="mb-6 flex flex-wrap lg:flex-nowrap items-stretch lg:items-center justify-between gap-6 border-b border-border pb-4 w-full"
-          >
-            <div class="relative flex flex-1 items-center gap-2 min-w-0 group">
-              <p
-                class="text-xs font-bold uppercase tracking-wider text-secondary shrink-0 me-1 hidden sm:flex"
-              >
-                Tags:
-              </p>
-
-              <div class="relative flex-1 min-w-0 flex items-center">
-                <button
-                  id="btn-scroll-left"
-                  type="button"
-                  class="absolute left-0 z-20 hidden h-7 w-7 items-center justify-center rounded-lg border border-border bg-surface/95 backdrop-blur-xl shadow-2xl text-secondary hover:text-color hover:border-brand/50 transition-all cursor-pointer"
-                >
-                  <i class="fa-regular fa-chevron-left text-xs"></i>
-                </button>
-
-                <div
-                  id="plan-filter-scroll"
-                  class="flex flex-1 min-w-0 flex-row items-center gap-2 overflow-x-auto px-1 scrollbar-none scroll-smooth transition-all duration-300"
-                >
-                  <button
-                    data-tag="all"
-                    class="tag-filter-btn h-8 shrink-0 whitespace-nowrap rounded-lg bg-brand/80 shadow-brand/10 px-3.5 text-xs font-semibold text-white transition cursor-pointer"
-                  >
-                    All Plans
-                  </button>
-                </div>
-
-                <button
-                  id="btn-scroll-right"
-                  type="button"
-                  class="absolute right-0 z-20 hidden h-7 w-7 items-center justify-center rounded-lg border border-border bg-surface/95 backdrop-blur-xl shadow-2xl text-secondary hover:text-color hover:border-brand/50 transition-all cursor-pointer"
-                >
-                  <i class="fa-regular fa-chevron-right text-xs"></i>
-                </button>
-              </div>
-            </div>
-
-            <div
-              class="flex flex-wrap sm:flex-nowrap items-center justify-between sm:justify-end gap-3"
+        <div
+          id="plan-filters-bar"
+          class="mb-6 flex flex-wrap lg:flex-nowrap items-stretch lg:items-center justify-between gap-6 border-b border-border pb-4 w-full"
+        >
+          <div class="relative flex flex-1 items-center gap-2 min-w-0 group">
+            <p
+              class="text-xs font-bold uppercase tracking-wider text-secondary shrink-0 me-1 hidden sm:flex"
             >
-              <div class="w-full flex flex-col xs:flex-row items-center gap-3">
-                <div class="w-full flex items-center gap-2">
-                  <div
-                    id="date-filter-autocomplete-wrapper"
-                  ></div>
-                </div>
+              Categories:
+            </p>
 
-                <div class="w-full flex items-center gap-2">
-                  <div
-                    id="sort-autocomplete-wrapper"
-                  ></div>
-                </div>
-              </div>
+            <div class="relative flex-1 min-w-0 flex items-center">
+              <button
+                id="btn-scroll-left"
+                type="button"
+                class="absolute left-0 z-20 hidden h-7 w-7 items-center justify-center rounded-lg border border-border bg-surface/95 backdrop-blur-xl shadow-2xl text-secondary hover:text-color transition-all cursor-pointer"
+              >
+                <i class="fa-regular fa-chevron-left text-xs"></i>
+              </button>
 
               <div
-                id="plan-count-badge"
-                class="shrink-0 flex justify-center items-center gap-1.5 px-4 py-1.5 bg-surface-3 rounded-xl text-xs font-bold text-color select-none w-full sm:w-36 lg:w-auto"
+                id="category-filter-scroll"
+                class="flex flex-1 min-w-0 flex-row items-center gap-2 overflow-x-auto px-1 scrollbar-none scroll-smooth transition-all duration-300"
+              ></div>
+
+              <button
+                id="btn-scroll-right"
+                type="button"
+                class="absolute right-0 z-20 hidden h-7 w-7 items-center justify-center rounded-lg border border-border bg-surface/95 backdrop-blur-xl shadow-2xl text-secondary hover:text-color transition-all cursor-pointer"
               >
-                0 Plans
-              </div>
+                <i class="fa-regular fa-chevron-right text-xs"></i>
+              </button>
             </div>
           </div>
 
-          <div
-            id="plan-list"
-            class="mt-6 w-full space-y-3"
-          ></div>
+          <div class="flex items-center gap-3">
+            <div
+              id="plan-count-badge"
+              class="shrink-0 flex justify-center items-center gap-1.5 px-4 py-1.5 bg-surface-3 rounded-xl text-xs font-bold text-color select-none"
+            >
+              0 Items
+            </div>
+          </div>
         </div>
+
+        <div
+          id="plan-list"
+          class="mt-6 w-full space-y-3"
+        ></div>
       </section>
     `;
   },
 };
 
 function setupPlanFiltersDragScroll() {
-  const scrollContainer = document.getElementById("plan-filter-scroll");
+  const scrollContainer = document.getElementById("category-filter-scroll");
   const btnLeft = document.getElementById("btn-scroll-left");
   const btnRight = document.getElementById("btn-scroll-right");
 

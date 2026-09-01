@@ -1,5 +1,5 @@
 import { NotificationService } from "@/services/notification.service.js";
-import { PlanController } from "../plan.controller.js";
+import { PlansController } from "../plans.controller.js";
 import { StateManager } from "@/models/state.model.js";
 
 export const SettingsArchiveController = {
@@ -88,7 +88,7 @@ export const SettingsArchiveController = {
 
     if (modified) {
       StateManager.save(plans);
-      PlanController.refreshUI();
+      PlansController.refreshUI();
 
       NotificationService.show({
         type: "info",

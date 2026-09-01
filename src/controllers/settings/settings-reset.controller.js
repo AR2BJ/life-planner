@@ -2,9 +2,8 @@ import { StateManager, state } from "@/models/state.model.js";
 
 import { GlobalLoaderService } from "@/services/loader.service";
 import { NotificationService } from "@/services/notification.service.js";
-import { PlanController } from "../plan.controller.js";
+import { PlansController } from "../plans.controller.js";
 import { STORAGE_KEY } from "@/models/storage.model.js";
-import { SettingsTagController } from "./settings-tag.controller.js";
 import { renderPlanList } from "@/views/plans/plan-list.renderer.js";
 
 export const SettingsResetController = {
@@ -16,8 +15,7 @@ export const SettingsResetController = {
 
   resetSession() {
     StateManager.init();
-    PlanController.refreshUI();
-    SettingsTagController.renderTagsList();
+    PlansController.refreshUI();
   },
 
   closeResetModal() {
@@ -91,9 +89,7 @@ export const SettingsResetController = {
 
         renderPlanList([], state.activeTab);
 
-        PlanController.refreshUI();
-
-        SettingsTagController.renderTagsList();
+        PlansController.refreshUI();
 
         NotificationService.show({
           type: "error",
@@ -120,11 +116,10 @@ export const SettingsResetController = {
                 state.currentView = "plans";
 
                 renderPlanList(
-                  StateManager.getFilteredPlans(),
+                  StateManager.getFilteredGoals(),
                   state.activeTab,
                 );
-                PlanController.refreshUI();
-                SettingsTagController.renderTagsList();
+                PlansController.refreshUI();
               } finally {
                 GlobalLoaderService.hide();
               }

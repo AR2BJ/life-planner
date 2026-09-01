@@ -10,7 +10,7 @@ let currentHeatmapView = "weekly";
 
 export const AnalyticsController = {
   init() {
-    this.bindStaticEvents();
+    // this.bindStaticEvents();
   },
 
   bindStaticEvents() {
@@ -30,16 +30,16 @@ export const AnalyticsController = {
   },
 
   handleTabSwitch(tab) {
-    if (tab === currentHeatmapView) return;
-    currentHeatmapView = tab;
+    // if (tab === currentHeatmapView) return;
+    // currentHeatmapView = tab;
 
-    updateTabStyles(tab);
+    // updateTabStyles(tab);
 
-    const plans = StateManager.getPlans();
-    updateHeatmapChart(plans, tab);
+    // const plans = StateManager.getPlans();
+    // updateHeatmapChart(plans, tab);
   },
 
   dispatchRender(plans) {
-    renderAnalyticsCharts(plans, currentHeatmapView);
+    // renderAnalyticsCharts(plans, currentHeatmapView);
   },
 };

@@ -1,46 +1,41 @@
-import { STORAGE_KEY, loadFromStorage } from "@/models/storage.model.js";
-
-import { PlanService } from "@/services/plan.service.js";
-import { eventBus } from "./event-bus.service.js";
+import { StateManager, state } from "@/models/state.model.js";
 
 class StoreService {
   constructor() {
-    this.cacheKey = STORAGE_KEY;
-    this.lastRaw = "";
-    this.initCache();
-    this.listenToStorage();
+    StateManager.init();
   }
 
-  initCache() {
-    this.lastRaw = localStorage.getItem(this.cacheKey) || "";
+  // Getters
+  get goals() {
+    return StateManager.getGoals();
   }
 
-  listenToStorage() {
-    window.addEventListener("storage", (e) => {
-      if (e.key === this.cacheKey) {
-        this.lastRaw = e.newValue || "";
-        this.notifyChanges();
-      }
-    });
-
-    setInterval(() => {
-      const currentRaw = localStorage.getItem(this.cacheKey) || "";
-      if (currentRaw !== this.lastRaw) {
-        this.lastRaw = currentRaw;
-        this.notifyChanges();
-      }
-    }, 300);
+  get dailyLogs() {
+    return StateManager.getDailyLogs();
   }
 
-  notifyChanges() {
-    const updatedData = loadFromStorage();
-    if (updatedData) {
-      updatedData.plans = PlanService.enforceSubplanRules(updatedData.plans);
+  get templates() {
+    return StateManager.getTemplates();
+  }
 
-      eventBus.emit("store:plans:changed", updatedData.plans);
-      eventBus.emit("store:tags:changed", updatedData.tags);
-      eventBus.emit("store:changed", updatedData);
-    }
+  get filteredGoals() {
+    return StateManager.getFilteredGoals();
+  }
+
+  // Setters / Actions
+  setGoals(goals) {
+    state.goals = goals;
+    StateManager.save();
+  }
+
+  setDailyLogs(dailyLogs) {
+    state.dailyLogs = dailyLogs;
+    StateManager.save();
+  }
+
+  setTemplates(templates) {
+    state.templates = templates;
+    StateManager.save();
   }
 }
 
