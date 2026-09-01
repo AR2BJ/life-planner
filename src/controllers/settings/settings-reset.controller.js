@@ -71,8 +71,13 @@ export const SettingsResetController = {
 
   executeApplicationReset() {
     const previousPayload = localStorage.getItem(STORAGE_KEY);
-    const previousPlans = StateManager.getPlans().map((plan) => ({ ...plan }));
-    const previousTags = StateManager.getTags().map((tag) => ({ ...tag }));
+    const previousGoals = StateManager.getGoals().map((goal) => ({ ...goal }));
+    const previousDailyLogs = StateManager.getDailyLogs().map((daily) => ({
+      ...daily,
+    }));
+    const previousTemplates = StateManager.getTemplates().map((temp) => ({
+      ...temp,
+    }));
 
     this.closeResetModal();
 
@@ -82,9 +87,10 @@ export const SettingsResetController = {
       try {
         localStorage.removeItem(STORAGE_KEY);
 
-        state.plans = [];
-        state.tags = [];
-        state.activeTab = "active";
+        state.goals = [];
+        state.dailyLogs = [];
+        state.templates = [];
+        state.activeTab = "goals";
         state.currentView = "plans";
 
         renderPlanList([], state.activeTab);
@@ -108,17 +114,24 @@ export const SettingsResetController = {
                   localStorage.removeItem(STORAGE_KEY);
                 }
 
-                StateManager.save(previousPlans || [], previousTags || []);
-                state.plans = previousPlans || [];
-                state.tags = previousTags || [];
+                StateManager.save(
+                  previousGoals || [],
+                  previousDailyLogs || [],
+                  previousTemplates || [],
+                );
 
-                state.activeTab = "active";
+                state.goals = previousGoals || [];
+                state.dailyLogs = previousDailyLogs || [];
+                state.templates = previousTemplates || [];
+
+                state.activeTab = "goals";
                 state.currentView = "plans";
 
                 renderPlanList(
-                  StateManager.getFilteredGoals(),
+                  StateManager.getFilteredPlans(),
                   state.activeTab,
                 );
+
                 PlansController.refreshUI();
               } finally {
                 GlobalLoaderService.hide();

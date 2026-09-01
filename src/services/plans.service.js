@@ -9,46 +9,25 @@ export const PlanService = {
       throw new Error("Goal title must be between 2 and 120 characters");
     }
 
-    const alreadyExists = currentGoals.some(
-      (g) => g.title.toLowerCase() === cleanedTitle.toLowerCase(),
-    );
-    if (alreadyExists) {
-      throw new Error("A goal with this title already exists");
-    }
-
     const newGoal = {
       id: generateId(),
       title: cleanedTitle,
       description: (goalData.description || "").trim(),
-      category: goalData.category || "personal",
-      timeframe: goalData.timeframe || "monthly", // yearly | monthly | weekly
-      targetValue: Number(goalData.targetValue) || 1,
+      category: goalData.category || "general",
+      timeframe: goalData.timeframe || "yearly",
+      targetValue: Number(goalData.targetValue) || 100,
       currentValue: Number(goalData.currentValue) || 0,
-      unit: goalData.unit || "times",
-      status: "in_progress", // in_progress | completed | paused
+      unit: goalData.unit || "%",
+      status: goalData.status || "todo",
+      archived: Boolean(goalData.archived),
       startDate: goalData.startDate || todayISO(),
       endDate: goalData.endDate || null,
       createdAt: todayISO(),
       updatedAt: todayISO(),
+      milestones: [],
     };
 
     return [newGoal, ...currentGoals];
-  },
-
-  updateGoalProgress(currentGoals, goalId, incrementValue) {
-    return currentGoals.map((goal) => {
-      if (goal.id !== goalId) return goal;
-
-      const newValue = Math.max(0, goal.currentValue + incrementValue);
-      const isCompleted = newValue >= goal.targetValue;
-
-      return {
-        ...goal,
-        currentValue: newValue,
-        status: isCompleted ? "completed" : "in_progress",
-        updatedAt: todayISO(),
-      };
-    });
   },
 
   editGoal(currentGoals, goalId, updatedFields) {
@@ -78,33 +57,22 @@ export const PlanService = {
     return currentGoals.filter((g) => g.id !== goalId);
   },
 
-  calculateGoalProgressPercentage(goal) {
-    if (!goal || !goal.targetValue || goal.targetValue <= 0) return 0;
-    const percentage = (goal.currentValue / goal.targetValue) * 100;
-    return Math.min(100, Math.round(percentage));
-  },
-
   createDailyLog(currentLogs, logData) {
-    const rawContent = typeof logData === "string" ? logData : logData.content;
-    const cleanedContent = (rawContent || "").trim();
+    const rawTitle = typeof logData === "string" ? logData : logData.title;
+    const cleanedTitle = (rawTitle || "").trim();
 
-    if (!cleanedContent) {
-      throw new Error("Daily log content cannot be empty");
-    }
-
-    const logDate = logData.date || todayISO();
-    const alreadyExists = currentLogs.some((log) => log.date === logDate);
-    if (alreadyExists) {
-      throw new Error("A daily log entry already exists for this date");
+    if (!cleanedTitle) {
+      throw new Error("Daily log title cannot be empty");
     }
 
     const newLog = {
       id: generateId(),
-      date: logDate,
-      content: cleanedContent,
-      mood: logData.mood || "neutral",
-      category: logData.category || "reflection",
-      highlights: Array.isArray(logData.highlights) ? logData.highlights : [],
+      title: cleanedTitle,
+      description: (logData.description || logData.content || "").trim(),
+      date: logData.date || todayISO(),
+      mood: logData.mood || "good",
+      category: logData.category || "journal",
+      linkedGoalTitle: logData.linkedGoalTitle || null,
       createdAt: todayISO(),
       updatedAt: todayISO(),
     };
@@ -121,9 +89,11 @@ export const PlanService = {
       return {
         ...l,
         ...updatedFields,
-        content: updatedFields.content
-          ? updatedFields.content.trim()
-          : l.content,
+        title: updatedFields.title ? updatedFields.title.trim() : l.title,
+        description:
+          updatedFields.description !== undefined
+            ? updatedFields.description.trim()
+            : l.description,
         updatedAt: todayISO(),
       };
     });
@@ -142,19 +112,12 @@ export const PlanService = {
       throw new Error("Template title must be between 2 and 100 characters");
     }
 
-    const alreadyExists = currentTemplates.some(
-      (t) => t.title.toLowerCase() === cleanedTitle.toLowerCase(),
-    );
-    if (alreadyExists) {
-      throw new Error("A template with this title already exists");
-    }
-
     const newTemplate = {
       id: generateId(),
       title: cleanedTitle,
       description: (templateData.description || "").trim(),
-      category: templateData.category || "routine",
-      structure: templateData.structure || [], // Sub-items, checkpoints, or fields
+      category: templateData.category || "workflow",
+      structure: templateData.structure || [],
       isFavorite: Boolean(templateData.isFavorite),
       createdAt: todayISO(),
       updatedAt: todayISO(),
@@ -188,16 +151,5 @@ export const PlanService = {
 
   deleteTemplate(currentTemplates, templateId) {
     return currentTemplates.filter((t) => t.id !== templateId);
-  },
-
-  toggleTemplateFavorite(currentTemplates, templateId) {
-    return currentTemplates.map((t) => {
-      if (t.id !== templateId) return t;
-      return {
-        ...t,
-        isFavorite: !t.isFavorite,
-        updatedAt: todayISO(),
-      };
-    });
   },
 };

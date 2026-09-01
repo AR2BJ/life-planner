@@ -15,9 +15,7 @@ export const SettingsViewComponent = {
           class="flex flex-col gap-5 p-4 sm:p-6 max-w-2xl mx-auto w-full animate-fade-in pb-16"
         >
           <div class="flex flex-col gap-1 px-1">
-            <h1
-              class="text-xl sm:text-2xl font-bold text-color tracking-tight"
-            >
+            <h1 class="text-xl sm:text-2xl font-bold text-color tracking-tight">
               Application Settings
             </h1>
             <p class="text-xs sm:text-sm text-secondary leading-relaxed">
@@ -74,50 +72,6 @@ export const SettingsViewComponent = {
                 <i class="fa-regular fa-moon text-base"></i>
                 <span>Dark Mode</span>
               </button>
-            </div>
-          </div>
-
-          <div
-            class="bg-surface rounded-2xl p-4 sm:p-6 flex flex-col gap-4 shadow-sm border border-border"
-          >
-            <div class="flex items-center gap-3 border-b border-border pb-3">
-              <div
-                class="w-8 h-8 rounded-lg bg-brand/10 text-brand/80 flex items-center justify-center shrink-0"
-              >
-                <i class="fa-regular fa-tags text-sm"></i>
-              </div>
-              <div class="min-w-0">
-                <h3
-                  class="text-sm sm:text-base font-semibold text-color truncate"
-                >
-                  Global Tag Management
-                </h3>
-                <p class="text-[11px] sm:text-xs text-secondary truncate">
-                  Create, edit, or remove workspace tags globally.
-                </p>
-              </div>
-            </div>
-
-            <div class="flex flex-col xs:flex-row gap-2 items-center">
-              <input
-                type="text"
-                id="sett-new-tag-input"
-                placeholder="Enter new tag name..."
-                class="w-full bg-surface-2 border border-border rounded-xl px-3.5 py-2 text-xs sm:text-sm text-color placeholder:text-muted truncate focus:outline-none focus:border-brand/80 transition"
-              />
-              <button
-                id="sett-add-tag-btn"
-                class="w-full xs:w-auto px-4 py-2 bg-brand/80 hover:bg-brand text-white font-medium text-xs sm:text-sm rounded-xl transition cursor-pointer shrink-0 flex justify-center items-center gap-1.5"
-              >
-                <i class="fa-regular fa-plus"></i>
-                <span>Add Tag</span>
-              </button>
-            </div>
-
-            <div
-              id="sett-tags-list"
-              class="flex flex-col gap-2 mt-2 max-h-60 overflow-y-auto scrollbar-thin scrollbar-thumb-surface-2 pe-1"
-            >
             </div>
           </div>
 
@@ -213,53 +167,6 @@ export const SettingsViewComponent = {
                   class="hidden"
                 />
               </div>
-            </div>
-          </div>
-
-          <!-- Automation Rules -->
-          <div
-            class="bg-surface rounded-2xl p-4 sm:p-6 flex flex-col gap-4 shadow-sm border border-border"
-          >
-            <div class="flex items-center gap-3 border-b border-border pb-3">
-              <div
-                class="w-8 h-8 rounded-lg bg-brand/10 text-brand/80 flex items-center justify-center shrink-0"
-              >
-                <i class="fa-regular fa-brain-circuit text-sm"></i>
-              </div>
-              <div class="min-w-0">
-                <h3
-                  class="text-sm sm:text-base font-semibold text-color truncate"
-                >
-                  Automation Rules
-                </h3>
-                <p class="text-[11px] sm:text-xs text-secondary truncate">
-                  Configure autonomous pipeline structures for plans archiving.
-                </p>
-              </div>
-            </div>
-
-            <div class="flex items-start justify-between gap-4 mt-1">
-              <div class="flex flex-col gap-0.5 min-w-0">
-                <span class="text-xs sm:text-sm font-medium text-color"
-                  >Auto-Archive Inactive Plans</span
-                >
-                <span
-                  class="text-[11px] sm:text-xs text-secondary leading-relaxed"
-                >
-                  Automatically shift plan profiles to the archived tab if zero
-                  commit logs are registered within the last 30 days.
-                </span>
-              </div>
-
-              <button
-                id="sett-auto-archive-toggle"
-                class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none mt-0.5 bg-neutral-300/80 dark:bg-neutral-700/80"
-              >
-                <span
-                  id="sett-auto-archive-dot"
-                  class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out translate-x-0"
-                ></span>
-              </button>
             </div>
           </div>
 

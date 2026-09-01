@@ -5,9 +5,9 @@ import { GlobalLoaderService } from "@/services/loader.service.js";
 import { PlansController } from "./plans.controller.js";
 
 export class NavigationController {
-  static tagKeyBuffer = "";
-  static tagKeyTimeoutId = null;
-  static TAG_KEY_TIMEOUT = 200;
+  static categoryKeyBuffer = "";
+  static categoryKeyTimeoutId = null;
+  static CATEGORY_KEY_TIMEOUT = 200;
 
   static init() {
     this.setupNavigationListeners();
@@ -16,40 +16,34 @@ export class NavigationController {
   }
 
   static setupNavigationListeners() {
-    const navButtons = ["plans", "analytics", "settings"];
-
-    navButtons.forEach((v) => {
-      const desktopBtn = document.getElementById(`nav-${v}`);
-      const mobileBtn = document.getElementById(`mobile-${v}`);
-
-      const handleNav = () => {
-        if (state.currentView === v) return;
-
-        const viewNames = {
-          plans: "Plans Dashboard",
-          analytics: "Analytical Metrics",
-          settings: "System Settings",
-        };
-
-        GlobalLoaderService.show(`Navigating to ${viewNames[v]}...`);
-
-        setTimeout(() => {
-          try {
-            this.setActiveTab(v);
-          } finally {
-            GlobalLoaderService.hide();
-          }
-        }, 30);
-      };
-
-      desktopBtn?.addEventListener("click", handleNav);
-      mobileBtn?.addEventListener("click", handleNav);
+    document.getElementById("nav-plans")?.addEventListener("click", () => {
+      this.setActiveTab("plans");
     });
+    document.getElementById("nav-analytics")?.addEventListener("click", () => {
+      this.setActiveTab("analytics");
+    });
+    document.getElementById("nav-settings")?.addEventListener("click", () => {
+      this.setActiveTab("settings");
+    });
+
+    document.getElementById("mobile-plans")?.addEventListener("click", () => {
+      this.setActiveTab("plans");
+    });
+    document
+      .getElementById("mobile-analytics")
+      ?.addEventListener("click", () => {
+        this.setActiveTab("analytics");
+      });
+    document
+      .getElementById("mobile-settings")
+      ?.addEventListener("click", () => {
+        this.setActiveTab("settings");
+      });
   }
 
   static setActiveTab(tabType = "plans") {
     StateManager.setView(tabType);
-    this.updateNavigationDOM(tabType);
+    this.updateNavigationDOM();
     this.showSection(tabType);
 
     if (tabType === "plans") {
@@ -60,10 +54,17 @@ export class NavigationController {
     }
   }
 
-  static updateNavigationDOM(currentView) {
+  static updateNavigationDOM() {
     const views = ["plans", "analytics", "settings"];
+    const currentView = state.currentView;
 
     views.forEach((v) => {
+      const el = document.getElementById(`${v}-view`);
+      if (el) {
+        if (currentView === v) el.classList.replace("hidden", "flex");
+        else el.classList.replace("flex", "hidden");
+      }
+
       const desktopBtn = document.getElementById(`nav-${v}`);
       const mobileBtn = document.getElementById(`mobile-${v}`);
 
@@ -130,9 +131,9 @@ export class NavigationController {
         if (key === "c") return dispatchAsyncClick("btn-toggle-plan-form");
         if (key === "t") return dispatchAsyncClick("theme-toggle");
         if (key === "n") return dispatchAsyncClick("menu-toggle");
-        if (key === "a") return dispatchAsyncClick("tab-active");
-        if (key === "d") return dispatchAsyncClick("tab-completed");
-        if (key === "x") return dispatchAsyncClick("tab-archived");
+        if (key === "g") return dispatchAsyncClick("tab-goals");
+        if (key === "d") return dispatchAsyncClick("tab-daily");
+        if (key === "x") return dispatchAsyncClick("tab-templates");
 
         if (key === "r") {
           event.preventDefault();
@@ -195,39 +196,42 @@ export class NavigationController {
 
       if (event.key === "?") return dispatchAsyncClick("help-toggle");
 
-      if (
-        ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"].includes(event.key)
-      ) {
+      if (["0", "1", "2", "3", "4", "5", "6", "7"].includes(event.key)) {
         const currentSection = document.querySelector("section:not(.hidden)");
         if (currentSection?.id === "plans-view") {
           event.preventDefault();
-          this.queueTagShortcutKey(event.key);
+          this.queueCategoryShortcutKey(event.key);
         }
       }
     });
   }
 
-  static queueTagShortcutKey(digit) {
-    if (this.tagKeyTimeoutId) clearTimeout(this.tagKeyTimeoutId);
+  static queueCategoryShortcutKey(digit) {
+    if (this.categoryKeyTimeoutId) clearTimeout(this.categoryKeyTimeoutId);
 
-    if (this.tagKeyBuffer.length >= 2) {
-      this.tagKeyBuffer = digit;
+    if (this.categoryKeyBuffer.length >= 2) {
+      this.categoryKeyBuffer = digit;
     } else {
-      this.tagKeyBuffer += digit;
+      this.categoryKeyBuffer += digit;
     }
 
-    this.tagKeyTimeoutId = setTimeout(() => {
-      this.processTagShortcutKey();
-    }, this.TAG_KEY_TIMEOUT);
+    this.categoryKeyTimeoutId = setTimeout(() => {
+      this.processCategoryShortcutKey();
+    }, this.CATEGORY_KEY_TIMEOUT);
   }
 
-  static processTagShortcutKey() {
-    const index = parseInt(this.tagKeyBuffer, 10);
-    this.tagKeyBuffer = "";
-    this.tagKeyTimeoutId = null;
+  static processCategoryShortcutKey() {
+    const index = parseInt(this.categoryKeyBuffer, 10);
+    this.categoryKeyBuffer = "";
+    this.categoryKeyTimeoutId = null;
 
-    const tagButtons = Array.from(
-      document.querySelectorAll("#tag-filters button, .tag-filter-btn"),
+    const categoryContainer = document.getElementById("category-filter-scroll");
+    const categoryButtons = Array.from(
+      categoryContainer
+        ? categoryContainer.querySelectorAll("button, .tag-filter-btn")
+        : document.querySelectorAll(
+            "#category-filter-scroll button, .tag-filter-btn",
+          ),
     ).filter((btn) => {
       const style = window.getComputedStyle(btn);
       return (
@@ -237,7 +241,7 @@ export class NavigationController {
       );
     });
 
-    const targetButton = tagButtons[index];
+    const targetButton = categoryButtons[index];
     if (targetButton) setTimeout(() => targetButton.click(), 10);
   }
 

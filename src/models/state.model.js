@@ -269,7 +269,7 @@ export const StateManager = {
     else if (tab === "templates") state.templatesUI.searchQuery = query;
   },
 
-  setSelectedCategoryForTab(tab, category) {
+  setSelectedCategory(category, tab) {
     if (tab === "goals") state.goalsUI.selectedCategory = category;
     else if (tab === "daily") state.dailyLogsUI.selectedCategory = category;
     else if (tab === "templates") state.templatesUI.selectedCategory = category;
@@ -279,7 +279,15 @@ export const StateManager = {
     state.currentView = view;
   },
 
-  save() {
+  save(
+    goals = state.goals,
+    dailyLogs = state.dailyLogs,
+    templates = state.templates,
+  ) {
+    state.goals = goals;
+    state.dailyLogs = dailyLogs;
+    state.templates = templates;
+
     saveToStorage({
       goals: state.goals,
       dailyLogs: state.dailyLogs,

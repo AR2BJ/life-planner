@@ -3,7 +3,7 @@ export const PlansView = {
     return `
       <section
         id="plans-view"
-        class="w-full min-w-0 flex-col"
+        class="hidden w-full min-w-0 flex-col"
       >
         <div
           class="mb-6 flex flex-wrap sm:flex-nowrap gap-4 justify-center sm:justify-between items-center w-full"
@@ -108,7 +108,7 @@ export const PlansView = {
               id="plan-form-container"
               class="hidden p-5 bg-surface-2/20 animate-slide-down flex-col gap-4 rounded-b-2xl border-t border-border"
             >
-              <div class="flex flex-col gap-1.5">
+              <div class="w-full min-w-0">
                 <label
                   for="create-plan-title"
                   class="mb-1.5 block ps-3 text-xs font-semibold text-secondary"
@@ -124,7 +124,7 @@ export const PlansView = {
                 />
               </div>
 
-              <div class="flex flex-col gap-1.5">
+              <div class="w-full min-w-0">
                 <label
                   for="create-plan-desc"
                   class="mb-1.5 block ps-3 text-xs font-semibold text-secondary"
@@ -158,7 +158,7 @@ export const PlansView = {
                   </div>
                 </div>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div class="flex flex-col gap-1.5">
+                  <div class="w-full min-w-0">
                     <label
                       for="create-goal-target"
                       class="mb-1 block ps-3 text-xs font-semibold text-secondary"

@@ -1,3 +1,4 @@
+import { StateManager, state } from "@/models/state.model.js";
 import {
   setPendingDeleteId,
   setPendingEditId,
@@ -5,7 +6,6 @@ import {
 
 import { NotificationService } from "@/services/notification.service.js";
 import { PlanService } from "@/services/plans.service.js";
-import { StateManager } from "@/models/state.model.js";
 
 export const PlansActionController = {
   init(mainController) {
@@ -19,7 +19,7 @@ export const PlansActionController = {
 
     listContainer.addEventListener("click", (e) => {
       const target = e.target;
-      const activeTab = StateManager.getPlansTab(); // 'goals' | 'daily' | 'templates'
+      const activeTab = StateManager.getPlansTab();
 
       // ==========================================
       // 1. GOAL PROGRESS / INCREMENT HANDLER
@@ -132,7 +132,7 @@ export const PlansActionController = {
 
           if (targetGoal) {
             const updated = PlanService.deleteGoal(currentGoals, id);
-            StateManager.save();
+            StateManager.save(updated, state.dailyLogs, state.templates);
             this.mainController.refreshUI();
 
             NotificationService.show({
@@ -147,7 +147,7 @@ export const PlansActionController = {
 
           if (targetLog) {
             const updated = PlanService.deleteDailyLog(currentLogs, id);
-            StateManager.save();
+            StateManager.save(state.goals, updated, state.templates);
             this.mainController.refreshUI();
 
             NotificationService.show({
@@ -162,7 +162,7 @@ export const PlansActionController = {
 
           if (targetTemplate) {
             const updated = PlanService.deleteTemplate(currentTemplates, id);
-            StateManager.save();
+            StateManager.save(state.goals, state.dailyLogs, updated);
             this.mainController.refreshUI();
 
             NotificationService.show({

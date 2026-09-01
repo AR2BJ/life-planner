@@ -11,8 +11,12 @@ function normalizeGoal(goal) {
     status: goal.status || "todo",
     priority: goal.priority || "low",
     category: goal.category || "general",
-    timeframe: goal.timeframe || "short_term",
-    dueDate: goal.dueDate || null,
+    timeframe: goal.timeframe || "yearly",
+    targetValue: Number(goal.targetValue) || 100,
+    currentValue: Number(goal.currentValue) || 0,
+    unit: goal.unit || "%",
+    startDate: goal.startDate || todayISO(),
+    endDate: goal.endDate || null,
     createdAt: goal.createdAt || todayISO(),
     updatedAt: goal.updatedAt || todayISO(),
     completedAt: goal.completedAt || null,
@@ -31,10 +35,12 @@ function normalizeGoal(goal) {
 function normalizeDailyLog(log) {
   return {
     id: String(log.id || generateId()),
-    date: log.date || todayISO(),
-    content: log.content || "",
+    title: log.title || "Daily Log Entry",
+    description: log.description || log.content || "",
     category: log.category || "journal",
-    mood: log.mood || "neutral",
+    mood: log.mood || "good",
+    date: log.date || todayISO(),
+    linkedGoalTitle: log.linkedGoalTitle || null,
     createdAt: log.createdAt || todayISO(),
     updatedAt: log.updatedAt || todayISO(),
   };
@@ -46,7 +52,10 @@ function normalizeTemplate(template) {
     title: template.title || "Untitled Template",
     description: template.description || "",
     category: template.category || "workflow",
+    structure: Array.isArray(template.structure) ? template.structure : [],
+    isFavorite: Boolean(template.isFavorite),
     createdAt: template.createdAt || todayISO(),
+    updatedAt: template.updatedAt || todayISO(),
   };
 }
 

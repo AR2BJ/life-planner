@@ -15,10 +15,10 @@ import { GlobalLoaderService } from "@/services/loader.service.js";
 import { HeaderComponent } from "@/components/shared/header.component.js";
 import { InfoModalComponent } from "@/components/modals/info-modal.component.js";
 import { MobileNavComponent } from "@/components/layout/mobile-nav.component.js";
+import { NavigationController } from "./navigation.controller.js";
 import { PlansActionController } from "./plans/plans-action.controller.js";
 import { PlansFormController } from "./plans/plans-form.controller.js";
 import { PlansView } from "@/views/plans-view.js";
-import { SettingsArchiveController } from "./settings/settings-archive.controller.js";
 import { SettingsViewComponent } from "@/components/features/settings/settings-view.component.js";
 import { eventBus } from "@/services/event-bus.service.js";
 import { renderPlanList } from "@/views/plans/plan-list.renderer.js";
@@ -33,8 +33,6 @@ export const PlansController = {
 
     PlansFormController.init(this);
     PlansActionController.init(this);
-
-    SettingsArchiveController.runAutoArchivePipeline();
 
     this.bindStaticEvents();
     this.bindMenuToggle();
@@ -232,17 +230,17 @@ export const PlansController = {
     const activeCategory = this.getSelectedCategoryForTab(currentTab);
 
     const allButtonHtml = `
-      <button
-        data-tag="all"
-        class="tag-filter-btn h-8 shrink-0 whitespace-nowrap rounded-lg px-3.5 text-xs font-semibold transition cursor-pointer ${
-          activeCategory === "all"
-            ? "bg-brand/80 text-white shadow-brand/10"
-            : "bg-surface-2 hover:bg-surface-3 text-secondary hover:text-color"
-        }"
-      >
-        All ${currentTab.charAt(0).toUpperCase() + currentTab.slice(1)}
-      </button>
-    `;
+    <button
+      data-tag="all"
+      class="tag-filter-btn h-8 shrink-0 whitespace-nowrap rounded-lg px-3.5 text-xs font-semibold transition cursor-pointer ${
+        activeCategory === "all"
+          ? "bg-brand/80 text-white shadow-brand/10"
+          : "bg-surface-2 hover:bg-surface-3 text-secondary hover:text-color"
+      }"
+    >
+      All ${currentTab.charAt(0).toUpperCase() + currentTab.slice(1)}
+    </button>
+  `;
 
     const categoriesHtml = categories
       .map((cat) => {
@@ -251,15 +249,24 @@ export const PlansController = {
           ? "bg-brand/80 text-white shadow-brand/10"
           : "bg-surface-2 hover:bg-surface-3 text-secondary hover:text-color";
 
+        let iconClass = cat.icon
+          ? cat.icon.replace("fa-solid", "fa-regular")
+          : "";
+        if (isActive) {
+          iconClass =
+            iconClass.replace(/text-[a-zA-Z0-9\/\-]+/g, "").trim() +
+            " text-white";
+        }
+
         return `
-          <button
-            data-tag="${cat.id}"
-            class="tag-filter-btn flex items-center gap-1.5 h-8 shrink-0 whitespace-nowrap rounded-lg px-3.5 text-xs font-semibold transition cursor-pointer ${activeClasses}"
-          >
-            ${cat.icon ? `<i class="${cat.icon.replace("fa-solid", "fa-regular")} text-[11px]"></i>` : ""}
-            <span>${cat.name}</span>
-          </button>
-        `;
+        <button
+          data-tag="${cat.id}"
+          class="tag-filter-btn flex items-center gap-1.5 h-8 shrink-0 whitespace-nowrap rounded-lg px-3.5 text-xs font-semibold transition cursor-pointer ${activeClasses}"
+        >
+          ${cat.icon ? `<i class="${iconClass} text-[11px]"></i>` : ""}
+          <span>${cat.name}</span>
+        </button>
+      `;
       })
       .join("");
 
@@ -274,7 +281,7 @@ export const PlansController = {
 
     renderPlanList(filteredPlans, state.activeTab);
     AnalyticsController.dispatchRender(allPlans);
-
+    NavigationController.updateNavigationDOM();
     PlansFormController.refreshUI();
   },
 
@@ -330,14 +337,20 @@ export const PlansController = {
 
   bindStaticEvents() {
     // 1. Tag Filters
-    const tagFilterBtn = document.getElementById("plan-filter-scroll");
+    const tagFilterBtn = document.getElementById("category-filter-scroll");
     if (tagFilterBtn) {
       tagFilterBtn.addEventListener("click", (e) => {
         const btn = e.target.closest(".tag-filter-btn");
         if (!btn) return;
 
         const selectedTag = btn.dataset.tag;
-        StateManager.setSelectedTag(selectedTag);
+
+        if (typeof StateManager.setSelectedCategory === "function") {
+          StateManager.setSelectedCategory(selectedTag, state.activeTab);
+        } else if (typeof StateManager.setSelectedTag === "function") {
+          StateManager.setSelectedTag(selectedTag);
+        }
+
         this.refreshUI();
       });
     }
@@ -674,6 +687,11 @@ export const PlansController = {
       };
       formToggleTitle.textContent = titles[tab] || "Create New Item";
     }
+
+    const titleInput = document.getElementById("create-plan-title");
+    const descInput = document.getElementById("create-plan-desc");
+    if (titleInput) titleInput.value = "";
+    if (descInput) descInput.value = "";
   },
 
   toggleModal(modalId, show) {

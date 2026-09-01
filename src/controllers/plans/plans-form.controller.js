@@ -5,6 +5,7 @@ import {
   TEMPLATE_CATEGORIES,
   TIMEFRAME_OPTIONS,
 } from "@/utils/constants/options-value.constants";
+import { StateManager, state } from "@/models/state.model.js";
 import {
   generateId,
   getUnitConfig,
@@ -17,12 +18,10 @@ import { DatePickerComponent } from "@/components/ui/date-picker.component.js";
 import { GlobalLoaderService } from "@/services/loader.service.js";
 import { NotificationService } from "@/services/notification.service.js";
 import { PlanService } from "@/services/plans.service.js";
-import { StateManager } from "@/models/state.model.js";
 
 let pendingDeleteId = null;
 let pendingEditId = null;
 
-// Autocomplete & DatePicker instances for Create Form
 let createGoalCategoryAutocomplete = null;
 let createGoalTimeframeAutocomplete = null;
 let createGoalUnitAutocomplete = null;
@@ -30,13 +29,10 @@ let createDailyCategoryAutocomplete = null;
 let createTemplateCategoryAutocomplete = null;
 let createDailyDatePicker = null;
 
-// Autocomplete & DatePicker instances for Edit Form
 let editGoalCategoryAutocomplete = null;
 let editGoalTimeframeAutocomplete = null;
 let editDailyCategoryAutocomplete = null;
 let editTemplateCategoryAutocomplete = null;
-
-// DatePicker instances
 let editDailyDatePicker = null;
 
 export function setPendingDeleteId(id) {
@@ -53,7 +49,6 @@ export function setPendingEditId(id) {
 export const PlansFormController = {
   init(mainController) {
     this.mainController = mainController;
-
     this.setupCreateAutocompletes();
     this.bindFormEvents();
   },
@@ -236,7 +231,6 @@ export const PlansFormController = {
     );
     if (createDailyDatePickerContainer) {
       const initialDate = todayISO();
-
       createDailyDatePicker = new DatePickerComponent({
         id: "create-daily-datepicker",
         value: initialDate,
@@ -297,37 +291,6 @@ export const PlansFormController = {
         return;
       }
 
-      if (activeTab === "goals") {
-        const targetRaw = document
-          .getElementById("create-goal-target")
-          ?.value.trim();
-        const targetValue = parseFormattedNumber(targetRaw);
-        const unit = createGoalUnitAutocomplete
-          ? createGoalUnitAutocomplete.getValue()
-          : "%";
-        const config = getUnitConfig(unit);
-
-        if (!targetRaw || targetValue <= 0) {
-          NotificationService.show({
-            type: "error",
-            message: "Please enter a valid positive target value",
-            icon: "fa-triangle-exclamation",
-            duration: 5000,
-          });
-          return;
-        }
-
-        if (targetValue > config.max) {
-          NotificationService.show({
-            type: "error",
-            message: `Target value for unit "${unit}" cannot exceed ${config.max.toLocaleString()}`,
-            icon: "fa-triangle-exclamation",
-            duration: 5000,
-          });
-          return;
-        }
-      }
-
       GlobalLoaderService.show(`Creating item "${title}"...`);
 
       setTimeout(() => {
@@ -345,10 +308,9 @@ export const PlansFormController = {
             const unit = createGoalUnitAutocomplete
               ? createGoalUnitAutocomplete.getValue()
               : "%";
-            const targetValue = parseFormattedNumber(targetRaw);
+            const targetValue = parseFormattedNumber(targetRaw) || 100;
 
             const newGoal = {
-              id: generateId(),
               title,
               description,
               category,
@@ -357,11 +319,9 @@ export const PlansFormController = {
               targetValue,
               unit,
               status: "todo",
-              milestones: [],
-              createdAt: todayISO(),
             };
 
-            const updatedGoals = PlanService.addGoal(
+            const updatedGoals = PlanService.createGoal(
               StateManager.getGoals(),
               newGoal,
             );
@@ -371,19 +331,18 @@ export const PlansFormController = {
               ? createDailyCategoryAutocomplete.getValue()
               : "journal";
             const date = createDailyDatePicker
-              ? createDailyDatePicker.getValue()
+              ? createDailyDatePicker.value
               : todayISO();
 
             const newLog = {
-              id: generateId(),
               title,
-              content: description,
+              description,
               date,
               category,
-              createdAt: todayISO(),
+              mood: "good",
             };
 
-            const updatedLogs = PlanService.addDailyLog(
+            const updatedLogs = PlanService.createDailyLog(
               StateManager.getDailyLogs(),
               newLog,
             );
@@ -394,14 +353,12 @@ export const PlansFormController = {
               : "workflow";
 
             const newTemplate = {
-              id: generateId(),
               title,
               description,
               category,
-              createdAt: todayISO(),
             };
 
-            const updatedTemplates = PlanService.addTemplate(
+            const updatedTemplates = PlanService.createTemplate(
               StateManager.getTemplates(),
               newTemplate,
             );
@@ -415,18 +372,6 @@ export const PlansFormController = {
 
           const targetInput = document.getElementById("create-goal-target");
           if (targetInput) targetInput.value = "100";
-
-          if (createGoalCategoryAutocomplete)
-            createGoalCategoryAutocomplete.setValue("general");
-          if (createGoalTimeframeAutocomplete)
-            createGoalTimeframeAutocomplete.setValue("yearly");
-          if (createDailyCategoryAutocomplete)
-            createDailyCategoryAutocomplete.setValue("journal");
-          if (createGoalUnitAutocomplete)
-            createGoalUnitAutocomplete.setValue("%");
-          if (createDailyDatePicker) createDailyDatePicker.setValue(todayISO());
-          if (createTemplateCategoryAutocomplete)
-            createTemplateCategoryAutocomplete.setValue("workflow");
 
           if (
             this.mainController &&
@@ -465,7 +410,7 @@ export const PlansFormController = {
 
     document.addEventListener("keydown", (e) => {
       const deleteModal = document.getElementById("delete-modal");
-      const editModal = document.getElementById("edit-plan-modal");
+      const editModal = document.getElementById("edit-modal");
 
       const deleteOpen =
         deleteModal && !deleteModal.classList.contains("hidden");
@@ -475,7 +420,7 @@ export const PlansFormController = {
 
       if (e.key === "Escape") {
         if (deleteOpen) this.mainController.toggleModal("delete-modal", false);
-        if (editOpen) this.mainController.toggleModal("edit-plan-modal", false);
+        if (editOpen) this.mainController.toggleModal("edit-modal", false);
       }
 
       if (e.key === "Enter" && e.ctrlKey) {
@@ -500,14 +445,16 @@ export const PlansFormController = {
     // Modal Edit Actions
     addClick("confirm-edit", () => this.executeEdit());
     addClick("cancel-edit", () =>
-      this.mainController.toggleModal("edit-plan-modal", false),
+      this.mainController.toggleModal("edit-modal", false),
     );
+
+    // Modal Mobile Edit Actions
     addClick("confirm-edit-mobile", () => this.executeEdit());
     addClick("cancel-edit-mobile", () =>
-      this.mainController.toggleModal("edit-plan-modal", false),
+      this.mainController.toggleModal("edit-modal", false),
     );
     addClick("cancel-edit-modal", () =>
-      this.mainController.toggleModal("edit-plan-modal", false),
+      this.mainController.toggleModal("edit-modal", false),
     );
   },
 
@@ -529,35 +476,29 @@ export const PlansFormController = {
 
     if (itemToDelete) {
       const capturedItem = { ...itemToDelete };
-
       GlobalLoaderService.show(`Purging "${capturedItem.title}" from store...`);
 
       setTimeout(() => {
         try {
-          let updated = [];
           if (activeTab === "goals") {
-            updated = PlanService.deleteGoal(currentItems, id);
-            StateManager.setGoals(updated);
+            StateManager.setGoals(PlanService.deleteGoal(currentItems, id));
           } else if (activeTab === "daily") {
-            updated = PlanService.deleteDailyLog(currentItems, id);
-            StateManager.setDailyLogs(updated);
+            StateManager.setDailyLogs(
+              PlanService.deleteDailyLog(currentItems, id),
+            );
           } else if (activeTab === "templates") {
-            updated = PlanService.deleteTemplate(currentItems, id);
-            StateManager.setTemplates(updated);
+            StateManager.setTemplates(
+              PlanService.deleteTemplate(currentItems, id),
+            );
           }
 
           StateManager.save();
-          if (
-            this.mainController &&
-            typeof this.mainController.toggleModal === "function"
-          ) {
+          if (this.mainController?.toggleModal) {
             this.mainController.toggleModal("delete-modal", false);
           }
           pendingDeleteId = null;
-          if (
-            this.mainController &&
-            typeof this.mainController.refreshUI === "function"
-          ) {
+
+          if (this.mainController?.refreshUI) {
             this.mainController.refreshUI();
           }
 
@@ -570,28 +511,27 @@ export const PlansFormController = {
               setTimeout(() => {
                 try {
                   if (activeTab === "goals") {
-                    StateManager.setGoals([
-                      capturedItem,
-                      ...StateManager.getGoals(),
-                    ]);
+                    const latestGoals = StateManager.getGoals();
+                    StateManager.save(
+                      [capturedItem, ...latestGoals],
+                      state.dailyLogs,
+                      state.templates,
+                    );
                   } else if (activeTab === "daily") {
-                    StateManager.setDailyLogs([
-                      capturedItem,
-                      ...StateManager.getDailyLogs(),
-                    ]);
+                    const latestDailyLogs = StateManager.getDailyLogs();
+                    StateManager.save(
+                      state.goals,
+                      [capturedItem, ...latestDailyLogs],
+                      state.templates,
+                    );
                   } else if (activeTab === "templates") {
-                    StateManager.setTemplates([
+                    const latestTemplates = StateManager.getTemplates();
+                    StateManager.save(state.goals, state.dailyLogs, [
                       capturedItem,
-                      ...StateManager.getTemplates(),
+                      ...latestTemplates,
                     ]);
                   }
-                  StateManager.save();
-                  if (
-                    this.mainController &&
-                    typeof this.mainController.refreshUI === "function"
-                  ) {
-                    this.mainController.refreshUI();
-                  }
+                  this.mainController.refreshUI();
                 } finally {
                   GlobalLoaderService.hide();
                 }
@@ -634,31 +574,25 @@ export const PlansFormController = {
           const updatedFields = {
             title: newTitle,
             description: descInput?.value.trim() || "",
-            currentValue:
-              parseFloat(document.getElementById("edit-goal-current")?.value) ||
-              0,
-            targetValue:
-              parseFloat(document.getElementById("edit-goal-target")?.value) ||
-              0,
-            unit: document.getElementById("edit-goal-unit")?.value.trim() || "",
             category: editGoalCategoryAutocomplete
               ? editGoalCategoryAutocomplete.getValue()
               : "general",
             timeframe: editGoalTimeframeAutocomplete
               ? editGoalTimeframeAutocomplete.getValue()
-              : "short_term",
+              : "yearly",
           };
 
-          const updatedGoals = PlanService.editGoal(
-            StateManager.getGoals(),
-            pendingEditId,
-            updatedFields,
+          StateManager.setGoals(
+            PlanService.editGoal(
+              StateManager.getGoals(),
+              pendingEditId,
+              updatedFields,
+            ),
           );
-          StateManager.setGoals(updatedGoals);
         } else if (activeTab === "daily") {
           const updatedFields = {
             title: newTitle,
-            content: descInput?.value.trim() || "",
+            description: descInput?.value.trim() || "",
             category: editDailyCategoryAutocomplete
               ? editDailyCategoryAutocomplete.getValue()
               : "journal",
@@ -667,12 +601,13 @@ export const PlansFormController = {
               : todayISO(),
           };
 
-          const updatedLogs = PlanService.editDailyLog(
-            StateManager.getDailyLogs(),
-            pendingEditId,
-            updatedFields,
+          StateManager.setDailyLogs(
+            PlanService.editDailyLog(
+              StateManager.getDailyLogs(),
+              pendingEditId,
+              updatedFields,
+            ),
           );
-          StateManager.setDailyLogs(updatedLogs);
         } else if (activeTab === "templates") {
           const updatedFields = {
             title: newTitle,
@@ -682,48 +617,23 @@ export const PlansFormController = {
               : "workflow",
           };
 
-          const updatedTemplates = PlanService.editTemplate(
-            StateManager.getTemplates(),
-            pendingEditId,
-            updatedFields,
+          StateManager.setTemplates(
+            PlanService.editTemplate(
+              StateManager.getTemplates(),
+              pendingEditId,
+              updatedFields,
+            ),
           );
-          StateManager.setTemplates(updatedTemplates);
         }
 
         StateManager.save();
-        if (
-          this.mainController &&
-          typeof this.mainController.toggleModal === "function"
-        ) {
+        if (this.mainController?.toggleModal) {
           this.mainController.toggleModal("edit-plan-modal", false);
-        }
-
-        if (editGoalCategoryAutocomplete) {
-          editGoalCategoryAutocomplete.destroy();
-          editGoalCategoryAutocomplete = null;
-        }
-        if (editGoalTimeframeAutocomplete) {
-          editGoalTimeframeAutocomplete.destroy();
-          editGoalTimeframeAutocomplete = null;
-        }
-        if (editDailyCategoryAutocomplete) {
-          editDailyCategoryAutocomplete.destroy();
-          editDailyCategoryAutocomplete = null;
-        }
-        if (editTemplateCategoryAutocomplete) {
-          editTemplateCategoryAutocomplete.destroy();
-          editTemplateCategoryAutocomplete = null;
-        }
-        if (editDailyDatePicker) {
-          editDailyDatePicker = null;
         }
 
         pendingEditId = null;
 
-        if (
-          this.mainController &&
-          typeof this.mainController.refreshUI === "function"
-        ) {
+        if (this.mainController?.refreshUI) {
           this.mainController.refreshUI();
         }
 

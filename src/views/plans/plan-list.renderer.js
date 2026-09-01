@@ -1,22 +1,28 @@
-export function renderPlanList(items, activeTab = "goals") {
+import { PlansItemComponent } from "@/components/features/plans/plan-item.component";
+
+export function renderPlanList(plans, activeTab = "goals") {
   const container = document.getElementById("plan-list");
   const countBadge = document.getElementById("plan-count-badge");
 
   if (!container) return;
 
   if (countBadge) {
-    const totalCount = items.length;
+    const totalCount = plans.length;
     const labels = {
-      goals: totalCount === 1 ? "goal" : "goals",
-      daily: totalCount === 1 ? "daily log" : "daily logs",
-      templates: totalCount === 1 ? "template" : "templates",
+      goals: totalCount === 1 || totalCount === 0 ? "goal" : "goals",
+      daily: totalCount === 1 || totalCount === 0 ? "daily log" : "daily logs",
+      templates:
+        totalCount === 1 || totalCount === 0 ? "template" : "templates",
     };
 
-    const currentLabel = labels[activeTab] || "items";
+    const currentLabel = labels[activeTab] || "plans";
 
     countBadge.innerHTML = `
-      <p class="text-secondary font-semibold text-sm p-0.5">
-        <span class="text-brand/80 font-extrabold">${totalCount}</span>&nbsp;${currentLabel}
+      <p
+        class="text-secondary font-semibold text-sm p-0.5 flex items-center gap-2"
+      >
+        <span class="text-brand/80 font-extrabold">${totalCount}</span
+        >${currentLabel}
       </p>
     `;
   }
@@ -41,7 +47,7 @@ export function renderPlanList(items, activeTab = "goals") {
     },
   };
 
-  if (items.length === 0) {
+  if (plans.length === 0) {
     const currentEmpty = emptyStateConfig[activeTab] || emptyStateConfig.goals;
 
     container.innerHTML = `
@@ -54,11 +60,13 @@ export function renderPlanList(items, activeTab = "goals") {
     return;
   }
 
-  items.forEach((item) => {
-    const wrapper = document.createElement("div");
-    wrapper.className =
-      "bg-surface border border-border/70 hover:border-border/90 rounded-2xl p-5 transition duration-200 shadow-xs";
-    wrapper.innerHTML = `<div class="text-sm font-semibold text-color">${item.title || item.name || "Untitled"}</div>`;
-    container.appendChild(wrapper);
+  plans.forEach((plan) => {
+    const item = document.createElement("div");
+    item.className =
+      "bg-surface border border-border/70 hover:border-border/90 rounded-2xl p-5 transition duration-200 shadow-xs hover:shadow-md";
+
+    item.innerHTML = PlansItemComponent.render(plan);
+
+    container.appendChild(item);
   });
 }
