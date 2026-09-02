@@ -9,22 +9,28 @@ export const PlanService = {
       throw new Error("Goal title must be between 2 and 120 characters");
     }
 
+    const targetValue = Number(goalData.targetValue) || 100;
+    const currentValue = Number(goalData.currentValue) || 0;
+    const isDone = currentValue >= targetValue && targetValue > 0;
+    const isInProgress = currentValue > 0 && !isDone;
+
     const newGoal = {
       id: generateId(),
       title: cleanedTitle,
       description: (goalData.description || "").trim(),
       category: goalData.category || "general",
       timeframe: goalData.timeframe || "yearly",
-      targetValue: Number(goalData.targetValue) || 100,
-      currentValue: Number(goalData.currentValue) || 0,
+      priority: goalData.priority || "low",
+      targetValue,
+      currentValue,
       unit: goalData.unit || "%",
-      status: goalData.status || "todo",
-      archived: Boolean(goalData.archived),
+      status: isDone ? "done" : isInProgress ? "in_progress" : "todo",
       startDate: goalData.startDate || todayISO(),
       endDate: goalData.endDate || null,
       createdAt: todayISO(),
       updatedAt: todayISO(),
-      milestones: [],
+      completedAt: isDone ? todayISO() : null,
+      milestones: Array.isArray(goalData.milestones) ? goalData.milestones : [],
     };
 
     return [newGoal, ...currentGoals];
@@ -44,10 +50,62 @@ export const PlanService = {
 
     return currentGoals.map((g) => {
       if (g.id !== goalId) return g;
+
+      const targetValue =
+        updatedFields.targetValue !== undefined
+          ? Number(updatedFields.targetValue)
+          : g.targetValue;
+      const currentValue =
+        updatedFields.currentValue !== undefined
+          ? Number(updatedFields.currentValue)
+          : g.currentValue;
+
+      const isDone = currentValue >= targetValue && targetValue > 0;
+      const isInProgress = currentValue > 0 && !isDone;
+
       return {
         ...g,
         ...updatedFields,
         title: cleanedTitle,
+        targetValue,
+        currentValue,
+        status: isDone ? "done" : isInProgress ? "in_progress" : "todo",
+        completedAt: isDone ? g.completedAt || todayISO() : null,
+        updatedAt: todayISO(),
+      };
+    });
+  },
+
+  updateGoalProgress(currentGoals, goalId, newCurrentValue) {
+    return currentGoals.map((g) => {
+      if (g.id !== goalId) return g;
+
+      const isPercent = g.unit === "%" || g.unit === "percentage";
+      const maxVal = isPercent ? 100 : g.targetValue;
+      const val = Math.max(0, Math.min(maxVal, newCurrentValue));
+
+      const isDone = val >= g.targetValue;
+      const isInProgress = val > 0 && !isDone;
+
+      return {
+        ...g,
+        currentValue: val,
+        status: isDone ? "done" : isInProgress ? "in_progress" : "todo",
+        completedAt: isDone ? g.completedAt || todayISO() : null,
+        updatedAt: todayISO(),
+      };
+    });
+  },
+
+  toggleMilestone(currentGoals, goalId, milestoneId) {
+    return currentGoals.map((g) => {
+      if (g.id !== goalId) return g;
+      const updatedMilestones = g.milestones.map((m) =>
+        m.id === milestoneId ? { ...m, completed: !m.completed } : m,
+      );
+      return {
+        ...g,
+        milestones: updatedMilestones,
         updatedAt: todayISO(),
       };
     });
@@ -61,9 +119,7 @@ export const PlanService = {
     const rawTitle = typeof logData === "string" ? logData : logData.title;
     const cleanedTitle = (rawTitle || "").trim();
 
-    if (!cleanedTitle) {
-      throw new Error("Daily log title cannot be empty");
-    }
+    if (!cleanedTitle) throw new Error("Daily log title cannot be empty");
 
     const newLog = {
       id: generateId(),
@@ -81,9 +137,6 @@ export const PlanService = {
   },
 
   editDailyLog(currentLogs, logId, updatedFields) {
-    const log = currentLogs.find((l) => l.id === logId);
-    if (!log) throw new Error("Daily log entry not found");
-
     return currentLogs.map((l) => {
       if (l.id !== logId) return l;
       return {
@@ -127,23 +180,12 @@ export const PlanService = {
   },
 
   editTemplate(currentTemplates, templateId, updatedFields) {
-    const template = currentTemplates.find((t) => t.id === templateId);
-    if (!template) throw new Error("Template not found");
-
-    let cleanedTitle = template.title;
-    if (updatedFields.title) {
-      cleanedTitle = updatedFields.title.trim().replace(/\s+/g, " ");
-      if (cleanedTitle.length < 2 || cleanedTitle.length > 100) {
-        throw new Error("Template title must be between 2 and 100 characters");
-      }
-    }
-
     return currentTemplates.map((t) => {
       if (t.id !== templateId) return t;
       return {
         ...t,
         ...updatedFields,
-        title: cleanedTitle,
+        title: updatedFields.title ? updatedFields.title.trim() : t.title,
         updatedAt: todayISO(),
       };
     });

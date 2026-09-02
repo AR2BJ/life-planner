@@ -60,13 +60,69 @@ export function renderPlanList(plans, activeTab = "goals") {
     return;
   }
 
-  plans.forEach((plan) => {
+  const createPlanCard = (plan) => {
     const item = document.createElement("div");
     item.className =
       "bg-surface border border-border/70 hover:border-border/90 rounded-2xl p-5 transition duration-200 shadow-xs hover:shadow-md";
-
     item.innerHTML = PlansItemComponent.render(plan);
+    return item;
+  };
 
-    container.appendChild(item);
-  });
+  if (activeTab === "goals") {
+    const activeGoals = plans.filter((plan) => plan.status !== "done");
+    const completedGoals = plans.filter((plan) => plan.status === "done");
+
+    activeGoals.forEach((plan) => {
+      container.appendChild(createPlanCard(plan));
+    });
+
+    if (activeGoals.length > 0 && completedGoals.length > 0) {
+      const separatorWrapper = document.createElement("div");
+      separatorWrapper.className = "w-full my-6 flex flex-col gap-4";
+
+      separatorWrapper.innerHTML = `
+        <div class="relative flex items-center justify-center">
+          <div class="absolute inset-0 flex items-center">
+            <div class="w-full border-t border-border/60"></div>
+          </div>
+          <button
+            id="toggle-completed-btn"
+            type="button"
+            class="group relative bg-surface hover:bg-surface-2 transition px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-muted flex items-center gap-2 rounded-full border border-border/60 shadow-xs cursor-pointer select-none"
+          >
+            <i class="fa-regular fa-circle-check text-emerald-500"></i>
+            <span>Completed Goals (${completedGoals.length})</span>
+            <span class="inline-flex transition duration-300 group-[.is-collapsed]:rotate-180">
+              <i class="fa-regular fa-chevron-down text-[10px] text-muted"></i>
+            </span>
+          </button>
+        </div>
+        <div id="completed-goals-container" class="flex flex-col gap-4 transition-all duration-300"></div>
+      `;
+
+      container.appendChild(separatorWrapper);
+
+      const completedContainer = separatorWrapper.querySelector(
+        "#completed-goals-container",
+      );
+      const toggleBtn = separatorWrapper.querySelector("#toggle-completed-btn");
+
+      completedGoals.forEach((plan) => {
+        completedContainer.appendChild(createPlanCard(plan));
+      });
+
+      toggleBtn.addEventListener("click", () => {
+        const isCollapsed = toggleBtn.classList.toggle("is-collapsed");
+        completedContainer.classList.toggle("hidden", isCollapsed);
+      });
+    } else if (completedGoals.length > 0) {
+      completedGoals.forEach((plan) => {
+        container.appendChild(createPlanCard(plan));
+      });
+    }
+  } else {
+    plans.forEach((plan) => {
+      container.appendChild(createPlanCard(plan));
+    });
+  }
 }

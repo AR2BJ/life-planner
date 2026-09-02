@@ -20,7 +20,6 @@ function normalizeGoal(goal) {
     createdAt: goal.createdAt || todayISO(),
     updatedAt: goal.updatedAt || todayISO(),
     completedAt: goal.completedAt || null,
-    archived: Boolean(goal.archived),
     milestones: Array.isArray(goal.milestones)
       ? goal.milestones.map((m) => ({
           id: String(m.id || generateId()),

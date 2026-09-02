@@ -108,7 +108,7 @@ export const PlansView = {
               id="plan-form-container"
               class="hidden p-5 bg-surface-2/20 animate-slide-down flex-col gap-4 rounded-b-2xl border-t border-border"
             >
-              <div class="w-full min-w-0">
+              <div class="w-full min-w-0 flex flex-col">
                 <label
                   for="create-plan-title"
                   class="mb-1.5 block ps-3 text-xs font-semibold text-secondary"
@@ -124,7 +124,7 @@ export const PlansView = {
                 />
               </div>
 
-              <div class="w-full min-w-0">
+              <div class="w-full min-w-0 flex flex-col">
                 <label
                   for="create-plan-desc"
                   class="mb-1.5 block ps-3 text-xs font-semibold text-secondary"
@@ -143,7 +143,9 @@ export const PlansView = {
                 class="plan-tab-fields flex flex-col gap-4"
                 data-tab-fields="goals"
               >
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div
+                  class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
+                >
                   <div class="flex flex-col gap-1.5">
                     <div
                       id="create-goal-category-autocomplete"
@@ -156,8 +158,33 @@ export const PlansView = {
                       class="w-full"
                     ></div>
                   </div>
+                  <div class="flex flex-col gap-1.5">
+                    <div
+                      id="create-goal-priority-autocomplete"
+                      class="w-full"
+                    ></div>
+                  </div>
                 </div>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div class="w-full min-w-0">
+                    <label
+                      for="create-goal-current"
+                      class="mb-1 block ps-3 text-xs font-semibold text-secondary"
+                      >Current Value</label
+                    >
+                    <input
+                      id="create-goal-current"
+                      type="text"
+                      inputmode="numeric"
+                      pattern="[0-9]*"
+                      value="0"
+                      maxlength="18"
+                      placeholder="e.g. 0"
+                      autocomplete="off"
+                      class="h-11 w-full rounded-xl border border-border bg-surface-2 px-4 text-sm text-color placeholder:text-secondary/70 focus:border-brand/80 focus:outline-none"
+                    />
+                  </div>
                   <div class="w-full min-w-0">
                     <label
                       for="create-goal-target"
@@ -183,6 +210,21 @@ export const PlansView = {
                     ></div>
                   </div>
                 </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div class="flex flex-col gap-1.5">
+                    <div
+                      id="create-goal-startdate-container"
+                      class="w-full"
+                    ></div>
+                  </div>
+                  <div class="flex flex-col gap-1.5">
+                    <div
+                      id="create-goal-enddate-container"
+                      class="w-full"
+                    ></div>
+                  </div>
+                </div>
               </div>
 
               <div
@@ -190,10 +232,16 @@ export const PlansView = {
                 class="plan-tab-fields hidden flex-col gap-4"
                 data-tab-fields="daily"
               >
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div class="flex flex-col gap-1.5">
                     <div
                       id="create-daily-category-autocomplete"
+                      class="w-full"
+                    ></div>
+                  </div>
+                  <div class="flex flex-col gap-1.5">
+                    <div
+                      id="create-daily-mood-autocomplete"
                       class="w-full"
                     ></div>
                   </div>
@@ -204,6 +252,13 @@ export const PlansView = {
                     ></div>
                   </div>
                 </div>
+
+                <div class="w-full min-w-0">
+                  <div
+                    id="create-daily-goal-link-autocomplete"
+                    class="w-full"
+                  ></div>
+                </div>
               </div>
 
               <div
@@ -211,11 +266,30 @@ export const PlansView = {
                 class="plan-tab-fields hidden flex-col gap-4"
                 data-tab-fields="templates"
               >
-                <div class="flex flex-col gap-1.5">
-                  <div
-                    id="create-template-category-autocomplete"
-                    class="w-full"
-                  ></div>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div class="col-span-2 flex flex-col gap-1.5">
+                    <div
+                      id="create-template-category-autocomplete"
+                      class="w-full"
+                    ></div>
+                  </div>
+                  <div class="col-span-1 flex items-center pt-5">
+                    <label
+                      class="relative inline-flex items-center cursor-pointer gap-2 select-none"
+                    >
+                      <input
+                        id="create-template-favorite"
+                        type="checkbox"
+                        class="sr-only peer"
+                      />
+                      <div
+                        class="w-9 h-5 bg-surface-3 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-brand"
+                      ></div>
+                      <span class="text-xs font-semibold text-secondary"
+                        >Mark as Favorite</span
+                      >
+                    </label>
+                  </div>
                 </div>
               </div>
 
@@ -240,7 +314,7 @@ export const PlansView = {
 
         <div
           id="plan-filters-bar"
-          class="mb-6 flex flex-wrap lg:flex-nowrap items-stretch lg:items-center justify-between gap-6 border-b border-border pb-4 w-full"
+          class="flex flex-wrap lg:flex-nowrap items-stretch lg:items-center justify-between gap-6 border-b border-border pb-4 w-full"
         >
           <div class="relative flex flex-1 items-center gap-2 min-w-0 group">
             <p
@@ -273,7 +347,19 @@ export const PlansView = {
             </div>
           </div>
 
-          <div class="flex items-center gap-3">
+          <div
+            class="flex flex-wrap sm:flex-nowrap items-center justify-between sm:justify-end gap-3"
+          >
+            <div class="w-full flex flex-col xs:flex-row items-center gap-3">
+              <div class="w-full flex items-center gap-2">
+                <div id="date-filter-autocomplete-wrapper"></div>
+              </div>
+
+              <div class="w-full flex items-center gap-2">
+                <div id="sort-autocomplete-wrapper"></div>
+              </div>
+            </div>
+
             <div
               id="plan-count-badge"
               class="shrink-0 flex justify-center items-center gap-1.5 px-4 py-1.5 bg-surface-3 rounded-xl text-xs font-bold text-color select-none"

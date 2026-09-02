@@ -1,7 +1,6 @@
 import {
-  DAILY_LOG_CATEGORIES,
-  GOAL_CATEGORIES,
-  TEMPLATE_CATEGORIES,
+  FILTER_OPTIONS_BY_TAB,
+  SORT_OPTIONS_BY_TAB,
 } from "@/utils/constants/options-value.constants.js";
 import { StateManager, state } from "@/models/state.model.js";
 
@@ -21,10 +20,11 @@ import { PlansFormController } from "./plans/plans-form.controller.js";
 import { PlansView } from "@/views/plans-view.js";
 import { SettingsViewComponent } from "@/components/features/settings/settings-view.component.js";
 import { eventBus } from "@/services/event-bus.service.js";
+import { initUserCurrency } from "@/services/currency.service.js";
 import { renderPlanList } from "@/views/plans/plan-list.renderer.js";
 
 export const PlansController = {
-  init() {
+  async init() {
     StateManager.init();
     this.renderComponent();
 
@@ -33,6 +33,8 @@ export const PlansController = {
 
     PlansFormController.init(this);
     PlansActionController.init(this);
+
+    await initUserCurrency();
 
     this.bindStaticEvents();
     this.bindMenuToggle();
@@ -46,54 +48,34 @@ export const PlansController = {
   },
 
   initFilterAutocompletes() {
+    const currentTab = state.activeTab || "goals";
     const dateWrapper = document.getElementById(
       "date-filter-autocomplete-wrapper",
     );
     const sortWrapper = document.getElementById("sort-autocomplete-wrapper");
 
     if (dateWrapper) {
-      const dateOptions = [
-        {
-          value: "all",
-          title: "All Dates",
-          icon: "fa-regular fa-calendar text-emerald-400",
-        },
-        {
-          value: "overdue",
-          title: "Overdue",
-          icon: "fa-regular fa-clock text-rose-400",
-        },
-        {
-          value: "today",
-          title: "Today",
-          icon: "fa-regular fa-calendar-day text-brand/80",
-        },
-        {
-          value: "this_week",
-          title: "This Week",
-          icon: "fa-regular fa-calendar-week text-amber-400",
-        },
-        {
-          value: "no_date",
-          title: "No Due Date",
-          icon: "fa-regular fa-calendar-xmark text-slate-400",
-        },
-      ];
+      if (this.dateFilterAutocomplete) {
+        this.dateFilterAutocomplete.destroy();
+      }
+
+      const dateOptions =
+        FILTER_OPTIONS_BY_TAB[currentTab] || FILTER_OPTIONS_BY_TAB.goals;
 
       this.dateFilterAutocomplete = new AutocompleteComponent(
         dateWrapper,
         dateOptions,
         {
-          label: "Date",
+          label: currentTab === "templates" ? "Type" : "Filter",
           isRow: true,
-          placeholder: "Select Date...",
+          placeholder: "Select Filter...",
           itemTitle: "title",
           itemValue: "value",
           itemIcon: "icon",
           containerClass: "min-h-8! bg-surface!",
           inputClass: "h-5! pb-0! w-full lg:w-36 text-xs sm:text-sm",
           onChange: (selectedVal) => {
-            GlobalLoaderService.show("Filtering plans by date...");
+            GlobalLoaderService.show("Applying filter...");
             setTimeout(() => {
               try {
                 StateManager.setDateFilter(selectedVal);
@@ -106,39 +88,17 @@ export const PlansController = {
         },
       );
 
-      if (state.dateFilter) {
-        this.dateFilterAutocomplete.setValue(state.dateFilter);
-      }
+      const activeFilter = this.getSelectedDateFilterForTab(currentTab);
+      this.dateFilterAutocomplete.setValue(activeFilter);
     }
 
     if (sortWrapper) {
-      const sortOptions = [
-        {
-          value: "priority",
-          title: "Priority",
-          icon: "fa-regular fa-arrow-down-short-wide text-brand/80",
-        },
-        {
-          value: "dueDate",
-          title: "Due Date",
-          icon: "fa-regular fa-calendar text-emerald-400",
-        },
-        {
-          value: "status",
-          title: "Status",
-          icon: "fa-regular fa-bar-progress text-amber-400",
-        },
-        {
-          value: "createdAt",
-          title: "Date Created",
-          icon: "fa-regular fa-clock text-rose-400",
-        },
-        {
-          value: "title",
-          title: "Title (A-Z)",
-          icon: "fa-regular fa-arrow-down-a-z text-indigo-400",
-        },
-      ];
+      if (this.sortAutocomplete) {
+        this.sortAutocomplete.destroy();
+      }
+
+      const sortOptions =
+        SORT_OPTIONS_BY_TAB[currentTab] || SORT_OPTIONS_BY_TAB.goals;
 
       this.sortAutocomplete = new AutocompleteComponent(
         sortWrapper,
@@ -153,7 +113,7 @@ export const PlansController = {
           containerClass: "min-h-8! bg-surface!",
           inputClass: "h-5! pb-0! w-full lg:w-36 text-xs sm:text-sm",
           onChange: (selectedVal) => {
-            GlobalLoaderService.show("Sorting plans...");
+            GlobalLoaderService.show("Sorting items...");
             setTimeout(() => {
               try {
                 StateManager.setSortBy(selectedVal);
@@ -166,10 +126,23 @@ export const PlansController = {
         },
       );
 
-      if (state.sortBy) {
-        this.sortAutocomplete.setValue(state.sortBy);
-      }
+      const activeSort = this.getSelectedSortForTab(currentTab);
+      this.sortAutocomplete.setValue(activeSort);
     }
+  },
+
+  getSelectedDateFilterForTab(tab) {
+    if (tab === "goals") return state.goalsUI?.dateFilter || "all";
+    if (tab === "daily") return state.dailyLogsUI?.dateFilter || "all";
+    if (tab === "templates") return state.templatesUI?.dateFilter || "all";
+    return "all";
+  },
+
+  getSelectedSortForTab(tab) {
+    if (tab === "goals") return state.goalsUI?.sortBy || "priority";
+    if (tab === "daily") return state.dailyLogsUI?.sortBy || "date_desc";
+    if (tab === "templates") return state.templatesUI?.sortBy || "favorites";
+    return "title";
   },
 
   renderComponent() {
@@ -194,23 +167,22 @@ export const PlansController = {
   },
 
   subscribeToDataChanges() {
-    eventBus.subscribe("store:changed", ({ plans }) => {
-      state.plans = plans;
+    eventBus.subscribe("store:changed", () => {
+      this.refreshUI();
+    });
+    eventBus.subscribe("store:goals:changed", () => {
+      this.refreshUI();
+    });
+    eventBus.subscribe("store:daily:changed", () => {
+      this.refreshUI();
+    });
+    eventBus.subscribe("store:templates:changed", () => {
       this.refreshUI();
     });
   },
 
   getCategoriesForTab(tab) {
-    switch (tab) {
-      case "goals":
-        return GOAL_CATEGORIES;
-      case "daily":
-        return DAILY_LOG_CATEGORIES;
-      case "templates":
-        return TEMPLATE_CATEGORIES;
-      default:
-        return GOAL_CATEGORIES;
-    }
+    return StateManager.getCategoriesForTab(tab);
   },
 
   getSelectedCategoryForTab(tab) {
@@ -218,7 +190,14 @@ export const PlansController = {
     if (tab === "daily") return state.dailyLogsUI?.selectedCategory || "all";
     if (tab === "templates")
       return state.templatesUI?.selectedCategory || "all";
-    return state.selectedCategory || "all";
+    return "all";
+  },
+
+  getSearchQueryForTab(tab) {
+    if (tab === "goals") return state.goalsUI?.searchQuery || "";
+    if (tab === "daily") return state.dailyLogsUI?.searchQuery || "";
+    if (tab === "templates") return state.templatesUI?.searchQuery || "";
+    return "";
   },
 
   renderCategories() {
@@ -230,17 +209,17 @@ export const PlansController = {
     const activeCategory = this.getSelectedCategoryForTab(currentTab);
 
     const allButtonHtml = `
-    <button
-      data-tag="all"
-      class="tag-filter-btn h-8 shrink-0 whitespace-nowrap rounded-lg px-3.5 text-xs font-semibold transition cursor-pointer ${
-        activeCategory === "all"
-          ? "bg-brand/80 text-white shadow-brand/10"
-          : "bg-surface-2 hover:bg-surface-3 text-secondary hover:text-color"
-      }"
-    >
-      All ${currentTab.charAt(0).toUpperCase() + currentTab.slice(1)}
-    </button>
-  `;
+      <button
+        data-tag="all"
+        class="tag-filter-btn h-8 shrink-0 whitespace-nowrap rounded-lg px-3.5 text-xs font-semibold transition cursor-pointer ${
+          activeCategory === "all"
+            ? "bg-brand/80 text-white shadow-brand/10"
+            : "bg-surface-2 hover:bg-surface-3 text-secondary hover:text-color"
+        }"
+      >
+        All ${currentTab.charAt(0).toUpperCase() + currentTab.slice(1)}
+      </button>
+    `;
 
     const categoriesHtml = categories
       .map((cat) => {
@@ -344,13 +323,7 @@ export const PlansController = {
         if (!btn) return;
 
         const selectedTag = btn.dataset.tag;
-
-        if (typeof StateManager.setSelectedCategory === "function") {
-          StateManager.setSelectedCategory(selectedTag, state.activeTab);
-        } else if (typeof StateManager.setSelectedTag === "function") {
-          StateManager.setSelectedTag(selectedTag);
-        }
-
+        StateManager.setSelectedCategory(selectedTag, state.activeTab);
         this.refreshUI();
       });
     }
@@ -358,7 +331,7 @@ export const PlansController = {
     // 2. Select Elements fallback
     const sortSelect = document.getElementById("plan-sort-select");
     if (sortSelect) {
-      sortSelect.value = state.sortBy || "priority";
+      sortSelect.value = state.goalsUI?.sortBy || "priority";
       sortSelect.addEventListener("change", (e) => {
         GlobalLoaderService.show("Sorting plans...");
         setTimeout(() => {
@@ -374,7 +347,7 @@ export const PlansController = {
 
     const dateFilterSelect = document.getElementById("plan-date-filter-select");
     if (dateFilterSelect) {
-      dateFilterSelect.value = state.dateFilter || "all";
+      dateFilterSelect.value = state.goalsUI?.dateFilter || "all";
       dateFilterSelect.addEventListener("change", (e) => {
         GlobalLoaderService.show("Filtering plans by date...");
         setTimeout(() => {
@@ -409,8 +382,9 @@ export const PlansController = {
     const searchInput = document.getElementById("search-plans");
     const clearBtn = document.getElementById("clear-search-btn");
     const searchContainer = searchInput?.closest(".group\\/search");
+
     if (searchInput) {
-      searchInput.value = state.searchQuery || "";
+      searchInput.value = this.getSearchQueryForTab(state.activeTab);
 
       const evaluateSearchState = () => {
         const hasValue = searchInput.value.trim().length > 0;
@@ -474,7 +448,7 @@ export const PlansController = {
       });
     }
 
-    // 5. Internal Sub-Tabs Handling (Goals / Daily Logs / Templates)
+    // 5. Internal Sub-Tabs Handling
     const goalsBtn = document.getElementById("tab-goals");
     const dailyBtn = document.getElementById("tab-daily");
     const templatesBtn = document.getElementById("tab-templates");
@@ -503,6 +477,7 @@ export const PlansController = {
       handleTabClick("templates", "Loading Routine Templates..."),
     );
 
+    // 6. Navigation Views (Plans / Analytics / Settings)
     const navButtons = ["plans", "analytics", "settings"];
     navButtons.forEach((v) => {
       const desktopBtn = document.getElementById(`nav-${v}`);
@@ -661,6 +636,14 @@ export const PlansController = {
 
   handleTabSwitch(tab) {
     StateManager.setTab(tab);
+
+    const searchInput = document.getElementById("search-plans");
+    if (searchInput) {
+      searchInput.value = this.getSearchQueryForTab(tab);
+    }
+
+    this.initFilterAutocompletes();
+
     this.updateTabStyles(tab);
     this.switchFormTabVisibility(tab);
     this.refreshUI();

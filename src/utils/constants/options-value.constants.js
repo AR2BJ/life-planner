@@ -150,6 +150,47 @@ export const TIMEFRAME_OPTIONS = [
   },
 ];
 
+export const GOAL_PRIORITY_OPTIONS = [
+  {
+    id: "low",
+    name: "Low Priority",
+    icon: "fa-solid fa-flag text-lime-400",
+  },
+  {
+    id: "medium",
+    name: "Medium Priority",
+    icon: "fa-solid fa-flag text-amber-400",
+  },
+  {
+    id: "high",
+    name: "High Priority",
+    icon: "fa-solid fa-flag text-red-400",
+  },
+];
+
+export const DAILY_MOOD_OPTIONS = [
+  {
+    id: "great",
+    name: "Great",
+    icon: "fa-solid fa-face-smile-beam text-emerald-500/80",
+  },
+  {
+    id: "good",
+    name: "Good",
+    icon: "fa-solid fa-face-smile text-cyan-500/80",
+  },
+  {
+    id: "neutral",
+    name: "Neutral",
+    icon: "fa-solid fa-face-meh text-brand/80",
+  },
+  {
+    id: "bad",
+    name: "Bad",
+    icon: "fa-solid fa-face-frown text-red-500/80",
+  },
+];
+
 export const GOAL_UNIT_OPTIONS = [
   {
     id: "%",
@@ -201,3 +242,186 @@ export const GOAL_UNIT_OPTIONS = [
     defaultValue: 10,
   },
 ];
+
+export const FILTER_OPTIONS_BY_TAB = {
+  goals: [
+    {
+      value: "all",
+      title: "All Timeframes & Dates",
+      icon: "fa-regular fa-calendar text-cyan-400",
+    },
+    {
+      value: "today",
+      title: "Due Today",
+      icon: "fa-regular fa-calendar-day text-orange-400",
+    },
+    {
+      value: "completed",
+      title: "Completed / Done Goals",
+      icon: "fa-regular fa-circle-check text-emerald-400",
+    },
+    {
+      value: "overdue",
+      title: "Overdue Goals",
+      icon: "fa-regular fa-clock text-red-400",
+    },
+    {
+      value: "yearly",
+      title: "Yearly Goals",
+      icon: "fa-regular fa-calendar-days text-violet-400",
+    },
+    {
+      value: "monthly",
+      title: "Monthly Goals",
+      icon: "fa-regular fa-calendar-range text-pink-400",
+    },
+    {
+      value: "weekly",
+      title: "Weekly Goals",
+      icon: "fa-regular fa-calendar-week text-blue-400",
+    },
+    {
+      value: "short_term",
+      title: "Short Term",
+      icon: "fa-regular fa-bolt text-yellow-400",
+    },
+    {
+      value: "medium_term",
+      title: "Medium Term",
+      icon: "fa-regular fa-clock text-emerald-400",
+    },
+    {
+      value: "long_term",
+      title: "Long Term",
+      icon: "fa-regular fa-hourglass-end text-fuchsia-400",
+    },
+    {
+      value: "lifetime",
+      title: "Lifetime / Milestone",
+      icon: "fa-regular fa-infinity text-teal-400",
+    },
+  ],
+  daily: [
+    {
+      value: "all",
+      title: "All Logs",
+      icon: "fa-regular fa-calendar text-emerald-400",
+    },
+    {
+      value: "today",
+      title: "Today",
+      icon: "fa-regular fa-calendar-day text-yellow-400",
+    },
+    {
+      value: "yesterday",
+      title: "Yesterday",
+      icon: "fa-regular fa-calendar-minus text-cyan-400",
+    },
+    {
+      value: "this_week",
+      title: "This Week",
+      icon: "fa-regular fa-calendar-week text-pink-400",
+    },
+    {
+      value: "this_month",
+      title: "This Month",
+      icon: "fa-regular fa-calendar-range text-violet-400",
+    },
+    {
+      value: "this_year",
+      title: "This Year",
+      icon: "fa-regular fa-calendar-days text-fuchsia-400",
+    },
+  ],
+  templates: [
+    {
+      value: "all",
+      title: "All Templates",
+      icon: "fa-regular fa-layer-group text-emerald-400",
+    },
+    {
+      value: "favorites",
+      title: "Favorites Only",
+      icon: "fa-regular fa-star text-yellow-400",
+    },
+  ],
+};
+
+export const SORT_OPTIONS_BY_TAB = {
+  goals: [
+    {
+      value: "priority",
+      title: "Priority (High to Low)",
+      icon: "fa-regular fa-arrow-down-short-wide text-yellow-400",
+    },
+    {
+      value: "progress_desc",
+      title: "Progress (High to Low)",
+      icon: "fa-regular fa-chart-line text-emerald-400",
+    },
+    {
+      value: "progress_asc",
+      title: "Progress (Low to High)",
+      icon: "fa-regular fa-chart-line-down text-cyan-400",
+    },
+    {
+      value: "dueDate",
+      title: "Due Date",
+      icon: "fa-regular fa-calendar text-blue-400",
+    },
+    {
+      value: "completedAt",
+      title: "Completion Date",
+      icon: "fa-regular fa-calendar-check text-emerald-400",
+    },
+    {
+      value: "createdAt",
+      title: "Date Created",
+      icon: "fa-regular fa-clock text-red-400",
+    },
+    {
+      value: "title",
+      title: "Title (A-Z)",
+      icon: "fa-regular fa-arrow-down-a-z text-violet-400",
+    },
+  ],
+  daily: [
+    {
+      value: "date_desc",
+      title: "Date (Newest First)",
+      icon: "fa-regular fa-calendar-arrow-down text-yellow-400",
+    },
+    {
+      value: "date_asc",
+      title: "Date (Oldest First)",
+      icon: "fa-regular fa-calendar-arrow-up text-violet-400",
+    },
+    {
+      value: "createdAt",
+      title: "Date Created",
+      icon: "fa-regular fa-clock text-red-400",
+    },
+    {
+      value: "title",
+      title: "Title (A-Z)",
+      icon: "fa-regular fa-arrow-down-a-z text-emerald-400",
+    },
+  ],
+  templates: [
+    {
+      value: "favorites",
+      title: "Favorites First",
+      icon: "fa-regular fa-star text-yellow-400",
+    },
+    {
+      value: "title",
+      title: "Title (A-Z)",
+      icon: "fa-regular fa-arrow-down-a-z text-emerald-400",
+    },
+    {
+      value: "createdAt",
+      title: "Date Created",
+      icon: "fa-regular fa-clock text-red-400",
+    },
+  ],
+};

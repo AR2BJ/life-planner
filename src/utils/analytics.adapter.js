@@ -57,11 +57,9 @@ function getActivityMap(plans) {
 
 export const AnalyticsAdapter = {
   generateHeatmapSeries(plans = [], view = "weekly") {
-    const activePlans = plans.filter((t) => !t.archived);
-
     let startDate = new Date();
-    if (activePlans.length > 0) {
-      const validDates = activePlans
+    if (plans.length > 0) {
+      const validDates = plans
         .map((t) => (t.createdAt ? new Date(t.createdAt).getTime() : null))
         .filter((time) => time && !isNaN(time));
 

@@ -95,6 +95,8 @@ export const SettingsResetController = {
 
         renderPlanList([], state.activeTab);
 
+        PlansController.handleTabSwitch("goals");
+
         PlansController.refreshUI();
 
         NotificationService.show({
@@ -126,6 +128,8 @@ export const SettingsResetController = {
 
                 state.activeTab = "goals";
                 state.currentView = "plans";
+
+                PlansController.handleTabSwitch("goals");
 
                 renderPlanList(
                   StateManager.getFilteredPlans(),

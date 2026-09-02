@@ -11,4 +11,16 @@ export default defineConfig({
       "@": fileURLToPath(new URL("./src", import.meta.url)),
     },
   },
+  server: {
+    proxy: {
+      "/api-geo": {
+        target: "https://ipapi.co",
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api-geo/, ""),
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+        },
+      },
+    },
+  },
 });

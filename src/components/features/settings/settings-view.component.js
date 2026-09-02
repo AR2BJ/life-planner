@@ -23,7 +23,6 @@ export const SettingsViewComponent = {
             </p>
           </div>
 
-          <!-- Theme Settings -->
           <div
             class="bg-surface rounded-2xl p-4 sm:p-6 flex flex-col gap-4 shadow-sm border border-border"
           >
@@ -170,7 +169,6 @@ export const SettingsViewComponent = {
             </div>
           </div>
 
-          <!-- Factory Reset -->
           <div
             class="bg-surface rounded-2xl p-4 sm:p-6 flex flex-col gap-4 shadow-sm border border-border"
           >

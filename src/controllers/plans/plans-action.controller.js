@@ -62,6 +62,15 @@ export const PlansActionController = {
         return;
       }
 
+      const stepBtn = e.target.closest(".quick-step-btn");
+      if (stepBtn) {
+        e.stopPropagation();
+        const goalId = stepBtn.dataset.id;
+        const stepVal = Number(stepBtn.dataset.step) || 0;
+        this.handleQuickStep(goalId, stepVal);
+        return;
+      }
+
       // ==========================================
       // 2. TOGGLE TEMPLATE FAVORITE
       // ==========================================
@@ -175,5 +184,20 @@ export const PlansActionController = {
         return;
       }
     });
+  },
+
+  handleQuickStep(goalId, stepVal) {
+    const goals = StateManager.getGoals();
+    const targetGoal = goals.find((g) => g.id === goalId);
+    if (!targetGoal) return;
+
+    const newCurrent = Math.max(0, targetGoal.currentValue + stepVal);
+    const updatedGoals = PlanService.updateGoalProgress(
+      goals,
+      goalId,
+      newCurrent,
+    );
+
+    StateManager.setGoals(updatedGoals);
   },
 };
