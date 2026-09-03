@@ -1,6 +1,5 @@
-import { formatNumberWithCommas, getCurrencySymbol } from "@/utils/helpers";
-
 import { GOAL_UNIT_OPTIONS } from "@/utils/constants/options-value.constants";
+import { formatNumberWithCommas } from "@/utils/helpers";
 
 export const PlansItemComponent = {
   _categoryRegistry: [
@@ -336,7 +335,7 @@ export const PlansItemComponent = {
     const milestones = Array.isArray(plan.milestones) ? plan.milestones : [];
 
     const unitSymbol =
-      plan.unit === "money" ? getCurrencySymbol() : plan.unit || "%";
+      plan.unit === "money" ? "$" : plan.unit || "%";
     const stepAmount = this._calculateStepAmount(plan.unit, target);
 
     return `

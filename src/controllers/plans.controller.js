@@ -20,11 +20,10 @@ import { PlansFormController } from "./plans/plans-form.controller.js";
 import { PlansView } from "@/views/plans-view.js";
 import { SettingsViewComponent } from "@/components/features/settings/settings-view.component.js";
 import { eventBus } from "@/services/event-bus.service.js";
-import { initUserCurrency } from "@/services/currency.service.js";
 import { renderPlanList } from "@/views/plans/plan-list.renderer.js";
 
 export const PlansController = {
-  async init() {
+  init() {
     StateManager.init();
     this.renderComponent();
 
@@ -33,8 +32,6 @@ export const PlansController = {
 
     PlansFormController.init(this);
     PlansActionController.init(this);
-
-    await initUserCurrency();
 
     this.bindStaticEvents();
     this.bindMenuToggle();

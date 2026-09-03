@@ -1,5 +1,4 @@
 import { GOAL_UNIT_OPTIONS } from "./constants/options-value.constants";
-import { getCurrentCurrencyCode } from "@/services/currency.service";
 
 export function generateId() {
   if (window.crypto?.randomUUID) {
@@ -57,37 +56,4 @@ export function formatNumberWithCommas(val) {
 export function getUnitConfig(unitId) {
   const found = GOAL_UNIT_OPTIONS.find((u) => u.id === unitId);
   return found || { max: 100000, defaultValue: 100 };
-}
-
-export function getCurrencySymbol() {
-  const currencyCode = getCurrentCurrencyCode();
-  const userLocale = navigator.language || "en-US";
-
-  try {
-    const parts = new Intl.NumberFormat(userLocale, {
-      style: "currency",
-      currency: currencyCode,
-    }).formatToParts(1);
-
-    const symbolPart = parts.find((part) => part.type === "currency");
-    return symbolPart ? symbolPart.value : currencyCode;
-  } catch (e) {
-    return currencyCode;
-  }
-}
-
-export function formatCurrency(val) {
-  const amount = parseFormattedNumber(val);
-  const currencyCode = getCurrentCurrencyCode();
-  const userLocale = navigator.language || "en-US";
-
-  try {
-    return new Intl.NumberFormat(userLocale, {
-      style: "currency",
-      currency: currencyCode,
-      maximumFractionDigits: currencyCode === "IRR" ? 0 : 2,
-    }).format(amount);
-  } catch (e) {
-    return `${formatNumberWithCommas(amount)} ${getCurrencySymbol()}`;
-  }
 }
