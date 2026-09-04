@@ -39,7 +39,10 @@ function normalizeDailyLog(log) {
     category: log.category || "journal",
     mood: log.mood || "good",
     date: log.date || todayISO(),
-    linkedGoalTitle: log.linkedGoalTitle || null,
+    linkedGoal: {
+      id: String(log.linkedGoal.id || generateId()),
+      title: log.linkedGoal.title || "",
+    },
     createdAt: log.createdAt || todayISO(),
     updatedAt: log.updatedAt || todayISO(),
   };

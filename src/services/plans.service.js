@@ -128,7 +128,7 @@ export const PlanService = {
       date: logData.date || todayISO(),
       mood: logData.mood || "good",
       category: logData.category || "journal",
-      linkedGoalTitle: logData.linkedGoalTitle || null,
+      linkedGoal: logData.linkedGoal || null,
       createdAt: todayISO(),
       updatedAt: todayISO(),
     };

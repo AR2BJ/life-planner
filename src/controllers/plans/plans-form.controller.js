@@ -7,7 +7,6 @@ import {
   TEMPLATE_CATEGORIES,
   TIMEFRAME_OPTIONS,
 } from "@/utils/constants/options-value.constants";
-import { StateManager, state } from "@/models/state.model.js";
 import {
   formatNumberWithCommas,
   generateId,
@@ -21,10 +20,12 @@ import { DatePickerComponent } from "@/components/ui/date-picker.component.js";
 import { GlobalLoaderService } from "@/services/loader.service.js";
 import { NotificationService } from "@/services/notification.service.js";
 import { PlanService } from "@/services/plans.service.js";
+import { StateManager } from "@/models/state.model.js";
 
 let pendingDeleteId = null;
 let pendingEditId = null;
 
+// Autocomplete & DatePicker references for Create Form
 let createGoalCategoryAutocomplete = null;
 let createGoalTimeframeAutocomplete = null;
 let createGoalPriorityAutocomplete = null;
@@ -39,6 +40,7 @@ let createDailyGoalLinkAutocomplete = null;
 
 let createTemplateCategoryAutocomplete = null;
 
+// Autocomplete & DatePicker references for Edit Form
 let editGoalCategoryAutocomplete = null;
 let editGoalTimeframeAutocomplete = null;
 let editGoalPriorityAutocomplete = null;
@@ -70,6 +72,7 @@ export const PlansFormController = {
     this.setupCreateAutocompletes();
     this.bindFormEvents();
     this.bindDynamicListEvents();
+    this.bindAccordionEvents();
   },
 
   refreshUI() {
@@ -95,7 +98,76 @@ export const PlansFormController = {
     }
   },
 
+  bindAccordionEvents() {
+    const accordionGroup = document.getElementById("edit-accordion-group");
+    if (!accordionGroup) return;
+
+    accordionGroup.addEventListener("click", (e) => {
+      const header = e.target.closest(".accordion-header");
+      if (!header) return;
+
+      const currentItem = header.closest(".accordion-item");
+      const currentContent = currentItem.querySelector(".accordion-content");
+
+      if (!currentContent.classList.contains("hidden")) return;
+
+      const visibleItems = Array.from(
+        accordionGroup.querySelectorAll(".accordion-item"),
+      ).filter((item) => !item.classList.contains("hidden"));
+
+      const currentIndex = visibleItems.indexOf(currentItem);
+
+      visibleItems.forEach((item, index) => {
+        const content = item.querySelector(".accordion-content");
+        const icon = item.querySelector(".accordion-icon");
+        const itemHeader = item.querySelector(".accordion-header");
+
+        if (index === currentIndex) {
+          content.classList.replace("hidden", "flex");
+        } else {
+          content.classList.replace("flex", "hidden");
+        }
+
+        itemHeader?.classList.toggle("border-b", index === currentIndex);
+        icon?.classList.toggle("fa-chevron-up", index === currentIndex);
+        icon?.classList.toggle("fa-chevron-down", index !== currentIndex);
+      });
+    });
+  },
+
+  resetAccordionToFirstItem() {
+    const accordionGroup = document.getElementById("edit-accordion-group");
+    if (!accordionGroup) return;
+
+    const visibleItems = Array.from(
+      accordionGroup.querySelectorAll(".accordion-item"),
+    ).filter((item) => !item.classList.contains("hidden"));
+
+    visibleItems.forEach((item, index) => {
+      const header = item.querySelector(".accordion-header");
+      const content = item.querySelector(".accordion-content");
+      const icon = item.querySelector(".accordion-icon");
+
+      if (index === 0) {
+        content.classList.replace("hidden", "flex");
+        header?.classList.add("border-b");
+        if (icon) {
+          icon.classList.remove("fa-chevron-down");
+          icon.classList.add("fa-chevron-up");
+        }
+      } else {
+        content.classList.replace("flex", "hidden");
+        header?.classList.remove("border-b");
+        if (icon) {
+          icon.classList.remove("fa-chevron-up");
+          icon.classList.add("fa-chevron-down");
+        }
+      }
+    });
+  },
+
   bindDynamicListEvents() {
+    // Create Form Dynamic Lists
     const addMilestoneBtn = document.getElementById("btn-add-milestone-input");
     if (addMilestoneBtn) {
       addMilestoneBtn.onclick = () => {
@@ -103,24 +175,7 @@ export const PlansFormController = {
           "create-goal-milestones-list",
         );
         if (!container) return;
-        const itemDiv = document.createElement("div");
-        itemDiv.className = "flex items-center gap-2 milestone-item";
-        itemDiv.innerHTML = `
-          <input
-            type="text"
-            placeholder="Enter milestone title..."
-            class="h-9 flex-1 rounded-lg border border-border bg-surface px-3 text-xs text-color focus:border-brand/80 focus:outline-none"
-          />
-          <button
-            type="button"
-            class="btn-remove-milestone h-9 w-9 flex items-center justify-center rounded-lg border border-border bg-surface text-secondary hover:text-red-500 transition cursor-pointer"
-          >
-            <i class="fa-regular fa-trash-can text-xs"></i>
-          </button>
-        `;
-        itemDiv.querySelector(".btn-remove-milestone").onclick = () =>
-          itemDiv.remove();
-        container.appendChild(itemDiv);
+        this._appendMilestoneRow(container, "");
       };
     }
 
@@ -129,26 +184,80 @@ export const PlansFormController = {
       addStepBtn.onclick = () => {
         const container = document.getElementById("create-template-steps-list");
         if (!container) return;
-        const itemDiv = document.createElement("div");
-        itemDiv.className = "flex items-center gap-2 template-step-item";
-        itemDiv.innerHTML = `
-          <input
-            type="text"
-            placeholder="Enter step instruction or task..."
-            class="h-9 flex-1 rounded-lg border border-border bg-surface px-3 text-xs text-color focus:border-brand/80 focus:outline-none"
-          />
-          <button
-            type="button"
-            class="btn-remove-step h-9 w-9 flex items-center justify-center rounded-lg border border-border bg-surface text-secondary hover:text-red-500 transition cursor-pointer"
-          >
-            <i class="fa-regular fa-trash-can text-xs"></i>
-          </button>
-        `;
-        itemDiv.querySelector(".btn-remove-step").onclick = () =>
-          itemDiv.remove();
-        container.appendChild(itemDiv);
+        this._appendStepRow(container, "");
       };
     }
+
+    // Edit Form Dynamic Lists
+    const editAddMilestoneBtn = document.getElementById(
+      "btn-add-edit-milestone",
+    );
+    if (editAddMilestoneBtn) {
+      editAddMilestoneBtn.onclick = () => {
+        const container = document.getElementById("edit-goal-milestones-list");
+        if (!container) return;
+        this._appendMilestoneRow(container, "");
+      };
+    }
+
+    const editAddStepBtn = document.getElementById(
+      "btn-add-edit-template-step",
+    );
+    if (editAddStepBtn) {
+      editAddStepBtn.onclick = () => {
+        const container = document.getElementById("edit-template-steps-list");
+        if (!container) return;
+        this._appendStepRow(container, "");
+      };
+    }
+  },
+
+  _appendMilestoneRow(container, title = "", completed = false) {
+    const itemDiv = document.createElement("div");
+    itemDiv.className = "flex items-center gap-2 milestone-item";
+    itemDiv.innerHTML = `
+      <input
+        type="checkbox"
+        class="milestone-checkbox rounded text-brand focus:ring-0 cursor-pointer"
+        ${completed ? "checked" : ""}
+      />
+      <input
+        type="text"
+        value="${title}"
+        placeholder="Enter milestone title..."
+        class="h-9 flex-1 rounded-lg border border-border bg-surface px-3 text-xs text-color focus:border-brand/80 focus:outline-none"
+      />
+      <button
+        type="button"
+        class="btn-remove-milestone h-9 w-9 flex items-center justify-center rounded-lg border border-border bg-surface text-secondary hover:text-red-500 transition cursor-pointer"
+      >
+        <i class="fa-regular fa-trash-can text-xs"></i>
+      </button>
+    `;
+    itemDiv.querySelector(".btn-remove-milestone").onclick = () =>
+      itemDiv.remove();
+    container.appendChild(itemDiv);
+  },
+
+  _appendStepRow(container, stepText = "") {
+    const itemDiv = document.createElement("div");
+    itemDiv.className = "flex items-center gap-2 template-step-item";
+    itemDiv.innerHTML = `
+      <input
+        type="text"
+        value="${stepText}"
+        placeholder="Enter step instruction..."
+        class="h-9 flex-1 rounded-lg border border-border bg-surface px-3 text-xs text-color focus:border-brand/80 focus:outline-none"
+      />
+      <button
+        type="button"
+        class="btn-remove-step h-9 w-9 flex items-center justify-center rounded-lg border border-border bg-surface text-secondary hover:text-red-500 transition cursor-pointer"
+      >
+        <i class="fa-regular fa-trash-can text-xs"></i>
+      </button>
+    `;
+    itemDiv.querySelector(".btn-remove-step").onclick = () => itemDiv.remove();
+    container.appendChild(itemDiv);
   },
 
   setupCreateAutocompletes() {
@@ -157,37 +266,31 @@ export const PlansFormController = {
       label: cat.name,
       icon: cat.icon,
     }));
-
     const unitOptions = GOAL_UNIT_OPTIONS.map((u) => ({
       value: u.id,
       label: u.name,
       icon: u.icon,
     }));
-
     const timeframeOptions = TIMEFRAME_OPTIONS.map((tf) => ({
       value: tf.id,
       label: tf.name,
       icon: tf.icon,
     }));
-
     const priorityOptions = GOAL_PRIORITY_OPTIONS.map((p) => ({
       value: p.id,
       label: p.name,
       icon: p.icon,
     }));
-
     const dailyLogCategoryOptions = DAILY_LOG_CATEGORIES.map((cat) => ({
       value: cat.id,
       label: cat.name,
       icon: cat.icon,
     }));
-
     const moodOptions = DAILY_MOOD_OPTIONS.map((m) => ({
       value: m.id,
       label: m.name,
       icon: m.icon,
     }));
-
     const templateCategoryOptions = TEMPLATE_CATEGORIES.map((cat) => ({
       value: cat.id,
       label: cat.name,
@@ -378,8 +481,8 @@ export const PlansFormController = {
         createDailyGoalLinkAutocomplete.destroy();
       const goals = StateManager.getGoals() || [];
       const goalLinkOptions = goals.map((g) => ({
-        value: g.title,
-        label: g.title,
+        id: g.id,
+        title: g.title,
         icon: "fa-regular fa-bullseye text-brand/80",
       }));
 
@@ -388,8 +491,8 @@ export const PlansFormController = {
         goalLinkOptions,
         {
           label: "Link to Goal (Optional)",
-          itemTitle: "label",
-          itemValue: "value",
+          itemTitle: "title",
+          itemValue: "id",
           itemIcon: "icon",
           placeholder: "Select goal to link...",
         },
@@ -419,6 +522,7 @@ export const PlansFormController = {
   },
 
   populateEditModal(itemId) {
+    // Destroy previous autocompletes
     if (editGoalCategoryAutocomplete) editGoalCategoryAutocomplete.destroy();
     if (editGoalTimeframeAutocomplete) editGoalTimeframeAutocomplete.destroy();
     if (editGoalPriorityAutocomplete) editGoalPriorityAutocomplete.destroy();
@@ -434,38 +538,38 @@ export const PlansFormController = {
       : "goals";
 
     let currentItem = null;
-    if (activeTab === "goals") {
+    if (activeTab === "goals")
       currentItem = StateManager.getGoals().find((g) => g.id === itemId);
-    } else if (activeTab === "daily") {
+    else if (activeTab === "daily")
       currentItem = StateManager.getDailyLogs().find((l) => l.id === itemId);
-    } else if (activeTab === "templates") {
+    else if (activeTab === "templates")
       currentItem = StateManager.getTemplates().find((t) => t.id === itemId);
-    }
 
     if (!currentItem) return;
 
+    // Toggle Tab specific accordion elements
+    const editModal = document.getElementById("edit-modal");
+    if (editModal) {
+      document.querySelectorAll(".edit-tab-field").forEach((el) => {
+        const fieldTab = el.getAttribute("data-tab");
+        el.classList.toggle("hidden", fieldTab !== activeTab);
+        if (fieldTab === activeTab && el.classList.contains("accordion-item")) {
+          el.classList.add("flex");
+        }
+      });
+    }
+
+    this.resetAccordionToFirstItem();
+
+    // Populate common basic fields
     const titleInput = document.getElementById("edit-item-title");
     const descInput = document.getElementById("edit-item-desc");
 
     if (titleInput) titleInput.value = currentItem.title || "";
     if (descInput) descInput.value = currentItem.description || "";
 
-    const editGoalWrapper = document.getElementById("edit-goal-fields-wrapper");
-    const editDailyWrapper = document.getElementById(
-      "edit-daily-fields-wrapper",
-    );
-    const editTemplateWrapper = document.getElementById(
-      "edit-template-fields-wrapper",
-    );
-
-    if (editGoalWrapper)
-      editGoalWrapper.classList.toggle("hidden", activeTab !== "goals");
-    if (editDailyWrapper)
-      editDailyWrapper.classList.toggle("hidden", activeTab !== "daily");
-    if (editTemplateWrapper)
-      editTemplateWrapper.classList.toggle("hidden", activeTab !== "templates");
-
     if (activeTab === "goals") {
+      // Goal Category
       const editGoalCategoryContainer = document.getElementById(
         "edit-goal-category-autocomplete",
       );
@@ -482,6 +586,7 @@ export const PlansFormController = {
             itemTitle: "label",
             itemValue: "value",
             itemIcon: "icon",
+            containerClass: "bg-surface!",
           },
         );
         editGoalCategoryAutocomplete.setValue(
@@ -489,6 +594,7 @@ export const PlansFormController = {
         );
       }
 
+      // Timeframe
       const editGoalTimeframeContainer = document.getElementById(
         "edit-goal-timeframe-autocomplete",
       );
@@ -505,13 +611,116 @@ export const PlansFormController = {
             itemTitle: "label",
             itemValue: "value",
             itemIcon: "icon",
+            containerClass: "bg-surface!",
           },
         );
         editGoalTimeframeAutocomplete.setValue(
           currentItem.timeframe || "yearly",
         );
       }
+
+      // Priority
+      const editGoalPriorityContainer = document.getElementById(
+        "edit-goal-priority-autocomplete",
+      );
+      if (editGoalPriorityContainer) {
+        editGoalPriorityAutocomplete = new AutocompleteComponent(
+          editGoalPriorityContainer,
+          GOAL_PRIORITY_OPTIONS.map((p) => ({
+            value: p.id,
+            label: p.name,
+            icon: p.icon,
+          })),
+          {
+            label: "Priority",
+            itemTitle: "label",
+            itemValue: "value",
+            itemIcon: "icon",
+            containerClass: "bg-surface!",
+          },
+        );
+        editGoalPriorityAutocomplete.setValue(currentItem.priority || "low");
+      }
+
+      // Unit
+      const editGoalUnitContainer = document.getElementById(
+        "edit-goal-unit-autocomplete",
+      );
+      if (editGoalUnitContainer) {
+        editGoalUnitAutocomplete = new AutocompleteComponent(
+          editGoalUnitContainer,
+          GOAL_UNIT_OPTIONS.map((u) => ({
+            value: u.id,
+            label: u.name,
+            icon: u.icon,
+          })),
+          {
+            label: "Unit",
+            itemTitle: "label",
+            itemValue: "value",
+            itemIcon: "icon",
+            containerClass: "bg-surface!",
+          },
+        );
+        editGoalUnitAutocomplete.setValue(currentItem.unit || "%");
+      }
+
+      // Current & Target values
+      const currentValInput = document.getElementById("edit-goal-current");
+      const targetValInput = document.getElementById("edit-goal-target");
+      if (currentValInput)
+        currentValInput.value = formatNumberWithCommas(
+          currentItem.currentValue || 0,
+        );
+      if (targetValInput)
+        targetValInput.value = formatNumberWithCommas(
+          currentItem.targetValue || 100,
+        );
+
+      // Start & End Date Pickers
+      const startDateContainer = document.getElementById(
+        "edit-goal-startdate-container",
+      );
+      if (startDateContainer) {
+        editGoalStartDatePicker = new DatePickerComponent({
+          id: "edit-goal-startdate",
+          value: currentItem.startDate || todayISO(),
+          label: "Start Date",
+          background: "surface",
+        });
+        startDateContainer.innerHTML = editGoalStartDatePicker.render();
+        editGoalStartDatePicker.bindEvents();
+      }
+
+      const endDateContainer = document.getElementById(
+        "edit-goal-enddate-container",
+      );
+      if (endDateContainer) {
+        editGoalEndDatePicker = new DatePickerComponent({
+          id: "edit-goal-enddate",
+          value: currentItem.endDate || "",
+          label: "End Date (Optional)",
+          background: "surface",
+        });
+        endDateContainer.innerHTML = editGoalEndDatePicker.render();
+        editGoalEndDatePicker.bindEvents();
+      }
+
+      // Milestones
+      const milestonesContainer = document.getElementById(
+        "edit-goal-milestones-list",
+      );
+      if (milestonesContainer) {
+        milestonesContainer.innerHTML = "";
+        const milestones = Array.isArray(currentItem.milestones)
+          ? currentItem.milestones
+          : [];
+        milestones.forEach((m) =>
+          this._appendMilestoneRow(milestonesContainer, m.title, m.completed),
+        );
+      }
     } else if (activeTab === "daily") {
+      // Daily Log Category
       const editDailyCategoryContainer = document.getElementById(
         "edit-daily-category-autocomplete",
       );
@@ -528,6 +737,7 @@ export const PlansFormController = {
             itemTitle: "label",
             itemValue: "value",
             itemIcon: "icon",
+            containerClass: "bg-surface!",
           },
         );
         editDailyCategoryAutocomplete.setValue(
@@ -535,6 +745,30 @@ export const PlansFormController = {
         );
       }
 
+      // Mood
+      const editDailyMoodContainer = document.getElementById(
+        "edit-daily-mood-autocomplete",
+      );
+      if (editDailyMoodContainer) {
+        editDailyMoodAutocomplete = new AutocompleteComponent(
+          editDailyMoodContainer,
+          DAILY_MOOD_OPTIONS.map((m) => ({
+            value: m.id,
+            label: m.name,
+            icon: m.icon,
+          })),
+          {
+            label: "Mood",
+            itemTitle: "label",
+            itemValue: "value",
+            itemIcon: "icon",
+            containerClass: "bg-surface!",
+          },
+        );
+        editDailyMoodAutocomplete.setValue(currentItem.mood || "good");
+      }
+
+      // Date Picker
       const editDailyDatePickerContainer = document.getElementById(
         "edit-daily-datepicker-container",
       );
@@ -543,12 +777,40 @@ export const PlansFormController = {
           id: "edit-daily-datepicker",
           value: currentItem.date || todayISO(),
           label: "Date",
-          background: "surface-2",
+          background: "surface",
         });
         editDailyDatePickerContainer.innerHTML = editDailyDatePicker.render();
         editDailyDatePicker.bindEvents();
       }
+
+      // Linked Goal Autocomplete
+      const editGoalLinkContainer = document.getElementById(
+        "edit-daily-goal-link-autocomplete",
+      );
+      if (editGoalLinkContainer) {
+        const goals = StateManager.getGoals() || [];
+        const goalLinkOptions = goals.map((g) => ({
+          id: g.id,
+          title: g.title,
+          icon: "fa-regular fa-bullseye text-brand/80",
+        }));
+        editDailyGoalLinkAutocomplete = new AutocompleteComponent(
+          editGoalLinkContainer,
+          goalLinkOptions,
+          {
+            label: "Link to Goal (Optional)",
+            itemTitle: "title",
+            itemValue: "id",
+            itemIcon: "icon",
+            containerClass: "bg-surface!",
+          },
+        );
+        if (currentItem.linkedGoal?.id) {
+          editDailyGoalLinkAutocomplete.setValue(currentItem.linkedGoal.id);
+        }
+      }
     } else if (activeTab === "templates") {
+      // Template Category
       const editTemplateCategoryContainer = document.getElementById(
         "edit-template-category-autocomplete",
       );
@@ -565,10 +827,29 @@ export const PlansFormController = {
             itemTitle: "label",
             itemValue: "value",
             itemIcon: "icon",
+            containerClass: "bg-surface!",
           },
         );
         editTemplateCategoryAutocomplete.setValue(
           currentItem.category || "workflow",
+        );
+      }
+
+      // Favorite Checkbox
+      const favCheckbox = document.getElementById("edit-template-favorite");
+      if (favCheckbox) favCheckbox.checked = Boolean(currentItem.isFavorite);
+
+      // Template Steps
+      const stepsContainer = document.getElementById(
+        "edit-template-steps-list",
+      );
+      if (stepsContainer) {
+        stepsContainer.innerHTML = "";
+        const steps = Array.isArray(currentItem.structure)
+          ? currentItem.structure
+          : [];
+        steps.forEach((stepText) =>
+          this._appendStepRow(stepsContainer, stepText),
         );
       }
     }
@@ -645,7 +926,6 @@ export const PlansFormController = {
       const activeTab = StateManager.getPlansTab
         ? StateManager.getPlansTab()
         : "goals";
-
       const title = titleInput?.value.trim();
       const description = descInput?.value.trim() || "";
 
@@ -695,7 +975,7 @@ export const PlansFormController = {
               : null;
 
             const milestoneElements = document.querySelectorAll(
-              "#create-goal-milestones-list .milestone-item input",
+              "#create-goal-milestones-list .milestone-item input[type='text']",
             );
             const milestones = Array.from(milestoneElements)
               .map((inp) => inp.value.trim())
@@ -720,12 +1000,9 @@ export const PlansFormController = {
               endDate,
               milestones,
             };
-
-            const updatedGoals = PlanService.createGoal(
-              StateManager.getGoals(),
-              newGoal,
+            StateManager.setGoals(
+              PlanService.createGoal(StateManager.getGoals(), newGoal),
             );
-            StateManager.setGoals(updatedGoals);
           } else if (activeTab === "daily") {
             const category = createDailyCategoryAutocomplete
               ? createDailyCategoryAutocomplete.getValue()
@@ -736,9 +1013,19 @@ export const PlansFormController = {
             const date = createDailyDatePicker
               ? createDailyDatePicker.value
               : todayISO();
-            const linkedGoalTitle = createDailyGoalLinkAutocomplete
-              ? createDailyGoalLinkAutocomplete.getValue()
-              : null;
+
+            let linkedGoal = null;
+            if (createDailyGoalLinkAutocomplete) {
+              const selectedItems =
+                createDailyGoalLinkAutocomplete.getSelectedItems();
+              if (selectedItems && selectedItems.length > 0) {
+                const item = selectedItems[0];
+                linkedGoal = {
+                  id: item.id || item.value,
+                  title: item.title || item.label,
+                };
+              }
+            }
 
             const newLog = {
               title,
@@ -746,14 +1033,11 @@ export const PlansFormController = {
               date,
               category,
               mood,
-              linkedGoalTitle,
+              linkedGoal,
             };
-
-            const updatedLogs = PlanService.createDailyLog(
-              StateManager.getDailyLogs(),
-              newLog,
+            StateManager.setDailyLogs(
+              PlanService.createDailyLog(StateManager.getDailyLogs(), newLog),
             );
-            StateManager.setDailyLogs(updatedLogs);
           } else if (activeTab === "templates") {
             const category = createTemplateCategoryAutocomplete
               ? createTemplateCategoryAutocomplete.getValue()
@@ -776,32 +1060,18 @@ export const PlansFormController = {
               isFavorite,
               structure,
             };
-
-            const updatedTemplates = PlanService.createTemplate(
-              StateManager.getTemplates(),
-              newTemplate,
+            StateManager.setTemplates(
+              PlanService.createTemplate(
+                StateManager.getTemplates(),
+                newTemplate,
+              ),
             );
-            StateManager.setTemplates(updatedTemplates);
           }
 
           StateManager.save();
 
           if (titleInput) titleInput.value = "";
           if (descInput) descInput.value = "";
-          const targetInput = document.getElementById("create-goal-target");
-          if (targetInput) targetInput.value = "100";
-          const currentInput = document.getElementById("create-goal-current");
-          if (currentInput) currentInput.value = "0";
-
-          const milestonesList = document.getElementById(
-            "create-goal-milestones-list",
-          );
-          if (milestonesList) milestonesList.innerHTML = "";
-
-          const stepsList = document.getElementById(
-            "create-template-steps-list",
-          );
-          if (stepsList) stepsList.innerHTML = "";
 
           if (
             this.mainController &&
@@ -831,34 +1101,6 @@ export const PlansFormController = {
 
     addBtn?.addEventListener("click", handleCreateItem);
 
-    titleInput?.addEventListener("keydown", (e) => {
-      if (e.key === "Enter" && !e.shiftKey) {
-        e.preventDefault();
-        handleCreateItem();
-      }
-    });
-
-    document.addEventListener("keydown", (e) => {
-      const deleteModal = document.getElementById("delete-modal");
-      const editModal = document.getElementById("edit-modal");
-
-      const deleteOpen =
-        deleteModal && !deleteModal.classList.contains("hidden");
-      const editOpen = editModal && !editModal.classList.contains("hidden");
-
-      if (!deleteOpen && !editOpen) return;
-
-      if (e.key === "Escape") {
-        if (deleteOpen) this.mainController.toggleModal("delete-modal", false);
-        if (editOpen) this.mainController.toggleModal("edit-modal", false);
-      }
-
-      if (e.key === "Enter" && e.ctrlKey) {
-        if (deleteOpen) this.executeDelete();
-        if (editOpen) this.executeEdit();
-      }
-    });
-
     const addClick = (id, cb) =>
       document.getElementById(id)?.addEventListener("click", cb);
 
@@ -875,10 +1117,6 @@ export const PlansFormController = {
     addClick("cancel-edit", () =>
       this.mainController.toggleModal("edit-modal", false),
     );
-    addClick("confirm-edit-mobile", () => this.executeEdit());
-    addClick("cancel-edit-mobile", () =>
-      this.mainController.toggleModal("edit-modal", false),
-    );
     addClick("cancel-edit-modal", () =>
       this.mainController.toggleModal("edit-modal", false),
     );
@@ -891,7 +1129,6 @@ export const PlansFormController = {
     const activeTab = StateManager.getPlansTab
       ? StateManager.getPlansTab()
       : "goals";
-
     let currentItems = [];
     if (activeTab === "goals") currentItems = StateManager.getGoals();
     else if (activeTab === "daily") currentItems = StateManager.getDailyLogs();
@@ -901,68 +1138,31 @@ export const PlansFormController = {
     const itemToDelete = currentItems.find((h) => h.id === id);
 
     if (itemToDelete) {
-      const capturedItem = { ...itemToDelete };
-      GlobalLoaderService.show(`Purging "${capturedItem.title}" from store...`);
-
+      GlobalLoaderService.show(`Purging "${itemToDelete.title}"...`);
       setTimeout(() => {
         try {
-          if (activeTab === "goals") {
+          if (activeTab === "goals")
             StateManager.setGoals(PlanService.deleteGoal(currentItems, id));
-          } else if (activeTab === "daily") {
+          else if (activeTab === "daily")
             StateManager.setDailyLogs(
               PlanService.deleteDailyLog(currentItems, id),
             );
-          } else if (activeTab === "templates") {
+          else if (activeTab === "templates")
             StateManager.setTemplates(
               PlanService.deleteTemplate(currentItems, id),
             );
-          }
 
           StateManager.save();
-          if (this.mainController?.toggleModal) {
+          if (this.mainController?.toggleModal)
             this.mainController.toggleModal("delete-modal", false);
-          }
           pendingDeleteId = null;
 
-          if (this.mainController?.refreshUI) {
-            this.mainController.refreshUI();
-          }
+          if (this.mainController?.refreshUI) this.mainController.refreshUI();
 
           NotificationService.show({
             type: "error",
-            message: `Deleted "${capturedItem.title}"`,
+            message: `Deleted "${itemToDelete.title}"`,
             duration: 5000,
-            undoAction: () => {
-              GlobalLoaderService.show("Re-instating deleted record...");
-              setTimeout(() => {
-                try {
-                  if (activeTab === "goals") {
-                    const latestGoals = StateManager.getGoals();
-                    StateManager.save(
-                      [capturedItem, ...latestGoals],
-                      state.dailyLogs,
-                      state.templates,
-                    );
-                  } else if (activeTab === "daily") {
-                    const latestDailyLogs = StateManager.getDailyLogs();
-                    StateManager.save(
-                      state.goals,
-                      [capturedItem, ...latestDailyLogs],
-                      state.templates,
-                    );
-                  } else if (activeTab === "templates") {
-                    const latestTemplates = StateManager.getTemplates();
-                    StateManager.save(state.goals, state.dailyLogs, [
-                      capturedItem,
-                      ...latestTemplates,
-                    ]);
-                  }
-                  this.mainController.refreshUI();
-                } finally {
-                  GlobalLoaderService.hide();
-                }
-              }, 30);
-            },
           });
         } finally {
           GlobalLoaderService.hide();
@@ -997,6 +1197,27 @@ export const PlansFormController = {
     setTimeout(() => {
       try {
         if (activeTab === "goals") {
+          const currentValRaw = document
+            .getElementById("edit-goal-current")
+            ?.value.trim();
+          const targetValRaw = document
+            .getElementById("edit-goal-target")
+            ?.value.trim();
+
+          const milestoneRows = document.querySelectorAll(
+            "#edit-goal-milestones-list .milestone-item",
+          );
+          const milestones = Array.from(milestoneRows)
+            .map((row) => ({
+              id: generateId(),
+              title:
+                row.querySelector("input[type='text']")?.value.trim() || "",
+              completed:
+                row.querySelector("input[type='checkbox']")?.checked || false,
+              createdAt: todayISO(),
+            }))
+            .filter((m) => m.title);
+
           const updatedFields = {
             title: newTitle,
             description: descInput?.value.trim() || "",
@@ -1006,6 +1227,19 @@ export const PlansFormController = {
             timeframe: editGoalTimeframeAutocomplete
               ? editGoalTimeframeAutocomplete.getValue()
               : "yearly",
+            priority: editGoalPriorityAutocomplete
+              ? editGoalPriorityAutocomplete.getValue()
+              : "low",
+            unit: editGoalUnitAutocomplete
+              ? editGoalUnitAutocomplete.getValue()
+              : "%",
+            currentValue: parseFormattedNumber(currentValRaw) || 0,
+            targetValue: parseFormattedNumber(targetValRaw) || 100,
+            startDate: editGoalStartDatePicker
+              ? editGoalStartDatePicker.value
+              : todayISO(),
+            endDate: editGoalEndDatePicker ? editGoalEndDatePicker.value : null,
+            milestones,
           };
 
           StateManager.setGoals(
@@ -1016,13 +1250,30 @@ export const PlansFormController = {
             ),
           );
         } else if (activeTab === "daily") {
+          let linkedGoal = null;
+          if (editDailyGoalLinkAutocomplete) {
+            const selectedItems =
+              editDailyGoalLinkAutocomplete.getSelectedItems();
+            if (selectedItems && selectedItems.length > 0) {
+              const item = selectedItems[0];
+              linkedGoal = {
+                id: item.id || item.value,
+                title: item.title || item.label,
+              };
+            }
+          }
+
           const updatedFields = {
             title: newTitle,
             description: descInput?.value.trim() || "",
             category: editDailyCategoryAutocomplete
               ? editDailyCategoryAutocomplete.getValue()
               : "journal",
+            mood: editDailyMoodAutocomplete
+              ? editDailyMoodAutocomplete.getValue()
+              : "good",
             date: editDailyDatePicker ? editDailyDatePicker.value : todayISO(),
+            linkedGoal,
           };
 
           StateManager.setDailyLogs(
@@ -1033,12 +1284,23 @@ export const PlansFormController = {
             ),
           );
         } else if (activeTab === "templates") {
+          const stepInputs = document.querySelectorAll(
+            "#edit-template-steps-list .template-step-item input",
+          );
+          const structure = Array.from(stepInputs)
+            .map((inp) => inp.value.trim())
+            .filter(Boolean);
+
           const updatedFields = {
             title: newTitle,
             description: descInput?.value.trim() || "",
             category: editTemplateCategoryAutocomplete
               ? editTemplateCategoryAutocomplete.getValue()
               : "workflow",
+            isFavorite:
+              document.getElementById("edit-template-favorite")?.checked ||
+              false,
+            structure,
           };
 
           StateManager.setTemplates(
@@ -1052,7 +1314,7 @@ export const PlansFormController = {
 
         StateManager.save();
         if (this.mainController?.toggleModal) {
-          this.mainController.toggleModal("edit-plan-modal", false);
+          this.mainController.toggleModal("edit-modal", false);
         }
 
         pendingEditId = null;

@@ -1,154 +1,28 @@
-import { GOAL_UNIT_OPTIONS } from "@/utils/constants/options-value.constants";
+import {
+  DAILY_LOG_CATEGORIES,
+  GOAL_CATEGORIES,
+  GOAL_UNIT_OPTIONS,
+  TEMPLATE_CATEGORIES,
+  TIMEFRAME_OPTIONS,
+} from "@/utils/constants/options-value.constants";
+
 import { formatNumberWithCommas } from "@/utils/helpers";
 
 export const PlansItemComponent = {
+  // Combine all categories directly from source of truth
   _categoryRegistry: [
-    {
-      id: "general",
-      name: "General",
-      icon: "fa-regular fa-folder",
-      class: "bg-amber-500/10 text-amber-500/80 border-amber-500/20",
-    },
-    {
-      id: "health",
-      name: "Health & Fitness",
-      icon: "fa-regular fa-heart-pulse",
-      class: "bg-emerald-500/10 text-emerald-500/80 border-emerald-500/20",
-    },
-    {
-      id: "career",
-      name: "Career & Work",
-      icon: "fa-regular fa-briefcase",
-      class: "bg-cyan-500/10 text-cyan-500/80 border-cyan-500/20",
-    },
-    {
-      id: "personal",
-      name: "Personal Development",
-      icon: "fa-regular fa-user",
-      class: "bg-lime-500/10 text-lime-500/80 border-lime-500/20",
-    },
-    {
-      id: "finance",
-      name: "Finance & Wealth",
-      icon: "fa-regular fa-wallet",
-      class: "bg-violet-500/10 text-violet-500/80 border-violet-500/20",
-    },
-    {
-      id: "education",
-      name: "Education & Learning",
-      icon: "fa-regular fa-graduation-cap",
-      class: "bg-pink-500/10 text-pink-500/80 border-pink-500/20",
-    },
-    {
-      id: "lifestyle",
-      name: "Lifestyle & Social",
-      icon: "fa-regular fa-masks-theater",
-      class: "bg-red-500/10 text-red-500/80 border-red-500/20",
-    },
-
-    // DAILY LOG CATEGORIES
-    {
-      id: "journal",
-      name: "Journal Entry",
-      icon: "fa-regular fa-book-user",
-      class: "bg-amber-500/10 text-amber-500/80 border-amber-500/20",
-    },
-    {
-      id: "reflection",
-      name: "Daily Reflection",
-      icon: "fa-regular fa-brain",
-      class: "bg-emerald-500/10 text-emerald-500/80 border-emerald-500/20",
-    },
-    {
-      id: "activity_log",
-      name: "Activity Log",
-      icon: "fa-regular fa-list-check",
-      class: "bg-cyan-500/10 text-cyan-500/80 border-cyan-500/20",
-    },
-    {
-      id: "mood",
-      name: "Mood & Energy",
-      icon: "fa-regular fa-face-smile",
-      class: "bg-lime-500/10 text-lime-500/80 border-lime-500/20",
-    },
-    {
-      id: "gratitude",
-      name: "Gratitude & Wins",
-      icon: "fa-regular fa-sun",
-      class: "bg-violet-500/10 text-violet-500/80 border-violet-500/20",
-    },
-    {
-      id: "notes",
-      name: "Quick Notes",
-      icon: "fa-regular fa-note-sticky",
-      class: "bg-pink-500/10 text-pink-500/80 border-pink-500/20",
-    },
-    {
-      id: "review",
-      name: "Nightly Review",
-      icon: "fa-regular fa-moon",
-      class: "bg-red-500/10 text-red-500/80 border-red-500/20",
-    },
-
-    // TEMPLATE CATEGORIES
-    {
-      id: "workflow",
-      name: "Workflows",
-      icon: "fa-regular fa-diagram-project",
-      class: "bg-amber-500/10 text-amber-500/80 border-amber-500/20",
-    },
+    ...GOAL_CATEGORIES,
+    ...DAILY_LOG_CATEGORIES,
+    ...TEMPLATE_CATEGORIES,
   ],
 
-  _timeframeRegistry: [
-    {
-      id: "yearly",
-      name: "Yearly",
-      icon: "fa-regular fa-calendar-days",
-      class: "bg-violet-500/10 text-violet-500/80 border-violet-500/20",
-    },
-    {
-      id: "monthly",
-      name: "Monthly",
-      icon: "fa-regular fa-calendar-range",
-      class: "bg-pink-500/10 text-pink-500/80 border-pink-500/20",
-    },
-    {
-      id: "weekly",
-      name: "Weekly",
-      icon: "fa-regular fa-calendar-week",
-      class: "bg-blue-500/10 text-blue-500/80 border-blue-500/20",
-    },
-    {
-      id: "short_term",
-      name: "Short Term",
-      icon: "fa-regular fa-bolt",
-      class: "bg-amber-500/10 text-amber-500/80 border-amber-500/20",
-    },
-    {
-      id: "medium_term",
-      name: "Medium Term",
-      icon: "fa-regular fa-clock",
-      class: "bg-emerald-500/10 text-emerald-500/80 border-emerald-500/20",
-    },
-    {
-      id: "long_term",
-      name: "Long Term",
-      icon: "fa-regular fa-hourglass-end",
-      class: "bg-red-500/10 text-red-500/80 border-red-500/20",
-    },
-    {
-      id: "lifetime",
-      name: "Lifetime",
-      icon: "fa-regular fa-infinity",
-      class: "bg-cyan-500/10 text-cyan-500/80 border-cyan-500/20",
-    },
-  ],
+  _timeframeRegistry: TIMEFRAME_OPTIONS,
 
   _getCategoryBadgeHtml(categoryInput) {
     const rawCategory =
       typeof categoryInput === "object"
-        ? categoryInput?.name || categoryInput?.id || ""
-        : categoryInput || "General";
+        ? categoryInput?.id || categoryInput?.name || ""
+        : categoryInput || "general";
 
     const normalizedInput = String(rawCategory)
       .toLowerCase()
@@ -161,16 +35,19 @@ export const PlansItemComponent = {
     );
 
     const categoryData = matched || {
-      name: rawCategory,
-      icon: "fa-regular fa-folder",
+      name: rawCategory || "General",
+      icon: "fa-regular fa-folder text-amber-500/80",
       class: "bg-surface text-secondary border-border/60",
     };
+
+    // Extract solid icon class and make it regular for uniform badges
+    const iconClass = categoryData.icon.replace("fa-solid", "fa-regular");
 
     return `
       <span
         class="inline-flex items-center gap-1 rounded-md border ${categoryData.class} px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider"
       >
-        <i class="${categoryData.icon} text-[9px]"></i>
+        <i class="${iconClass} text-[9px]"></i>
         <span>${categoryData.name}</span>
       </span>
     `;
@@ -193,16 +70,18 @@ export const PlansItemComponent = {
     );
 
     const tfData = matched || {
-      name: rawTimeframe,
-      icon: "fa-regular fa-calendar",
+      name: rawTimeframe || "Yearly",
+      icon: "fa-regular fa-calendar text-violet-500/80",
       class: "bg-surface text-secondary border-border/60",
     };
+
+    const iconClass = tfData.icon.replace("fa-solid", "fa-regular");
 
     return `
       <span
         class="inline-flex items-center gap-1 rounded-md border ${tfData.class} px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider"
       >
-        <i class="${tfData.icon} text-[9px]"></i>
+        <i class="${iconClass} text-[9px]"></i>
         <span>${tfData.name}</span>
       </span>
     `;
@@ -334,8 +213,7 @@ export const PlansItemComponent = {
     const unitIconClass = this._getUnitIconClass(plan.unit);
     const milestones = Array.isArray(plan.milestones) ? plan.milestones : [];
 
-    const unitSymbol =
-      plan.unit === "money" ? "$" : plan.unit || "%";
+    const unitSymbol = plan.unit === "money" ? "$" : plan.unit || "%";
     const stepAmount = this._calculateStepAmount(plan.unit, target);
 
     return `
@@ -352,10 +230,10 @@ export const PlansItemComponent = {
                 <span
                   class="inline-flex items-center gap-1 rounded-md border ${
                     isCompleted
-                      ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-500"
+                      ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-500/80"
                       : isInProgress
-                        ? "border-brand/20 bg-brand/10 text-brand"
-                        : "border-sky-500/20 bg-sky-500/10 text-sky-500"
+                        ? "border-brand/20 bg-brand/10 text-brand/80"
+                        : "border-sky-500/20 bg-sky-500/10 text-sky-500/80"
                   } px-2 py-0.5 text-[10px] uppercase font-semibold"
                 >
                   <i class="${statusIconClass} text-[9px]"></i>
@@ -502,6 +380,8 @@ export const PlansItemComponent = {
     };
     const moodInfo = moodIcons[log.mood] || moodIcons.good;
 
+    const linkedGoalTitle = log.linkedGoal?.title || "";
+
     return `
       <div
         data-id="${log.id}"
@@ -521,9 +401,9 @@ export const PlansItemComponent = {
               </span>
 
               ${
-                log.linkedGoalTitle
-                  ? `<span class="inline-flex items-center gap-1 rounded-md border border-brand/30 bg-brand/10 px-2 py-0.5 text-[10px] font-medium text-brand">
-                      <i class="fa-regular fa-bullseye"></i> Goal: ${log.linkedGoalTitle}
+                linkedGoalTitle
+                  ? `<span class="inline-flex items-center gap-1 rounded-md border border-brand/20 bg-brand/10 px-2 py-0.5 text-[10px] font-medium text-brand/80">
+                      <i class="fa-regular fa-bullseye"></i> Goal: ${linkedGoalTitle}
                     </span>`
                   : ""
               }
@@ -540,10 +420,6 @@ export const PlansItemComponent = {
                   </p>`
                 : ""
             }
-
-            <div class="flex items-center gap-3 mt-1 text-[11px] lg:text-xs text-muted">
-              <span><i class="fa-regular fa-clock me-1"></i>Logged at ${log.createdAt || "N/A"}</span>
-            </div>
           </div>
 
           ${this._renderActionButtons(log.id)}
@@ -562,17 +438,21 @@ export const PlansItemComponent = {
         class="template-item group relative flex flex-col justify-between gap-4 p-3 md:p-4 rounded-xl bg-surface-2/40 hover:bg-surface-2/60 transition-all border border-dashed border-border/80"
       >
         <div class="flex flex-col gap-2">
-          <div class="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+          <div
+            class="flex flex-col gap-2 md:flex-row md:items-start md:justify-between"
+          >
             <div class="flex items-center gap-1.5 flex-wrap pe-12">
-              <span class="inline-flex items-center gap-1 rounded-md border border-purple-500/20 bg-purple-500/10 px-2 py-0.5 text-[10px] uppercase font-semibold tracking-wider text-purple-400">
+              <span
+                class="inline-flex items-center gap-1 rounded-md border border-violet-500/20 bg-violet-500/10 px-2 py-0.5 text-[10px] uppercase font-semibold tracking-wider text-violet-500/80"
+              >
                 <i class="fa-regular fa-cubes"></i> Template
               </span>
-              
+
               ${categoryBadgeHtml}
 
               ${
                 template.isFavorite
-                  ? `<span class="inline-flex items-center gap-1 rounded-md border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold text-amber-400">
+                  ? `<span class="inline-flex items-center gap-1 rounded-md border border-yellow-500/20 bg-yellow-500/10 px-2 py-0.5 text-[10px] font-semibold text-yellow-500/80">
                       <i class="fa-regular fa-star"></i> Favorite
                     </span>`
                   : ""
@@ -582,7 +462,9 @@ export const PlansItemComponent = {
             ${this._renderActionButtons(template.id)}
           </div>
 
-          <h3 class="text-sm lg:text-base font-bold text-color tracking-tight mt-1 wrap-break-word">
+          <h3
+            class="text-sm lg:text-base font-bold text-color tracking-tight mt-1 wrap-break-word"
+          >
             ${template.title}
           </h3>
 
@@ -615,13 +497,15 @@ export const PlansItemComponent = {
           }
         </div>
 
-        <div class="pt-3 border-t border-border/50 flex items-center justify-between">
+        <div
+          class="pt-3 border-t border-border/50 flex items-center justify-between"
+        >
           <span class="text-[11px] text-muted">
             <i class="fa-regular fa-layer-group me-1"></i>Preset Framework
           </span>
           <button
             data-id="${template.id}"
-            class="use-template-btn inline-flex items-center gap-1.5 bg-brand hover:bg-brand/90 text-(--color-btn-primary-text) text-xs font-semibold px-3 py-1.5 rounded-lg transition shadow-md shadow-brand/20 cursor-pointer"
+            class="use-template-btn inline-flex items-center gap-1.5 bg-brand/80 hover:bg-brand/90 text-(--color-btn-primary-text) text-xs font-semibold px-3 py-1.5 rounded-lg transition shadow-md shadow-brand/20 cursor-pointer"
           >
             <i class="fa-regular fa-rocket"></i> Use Template
           </button>

@@ -266,16 +266,18 @@ export const PlansView = {
                 class="plan-tab-fields hidden flex-col gap-4"
                 data-tab-fields="templates"
               >
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div class="col-span-2 flex flex-col gap-1.5">
+                <div
+                  class="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full"
+                >
+                  <div class="flex-1 w-full min-w-0">
                     <div
                       id="create-template-category-autocomplete"
                       class="w-full"
                     ></div>
                   </div>
-                  <div class="col-span-1 flex items-center pt-5">
+                  <div class="shrink-0 w-auto pt-3 sm:pt-6">
                     <label
-                      class="relative inline-flex items-center cursor-pointer gap-2 select-none"
+                      class="relative inline-flex items-center cursor-pointer gap-2.5 select-none"
                     >
                       <input
                         id="create-template-favorite"
@@ -283,9 +285,10 @@ export const PlansView = {
                         class="sr-only peer"
                       />
                       <div
-                        class="w-9 h-5 bg-surface-3 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-brand"
+                        class="w-10 h-5.5 bg-surface-3 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4.5 after:w-4.5 after:transition-all peer-checked:bg-brand"
                       ></div>
-                      <span class="text-xs font-semibold text-secondary"
+                      <span
+                        class="text-xs font-semibold text-secondary whitespace-nowrap"
                         >Mark as Favorite</span
                       >
                     </label>
