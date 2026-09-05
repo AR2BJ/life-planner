@@ -3,64 +3,88 @@ export const EditModalsComponent = {
     const isCompleted = step.completed;
 
     return `
-    <div class="group flex items-center justify-between gap-3 p-2.5 lg:p-3 rounded-xl bg-surface border border-border/80 hover:border-border transition">
-      <div class="flex items-center gap-3 min-w-0 flex-1">
+      <div
+        class="group flex items-center justify-between gap-3 p-2.5 lg:p-3 rounded-xl bg-surface border border-border/80 hover:border-border transition"
+      >
+        <div class="flex items-center gap-3 min-w-0 flex-1">
+          <button
+            type="button"
+            data-step-id="${step.id}"
+            class="toggle-step-btn shrink-0 w-6 h-6 rounded-lg flex items-center justify-center text-base transition cursor-pointer ${
+              isCompleted ? "text-brand" : "text-secondary hover:text-color"
+            }"
+          >
+            <i
+              class="${
+                isCompleted
+                  ? "fa-solid fa-square-check"
+                  : "fa-regular fa-square"
+              }"
+            ></i>
+          </button>
+
+          <span
+            class="text-xs lg:text-sm text-color truncate ${
+              isCompleted ? "line-through text-secondary" : ""
+            }"
+          >
+            ${step.title}
+          </span>
+        </div>
+
         <button
           type="button"
           data-step-id="${step.id}"
-          class="toggle-step-btn shrink-0 w-6 h-6 rounded-lg flex items-center justify-center text-base transition cursor-pointer ${
-            isCompleted ? "text-brand" : "text-secondary hover:text-color"
-          }"
+          class="delete-step-btn opacity-0 group-hover:opacity-100 w-7 h-7 rounded-lg bg-surface-2 hover:bg-red-600/10 text-secondary hover:text-red-500 flex items-center justify-center transition cursor-pointer shrink-0"
         >
-          <i class="${isCompleted ? "fa-solid fa-square-check" : "fa-regular fa-square"}"></i>
+          <i class="fa-regular fa-trash-can text-xs"></i>
         </button>
-
-        <span class="text-xs lg:text-sm text-color truncate ${isCompleted ? "line-through text-secondary" : ""}">
-          ${step.title}
-        </span>
       </div>
-
-      <button
-        type="button"
-        data-step-id="${step.id}"
-        class="delete-step-btn opacity-0 group-hover:opacity-100 w-7 h-7 rounded-lg bg-surface-2 hover:bg-red-600/10 text-secondary hover:text-red-500 flex items-center justify-center transition cursor-pointer shrink-0"
-      >
-        <i class="fa-regular fa-trash-can text-xs"></i>
-      </button>
-    </div>
-  `;
+    `;
   },
 
   renderMilestoneItem(milestone) {
     const isCompleted = Boolean(milestone.completed);
 
     return `
-    <div class="group flex items-center justify-between gap-3 p-2.5 lg:p-3 rounded-xl bg-surface border border-border/80 hover:border-border transition">
-      <div class="flex items-center gap-3 min-w-0 flex-1">
+      <div
+        class="group flex items-center justify-between gap-3 p-2.5 lg:p-3 rounded-xl bg-surface border border-border/80 hover:border-border transition"
+      >
+        <div class="flex items-center gap-3 min-w-0 flex-1">
+          <button
+            type="button"
+            data-milestone-id="${milestone.id}"
+            class="toggle-milestone-btn shrink-0 w-6 h-6 rounded-lg flex items-center justify-center text-base transition cursor-pointer ${
+              isCompleted ? "text-brand" : "text-secondary hover:text-color"
+            }"
+          >
+            <i
+              class="${
+                isCompleted
+                  ? "fa-solid fa-square-check"
+                  : "fa-regular fa-square"
+              }"
+            ></i>
+          </button>
+
+          <span
+            class="text-xs lg:text-sm text-color truncate ${
+              isCompleted ? "line-through text-secondary" : ""
+            }"
+          >
+            ${milestone.title}
+          </span>
+        </div>
+
         <button
           type="button"
           data-milestone-id="${milestone.id}"
-          class="toggle-milestone-btn shrink-0 w-6 h-6 rounded-lg flex items-center justify-center text-base transition cursor-pointer ${
-            isCompleted ? "text-brand" : "text-secondary hover:text-color"
-          }"
+          class="delete-milestone-btn opacity-0 group-hover:opacity-100 w-7 h-7 rounded-lg bg-surface-2 hover:bg-red-600/10 text-secondary hover:text-red-500 flex items-center justify-center transition cursor-pointer shrink-0"
         >
-          <i class="${isCompleted ? "fa-solid fa-square-check" : "fa-regular fa-square"}"></i>
+          <i class="fa-regular fa-trash-can text-xs"></i>
         </button>
-
-        <span class="text-xs lg:text-sm text-color truncate ${isCompleted ? "line-through text-secondary" : ""}">
-          ${milestone.title}
-        </span>
       </div>
-
-      <button
-        type="button"
-        data-milestone-id="${milestone.id}"
-        class="delete-milestone-btn opacity-0 group-hover:opacity-100 w-7 h-7 rounded-lg bg-surface-2 hover:bg-red-600/10 text-secondary hover:text-red-500 flex items-center justify-center transition cursor-pointer shrink-0"
-      >
-        <i class="fa-regular fa-trash-can text-xs"></i>
-      </button>
-    </div>
-  `;
+    `;
   },
 
   render() {
@@ -136,11 +160,11 @@ export const EditModalsComponent = {
               </button>
 
               <div class="accordion-content p-3.5 lg:p-4 flex flex-col gap-3.5">
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5 w-full">
-                  <div class="sm:col-span-2 flex flex-col">
+                <div class="flex flex-col sm:flex-row items-stretch sm:items-end gap-3.5 w-full">
+                  <div class="flex flex-col flex-1 min-w-0">
                     <label
                       for="edit-item-title"
-                      class="mb-1.5 block ps-1 text-xs font-semibold text-secondary"
+                      class="mb-1.5 block ps-3 text-xs font-semibold text-secondary"
                     >
                       Title <span class="text-red-500">*</span>
                     </label>
@@ -148,11 +172,11 @@ export const EditModalsComponent = {
                       id="edit-item-title"
                       type="text"
                       placeholder="Enter title..."
-                      class="h-10 lg:h-11 w-full rounded-xl bg-surface border border-border px-3.5 text-xs lg:text-sm text-color placeholder:text-secondary/70 outline-none focus:border-brand/80 transition"
+                      class="h-10 lg:h-11 w-full rounded-xl border border-border bg-surface px-4 text-sm text-color placeholder:text-secondary/70 transition focus:border-brand/80 focus:outline-none"
                     />
                   </div>
 
-                  <div class="sm:col-span-1 flex flex-col justify-end">
+                  <div class="flex flex-col flex-1 min-w-0">
                     <div
                       id="edit-goal-category-container"
                       class="edit-tab-field w-full"
@@ -184,20 +208,42 @@ export const EditModalsComponent = {
                       ></div>
                     </div>
                   </div>
+
+                  <div
+                    class="edit-tab-field hidden shrink-0 w-auto h-10 lg:h-11 items-center justify-start sm:justify-end pt-2.5"
+                    data-tab="templates"
+                  >
+                    <label
+                      class="relative inline-flex items-center cursor-pointer gap-2.5 select-none"
+                    >
+                      <input
+                        id="edit-template-favorite"
+                        type="checkbox"
+                        class="sr-only peer"
+                      />
+                      <div
+                        class="w-10 h-5.5 bg-surface-3 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4.5 after:w-4.5 after:transition-all peer-checked:bg-brand"
+                      ></div>
+                      <span
+                        class="text-xs font-semibold text-secondary whitespace-nowrap"
+                        >Mark as Favorite</span
+                      >
+                    </label>
+                  </div>
                 </div>
 
                 <div class="w-full flex flex-col">
                   <label
                     for="edit-item-desc"
-                    class="mb-1.5 block ps-1 text-xs font-semibold text-secondary"
+                    class="mb-1.5 block ps-3 text-xs font-semibold text-secondary"
                   >
                     Description
                   </label>
                   <textarea
                     id="edit-item-desc"
-                    rows="3"
+                    rows="2"
                     placeholder="Enter description or content..."
-                    class="w-full scrollbar-thin scrollbar-thumb-surface rounded-xl bg-surface border border-border p-3 text-xs lg:text-sm text-color placeholder:text-secondary/70 outline-none focus:border-brand/80 transition resize-none"
+                    class="w-full scrollbar-thin scrollbar-thumb-surface rounded-xl border border-border bg-surface p-3 text-sm text-color placeholder:text-secondary/70 transition focus:border-brand/80 focus:outline-none resize-none"
                   ></textarea>
                 </div>
               </div>
@@ -250,7 +296,7 @@ export const EditModalsComponent = {
                   <div class="flex flex-col">
                     <label
                       for="edit-goal-current"
-                      class="mb-1.5 block ps-1 text-xs font-semibold text-secondary"
+                      class="mb-1.5 block ps-3 text-xs font-semibold text-secondary"
                     >
                       Current Value
                     </label>
@@ -258,13 +304,13 @@ export const EditModalsComponent = {
                       id="edit-goal-current"
                       type="text"
                       inputmode="numeric"
-                      class="h-10 lg:h-11 w-full rounded-xl bg-surface border border-border px-3.5 text-xs lg:text-sm text-color focus:border-brand/80 transition"
+                      class="h-10 lg:h-11 w-full rounded-xl border border-border bg-surface px-4 text-sm text-color placeholder:text-secondary/70 transition focus:border-brand/80 focus:outline-none"
                     />
                   </div>
                   <div class="flex flex-col">
                     <label
                       for="edit-goal-target"
-                      class="mb-1.5 block ps-1 text-xs font-semibold text-secondary"
+                      class="mb-1.5 block ps-3 text-xs font-semibold text-secondary"
                     >
                       Target Value
                     </label>
@@ -272,7 +318,7 @@ export const EditModalsComponent = {
                       id="edit-goal-target"
                       type="text"
                       inputmode="numeric"
-                      class="h-10 lg:h-11 w-full rounded-xl bg-surface border border-border px-3.5 text-xs lg:text-sm text-color focus:border-brand/80 transition"
+                      class="h-10 lg:h-11 w-full rounded-xl border border-border bg-surface px-4 text-sm text-color placeholder:text-secondary/70 transition focus:border-brand/80 focus:outline-none"
                     />
                   </div>
                   <div
@@ -344,10 +390,10 @@ export const EditModalsComponent = {
                     id="new-milestone-input"
                     type="text"
                     placeholder="Add a new milestone or checkpoint..."
-                    class="w-full h-10 lg:h-11 flex-1 rounded-xl bg-transparent px-3.5 pe-23 text-xs lg:text-sm text-color placeholder:text-secondary/70 outline-none focus:border-brand/80 transition"
+                    class="h-10 lg:h-11 w-full rounded-xl bg-surface px-4 text-sm text-color placeholder:text-secondary/70 transition focus:border-brand/80 focus:outline-none"
                   />
                   <button
-                    id="add-milestone-btn"
+                    id="btn-add-milestone"
                     type="button"
                     class="w-20 h-10 lg:h-11 absolute right-0 px-3.5 rounded-e-xl bg-brand/10 text-brand/80 transition hover:bg-brand/20 font-semibold text-xs lg:text-sm flex items-center justify-center gap-1.5 shrink-0 cursor-pointer"
                   >
@@ -356,7 +402,7 @@ export const EditModalsComponent = {
                 </div>
 
                 <div
-                  id="edit-milestones-list"
+                  id="goal-milestones-list"
                   class="w-full flex flex-col gap-2"
                 ></div>
               </div>
@@ -441,12 +487,6 @@ export const EditModalsComponent = {
                 </div>
 
                 <div class="flex items-center gap-2 lg:gap-3">
-                  <span
-                    id="step-progress-badge"
-                    class="text-[10px] lg:text-xs text-secondary px-2 lg:px-3 py-1 rounded-lg bg-surface border border-border shrink-0"
-                  >
-                    0/0 Done
-                  </span>
                   <i
                     class="accordion-icon fa-regular fa-chevron-down text-secondary text-xs lg:text-sm transition-transform duration-200"
                   ></i>
@@ -463,7 +503,7 @@ export const EditModalsComponent = {
                     id="new-step-input"
                     type="text"
                     placeholder="Add a new execution step..."
-                    class="w-full h-10 lg:h-11 flex-1 rounded-xl bg-transparent px-3.5 pe-23 text-xs lg:text-sm text-color placeholder:text-secondary/70 outline-none focus:border-brand/80 transition"
+                    class="h-10 lg:h-11 w-full rounded-xl bg-surface px-4 text-sm text-color placeholder:text-secondary/70 transition focus:border-brand/80 focus:outline-none"
                   />
                   <button
                     id="add-step-btn"
@@ -475,7 +515,7 @@ export const EditModalsComponent = {
                 </div>
 
                 <div
-                  id="steps-list-container"
+                  id="template-steps-list"
                   class="w-full flex flex-col gap-2"
                 ></div>
               </div>

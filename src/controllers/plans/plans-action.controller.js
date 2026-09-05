@@ -6,11 +6,29 @@ import {
 
 import { NotificationService } from "@/services/notification.service.js";
 import { PlanService } from "@/services/plans.service.js";
+import { openMilestonesState } from "@/utils/helpers.js";
 
 export const PlansActionController = {
   init(mainController) {
     this.mainController = mainController;
     this.bindDynamicEvents();
+  },
+
+  handleQuickStep(goalId, stepVal) {
+    const goals = StateManager.getGoals();
+    const targetGoal = goals.find((g) => g.id === goalId);
+    if (!targetGoal) return;
+
+    const newCurrent = Math.max(0, targetGoal.currentValue + stepVal);
+    const updatedGoals = PlanService.updateGoalProgress(
+      goals,
+      goalId,
+      newCurrent,
+    );
+
+    StateManager.setGoals(updatedGoals);
+    StateManager.save();
+    this.mainController.refreshUI();
   },
 
   bindDynamicEvents() {
@@ -22,7 +40,58 @@ export const PlansActionController = {
       const activeTab = StateManager.getPlansTab();
 
       // ==========================================
-      // 1. GOAL PROGRESS / INCREMENT HANDLER
+      // 1. TOGGLE MILESTONES DROPDOWN (ACCORDION)
+      // ==========================================
+      const toggleMilestonesBtn = target.closest(".toggle-milestones-btn");
+      if (toggleMilestonesBtn) {
+        e.stopPropagation();
+        const goalId = toggleMilestonesBtn.dataset.goalId;
+        if (!goalId) return;
+
+        const container = document.getElementById(
+          `milestones-container-${goalId}`,
+        );
+        const chevron = toggleMilestonesBtn.querySelector(".milestone-chevron");
+
+        if (openMilestonesState.expandedGoalIds.has(goalId)) {
+          openMilestonesState.expandedGoalIds.delete(goalId);
+          if (container) container.classList.add("hidden");
+          if (chevron) chevron.classList.remove("rotate-180");
+        } else {
+          openMilestonesState.expandedGoalIds.add(goalId);
+          if (container) container.classList.remove("hidden");
+          if (chevron) chevron.classList.add("rotate-180");
+        }
+        return;
+      }
+
+      // ==========================================
+      // 2. TOGGLE INDIVIDUAL MILESTONE CHECKBOX
+      // ==========================================
+      const milestoneToggle = target.closest(".milestone-toggle");
+      if (milestoneToggle) {
+        e.stopPropagation();
+        const goalId = milestoneToggle.dataset.goalId;
+        const milestoneId = milestoneToggle.dataset.milestoneId;
+
+        if (goalId && milestoneId) {
+          openMilestonesState.expandedGoalIds.add(goalId);
+
+          const updatedGoals = PlanService.toggleMilestone(
+            StateManager.getGoals(),
+            goalId,
+            milestoneId,
+          );
+
+          StateManager.setGoals(updatedGoals);
+          StateManager.save();
+          this.mainController.refreshUI();
+        }
+        return;
+      }
+
+      // ==========================================
+      // 3. GOAL PROGRESS / INCREMENT HANDLER
       // ==========================================
       const progressBtn = target.closest(".progress-btn");
       if (progressBtn) {
@@ -42,7 +111,9 @@ export const PlansActionController = {
             this.mainController.refreshUI();
 
             const updatedGoal = updated.find((g) => g.id === id);
-            const isCompleted = updatedGoal?.status === "completed";
+            const isCompleted =
+              updatedGoal?.status === "completed" ||
+              updatedGoal?.status === "done";
 
             NotificationService.show({
               type: isCompleted ? "success" : "info",
@@ -62,7 +133,7 @@ export const PlansActionController = {
         return;
       }
 
-      const stepBtn = e.target.closest(".quick-step-btn");
+      const stepBtn = target.closest(".quick-step-btn");
       if (stepBtn) {
         e.stopPropagation();
         const goalId = stepBtn.dataset.id;
@@ -72,7 +143,7 @@ export const PlansActionController = {
       }
 
       // ==========================================
-      // 2. TOGGLE TEMPLATE FAVORITE
+      // 4. TOGGLE TEMPLATE FAVORITE
       // ==========================================
       const favoriteBtn = target.closest(".favorite-btn");
       if (favoriteBtn) {
@@ -107,7 +178,7 @@ export const PlansActionController = {
       }
 
       // ==========================================
-      // 3. EDIT MODAL TRIGGER
+      // 5. EDIT MODAL TRIGGER
       // ==========================================
       const editBtn = target.closest(".edit-btn");
       if (editBtn) {
@@ -118,7 +189,7 @@ export const PlansActionController = {
       }
 
       // ==========================================
-      // 4. DELETE MODAL TRIGGER
+      // 6. DELETE MODAL TRIGGER
       // ==========================================
       const deleteBtn = target.closest(".delete-btn");
       if (deleteBtn) {
@@ -129,7 +200,7 @@ export const PlansActionController = {
       }
 
       // ==========================================
-      // 5. DIRECT DELETE ITEM HANDLER (WITH UNDO)
+      // 7. DIRECT DELETE ITEM HANDLER
       // ==========================================
       const directDeleteBtn = target.closest(".direct-delete-btn");
       if (directDeleteBtn) {
@@ -184,20 +255,5 @@ export const PlansActionController = {
         return;
       }
     });
-  },
-
-  handleQuickStep(goalId, stepVal) {
-    const goals = StateManager.getGoals();
-    const targetGoal = goals.find((g) => g.id === goalId);
-    if (!targetGoal) return;
-
-    const newCurrent = Math.max(0, targetGoal.currentValue + stepVal);
-    const updatedGoals = PlanService.updateGoalProgress(
-      goals,
-      goalId,
-      newCurrent,
-    );
-
-    StateManager.setGoals(updatedGoals);
   },
 };

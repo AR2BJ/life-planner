@@ -5,8 +5,7 @@ import {
   TEMPLATE_CATEGORIES,
   TIMEFRAME_OPTIONS,
 } from "@/utils/constants/options-value.constants";
-
-import { formatNumberWithCommas } from "@/utils/helpers";
+import { formatNumberWithCommas, openMilestonesState } from "@/utils/helpers";
 
 export const PlansItemComponent = {
   // Combine all categories directly from source of truth
@@ -173,6 +172,8 @@ export const PlansItemComponent = {
     const isCompleted = plan.status === "done";
     const isInProgress = plan.status === "in_progress";
 
+    const isExpanded = openMilestonesState.expandedGoalIds.has(plan.id);
+
     const isPercentUnit = plan.unit === "%" || plan.unit === "percentage";
     const progressPercent = isPercentUnit
       ? Math.min(100, Math.max(0, current))
@@ -212,6 +213,34 @@ export const PlansItemComponent = {
     const timeframeBadgeHtml = this._getTimeframeBadgeHtml(plan.timeframe);
     const unitIconClass = this._getUnitIconClass(plan.unit);
     const milestones = Array.isArray(plan.milestones) ? plan.milestones : [];
+    const completedMilestones = milestones.filter((m) => m.completed).length;
+
+    const milestonesPercentage =
+      milestones.length > 0
+        ? Math.round((completedMilestones / milestones.length) * 100)
+        : 0;
+
+    const milestonesProgressColor =
+      milestonesPercentage === 100
+        ? "bg-emerald-500/80"
+        : milestonesPercentage <= 65 && milestonesPercentage >= 35
+          ? "bg-amber-500/80"
+          : milestonesPercentage <= 35 && milestonesPercentage > 0
+            ? "bg-red-500/80"
+            : milestonesPercentage === 0
+              ? "bg-slate-500/80"
+              : "bg-brand/80";
+
+    const milestonesPercentColor =
+      milestonesPercentage === 100
+        ? "text-emerald-500/80"
+        : milestonesPercentage <= 65 && milestonesPercentage >= 35
+          ? "text-amber-500/80"
+          : milestonesPercentage <= 35 && milestonesPercentage > 0
+            ? "text-red-500/80"
+            : milestonesPercentage === 0
+              ? "text-slate-500/80"
+              : "text-brand/80";
 
     const unitSymbol = plan.unit === "money" ? "$" : plan.unit || "%";
     const stepAmount = this._calculateStepAmount(plan.unit, target);
@@ -223,7 +252,9 @@ export const PlansItemComponent = {
           isCompleted ? "opacity-80" : ""
         }"
       >
-        <div class="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+        <div
+          class="flex flex-col gap-4 md:flex-row md:items-start md:justify-between"
+        >
           <div class="flex items-start gap-3 min-w-0 flex-1">
             <div class="flex flex-col min-w-0 w-full gap-1.5 pe-12 md:pe-0">
               <div class="flex items-center gap-2 flex-wrap">
@@ -239,8 +270,7 @@ export const PlansItemComponent = {
                   <i class="${statusIconClass} text-[9px]"></i>
                   ${plan.status.replace("_", " ")}
                 </span>
-                ${categoryBadgeHtml}
-                ${timeframeBadgeHtml}
+                ${categoryBadgeHtml} ${timeframeBadgeHtml}
                 ${
                   plan.priority
                     ? `<span
@@ -252,9 +282,7 @@ export const PlansItemComponent = {
                 }
               </div>
 
-              <h2 class="text-base font-bold mt-1 text-color">
-                ${plan.title}
-              </h2>
+              <h2 class="text-base font-bold mt-1 text-color">${plan.title}</h2>
 
               ${
                 plan.description
@@ -263,7 +291,9 @@ export const PlansItemComponent = {
               }
 
               <div class="flex flex-col gap-1.5 mt-2 text-[11px] text-muted">
-                <div class="flex flex-col sm:flex-row sm:items-center gap-2 text-secondary/80 mt-0.5">
+                <div
+                  class="flex flex-col sm:flex-row sm:items-center gap-2 text-secondary/80 mt-0.5"
+                >
                   ${
                     plan.startDate
                       ? `<span class="flex items-center gap-1.5"><i class="fa-regular fa-calendar-check text-emerald-500/80"></i> Start Date: <strong class="text-color">${plan.startDate}</strong></span>`
@@ -283,11 +313,14 @@ export const PlansItemComponent = {
         </div>
 
         <div class="mt-1 border-t border-border/40 pt-3">
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div
+            class="flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+          >
             <div class="flex items-center gap-2">
               <i class="${unitIconClass}"></i>
               <span class="text-xs font-bold text-secondary">
-                Progress: ${formatNumberWithCommas(current)} / ${formatNumberWithCommas(target)} ${unitSymbol}
+                Progress: ${formatNumberWithCommas(current)} /
+                ${formatNumberWithCommas(target)} ${unitSymbol}
               </span>
             </div>
 
@@ -296,12 +329,18 @@ export const PlansItemComponent = {
                 data-id="${plan.id}"
                 data-step="-${stepAmount}"
                 title="Decrease by ${stepAmount} ${unitSymbol}"
-                class="quick-step-btn h-7 w-7 rounded-lg bg-surface border border-border flex items-center justify-center text-xs font-bold text-secondary hover:text-color hover:bg-surface-2 cursor-pointer transition shadow-xs ${progressPercent === 0 ? "opacity-50 select-none pointer-events-none" : ""}"
+                class="quick-step-btn h-7 w-7 rounded-lg bg-surface border border-border flex items-center justify-center text-xs font-bold text-secondary hover:text-color hover:bg-surface-2 cursor-pointer transition shadow-xs ${
+                  progressPercent === 0
+                    ? "opacity-50 select-none pointer-events-none"
+                    : ""
+                }"
               >
                 <i class="fa-regular fa-minus"></i>
               </button>
 
-              <div class="w-24 sm:w-32 h-2 rounded-full bg-surface-2 overflow-hidden">
+              <div
+                class="w-24 sm:w-32 h-2 rounded-full bg-surface-2 overflow-hidden"
+              >
                 <div
                   class="h-full ${progressColor} transition-all duration-300"
                   style="width: ${progressPercent}%"
@@ -312,7 +351,11 @@ export const PlansItemComponent = {
                 data-id="${plan.id}"
                 data-step="+${stepAmount}"
                 title="Increase by ${stepAmount} ${unitSymbol}"
-                class="quick-step-btn h-7 w-7 rounded-lg bg-surface border border-border flex items-center justify-center text-xs font-bold text-secondary hover:text-color hover:bg-surface-2 cursor-pointer transition shadow-xs ${progressPercent === target ? "opacity-50 select-none pointer-events-none" : ""}"
+                class="quick-step-btn h-7 w-7 rounded-lg bg-surface border border-border flex items-center justify-center text-xs font-bold text-secondary hover:text-color hover:bg-surface-2 cursor-pointer transition shadow-xs ${
+                  progressPercent === target
+                    ? "opacity-50 select-none pointer-events-none"
+                    : ""
+                }"
               >
                 <i class="fa-regular fa-plus"></i>
               </button>
@@ -327,26 +370,100 @@ export const PlansItemComponent = {
         ${
           milestones.length > 0
             ? `
-            <div class="mt-2 bg-surface/40 p-3 rounded-lg border border-border/40 flex flex-col gap-2">
-              <div class="flex items-center justify-between">
-                <span class="text-[11px] font-bold uppercase tracking-wider text-muted flex items-center gap-1.5">
-                  <i class="fa-regular fa-list-check text-brand"></i> Milestones (${milestones.filter((m) => m.completed).length}/${milestones.length})
-                </span>
-              </div>
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-1">
-                ${milestones
-                  .map(
-                    (m) => `
-                  <label class="flex items-center gap-2 p-1.5 rounded bg-surface/60 border border-border/30 hover:border-border cursor-pointer transition">
-                    <input type="checkbox" data-goal-id="${plan.id}" data-milestone-id="${m.id}" class="milestone-checkbox rounded text-brand focus:ring-0 cursor-pointer" ${m.completed ? "checked" : ""} />
-                    <span class="text-xs ${m.completed ? "line-through text-muted" : "text-color"}">${m.title}</span>
-                  </label>
-                `,
-                  )
-                  .join("")}
-              </div>
-            </div>
-          `
+                <div class="border-t border-border/60 pt-2">
+                  <button
+                    type="button"
+                    data-goal-id="${plan.id}"
+                    class="toggle-milestones-btn w-full flex flex-wrap sm:flex-nowrap items-center justify-between gap-5 p-2 rounded-md hover:bg-surface-3/40 transition cursor-pointer group/milestone-hdr text-left"
+                  >
+                    <div
+                      class="w-full sm:w-fit flex justify-center xs:justify-start items-center gap-2"
+                    >
+                      <i class="fa-regular fa-list-check text-brand/80"></i>
+                      <span
+                        class="text-[11px] sm:text-xs font-bold text-secondary group-hover/milestone-hdr:text-color transition"
+                      >
+                        Milestones
+                        (${completedMilestones}/${milestones.length})
+                      </span>
+                    </div>
+
+                    <div class="w-full sm:w-fit flex items-center gap-3">
+                      <div
+                        class="w-full sm:w-32 h-1.5 rounded-full bg-surface-2 overflow-hidden"
+                      >
+                        <div
+                          class="h-full ${milestonesProgressColor} transition-all duration-300"
+                          style="width: ${milestonesPercentage}%"
+                        ></div>
+                      </div>
+
+                      <span
+                        class="text-[11px] font-bold ${milestonesPercentColor}"
+                        >${milestonesPercentage}%</span
+                      >
+
+                      <div
+                        class="milestone-chevron w-5 h-5 rounded-md flex items-center justify-center text-secondary group-hover/milestone-hdr:text-color transition-transform duration-300 ${
+                          isExpanded ? "rotate-180" : ""
+                        }"
+                      >
+                        <i class="fa-regular fa-chevron-down text-xs"></i>
+                      </div>
+                    </div>
+                  </button>
+
+                  <div
+                    id="milestones-container-${plan.id}"
+                    class="milestones-dropdown-body ${
+                      isExpanded ? "" : "hidden"
+                    } animate-slide-down space-y-1.5 pt-2 ps-1 pe-1"
+                  >
+                    ${milestones
+                      .map(
+                        (m) => `
+                          <div
+                            class="flex items-center justify-between gap-1 group/m rounded-lg p-2 hover:bg-surface-2/60 border border-transparent hover:border-border/50 transition cursor-pointer"
+                          >
+                            <div
+                              class="relative flex flex-row justify-start items-center gap-2 shrink-0 min-w-0 flex-1"
+                            >
+                              <button
+                                type="button"
+                                data-goal-id="${plan.id}"
+                                data-milestone-id="${m.id}"
+                                class="milestone-toggle w-6 h-6 shrink-0 rounded-md border-2 flex items-center justify-center transition peer hover:cursor-pointer ${
+                                  m.completed
+                                    ? "bg-brand/80 border-brand/80 text-(--color-btn-primary-text) shadow-lg shadow-brand/20"
+                                    : "border-border text-secondary hover:border-brand/80 hover:text-brand/80"
+                                }"
+                              >
+                                <i
+                                  class="fa-regular ${
+                                    m.completed
+                                      ? "fa-check text-xs md:text-sm font-bold"
+                                      : "fa-square text-[10px]"
+                                  }"
+                                ></i>
+                              </button>
+
+                              <span
+                                data-goal-id="${plan.id}"
+                                data-milestone-id="${m.id}"
+                                class="milestone-toggle text-sm text-color truncate ${
+                                  m.completed ? "line-through opacity-50" : ""
+                                }"
+                              >
+                                ${m.title}
+                              </span>
+                            </div>
+                          </div>
+                        `,
+                      )
+                      .join("")}
+                  </div>
+                </div>
+              `
             : ""
         }
       </div>

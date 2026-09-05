@@ -1,5 +1,16 @@
 import { GOAL_UNIT_OPTIONS } from "./constants/options-value.constants";
 
+export const openMilestonesState = {
+  milestonesMemory: new Map(),
+
+  expandedGoalIds: new Set(),
+
+  clear() {
+    this.expandedTaskIds.clear();
+    this.subtasksMemory.clear();
+  },
+};
+
 export function generateId() {
   if (window.crypto?.randomUUID) {
     return window.crypto.randomUUID();

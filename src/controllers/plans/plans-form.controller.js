@@ -25,6 +25,9 @@ import { StateManager } from "@/models/state.model.js";
 let pendingDeleteId = null;
 let pendingEditId = null;
 
+let currentEditMilestones = [];
+let currentEditSteps = [];
+
 // Autocomplete & DatePicker references for Create Form
 let createGoalCategoryAutocomplete = null;
 let createGoalTimeframeAutocomplete = null;
@@ -71,7 +74,7 @@ export const PlansFormController = {
     this.mainController = mainController;
     this.setupCreateAutocompletes();
     this.bindFormEvents();
-    this.bindDynamicListEvents();
+    this.bindEditItemEvents();
     this.bindAccordionEvents();
   },
 
@@ -166,98 +169,281 @@ export const PlansFormController = {
     });
   },
 
-  bindDynamicListEvents() {
-    // Create Form Dynamic Lists
-    const addMilestoneBtn = document.getElementById("btn-add-milestone-input");
-    if (addMilestoneBtn) {
-      addMilestoneBtn.onclick = () => {
-        const container = document.getElementById(
-          "create-goal-milestones-list",
+  bindEditItemEvents() {
+    // --- Edit Milestones ---
+    const addMilestoneBtn = document.getElementById("btn-add-milestone");
+    const newMilestoneInput = document.getElementById("new-milestone-input");
+    const milestonesContainer = document.getElementById("goal-milestones-list");
+
+    const handleAddMilestone = () => {
+      if (!newMilestoneInput) return;
+      const title = newMilestoneInput.value.trim();
+      if (!title) return;
+
+      currentEditMilestones.push({
+        id: generateId(),
+        title,
+        completed: false,
+        isEditing: false,
+      });
+
+      newMilestoneInput.value = "";
+      this.renderEditMilestones();
+    };
+
+    addMilestoneBtn?.addEventListener("click", handleAddMilestone);
+    newMilestoneInput?.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        handleAddMilestone();
+      }
+    });
+
+    milestonesContainer?.addEventListener("click", (e) => {
+      const target = e.target.closest("[data-action]");
+      if (!target) return;
+
+      const card = target.closest("[data-item-id]");
+      if (!card) return;
+
+      const itemId = card.dataset.itemId;
+      const action = target.dataset.action;
+
+      if (action === "delete") {
+        const index = currentEditMilestones.findIndex((m) => m.id === itemId);
+        if (index === -1) return;
+        const removedItem = currentEditMilestones[index];
+
+        currentEditMilestones.splice(index, 1);
+        this.renderEditMilestones();
+
+        NotificationService.show({
+          type: "error",
+          message: `Milestone "${removedItem.title}" deleted`,
+          duration: 4000,
+          undoAction: () => {
+            currentEditMilestones.splice(index, 0, removedItem);
+            this.renderEditMilestones();
+          },
+        });
+      } else if (action === "toggle") {
+        const item = currentEditMilestones.find((m) => m.id === itemId);
+        if (item) {
+          item.completed = !item.completed;
+          this.renderEditMilestones();
+        }
+      } else if (action === "edit") {
+        const item = currentEditMilestones.find((m) => m.id === itemId);
+        if (item) {
+          item.isEditing = !item.isEditing;
+          this.renderEditMilestones();
+
+          if (item.isEditing) {
+            requestAnimationFrame(() => {
+              const input = milestonesContainer?.querySelector(
+                `[data-item-id="${itemId}"] .item-title-input`,
+              );
+              input?.focus();
+              input?.select();
+            });
+          }
+        }
+      }
+    });
+
+    milestonesContainer?.addEventListener("input", (e) => {
+      if (e.target.dataset.action === "edit-text") {
+        const card = e.target.closest("[data-item-id]");
+        if (!card) return;
+        const item = currentEditMilestones.find(
+          (m) => m.id === card.dataset.itemId,
         );
-        if (!container) return;
-        this._appendMilestoneRow(container, "");
-      };
-    }
+        if (item) item.title = e.target.value;
+      }
+    });
 
-    const addStepBtn = document.getElementById("btn-add-template-step");
-    if (addStepBtn) {
-      addStepBtn.onclick = () => {
-        const container = document.getElementById("create-template-steps-list");
-        if (!container) return;
-        this._appendStepRow(container, "");
-      };
-    }
+    // --- Edit Steps ---
+    const addStepBtn = document.getElementById("add-step-btn");
+    const newStepInput = document.getElementById("new-step-input");
+    const stepsContainer = document.getElementById("template-steps-list");
 
-    // Edit Form Dynamic Lists
-    const editAddMilestoneBtn = document.getElementById(
-      "btn-add-edit-milestone",
-    );
-    if (editAddMilestoneBtn) {
-      editAddMilestoneBtn.onclick = () => {
-        const container = document.getElementById("edit-goal-milestones-list");
-        if (!container) return;
-        this._appendMilestoneRow(container, "");
-      };
-    }
+    const handleAddStep = () => {
+      if (!newStepInput) return;
+      const title = newStepInput.value.trim();
+      if (!title) return;
 
-    const editAddStepBtn = document.getElementById(
-      "btn-add-edit-template-step",
-    );
-    if (editAddStepBtn) {
-      editAddStepBtn.onclick = () => {
-        const container = document.getElementById("edit-template-steps-list");
-        if (!container) return;
-        this._appendStepRow(container, "");
-      };
-    }
+      currentEditSteps.push({
+        id: generateId(),
+        title,
+        isEditing: false,
+      });
+
+      newStepInput.value = "";
+      this.renderEditSteps();
+    };
+
+    addStepBtn?.addEventListener("click", handleAddStep);
+    newStepInput?.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        handleAddStep();
+      }
+    });
+
+    stepsContainer?.addEventListener("click", (e) => {
+      const target = e.target.closest("[data-action]");
+      if (!target) return;
+
+      const card = target.closest("[data-item-id]");
+      if (!card) return;
+
+      const itemId = card.dataset.itemId;
+      const action = target.dataset.action;
+
+      if (action === "delete") {
+        const index = currentEditSteps.findIndex((s) => s.id === itemId);
+        if (index === -1) return;
+        const removedItem = currentEditSteps[index];
+
+        currentEditSteps.splice(index, 1);
+        this.renderEditSteps();
+
+        NotificationService.show({
+          type: "error",
+          message: `Step "${removedItem.title}" deleted`,
+          duration: 4000,
+          undoAction: () => {
+            currentEditSteps.splice(index, 0, removedItem);
+            this.renderEditSteps();
+          },
+        });
+      } else if (action === "edit") {
+        const item = currentEditSteps.find((s) => s.id === itemId);
+        if (item) {
+          item.isEditing = !item.isEditing;
+          this.renderEditSteps();
+
+          if (item.isEditing) {
+            requestAnimationFrame(() => {
+              const input = stepsContainer?.querySelector(
+                `[data-item-id="${itemId}"] .item-title-input`,
+              );
+              input?.focus();
+              input?.select();
+            });
+          }
+        }
+      }
+    });
+
+    stepsContainer?.addEventListener("input", (e) => {
+      if (e.target.dataset.action === "edit-text") {
+        const card = e.target.closest("[data-item-id]");
+        if (!card) return;
+        const item = currentEditSteps.find((s) => s.id === card.dataset.itemId);
+        if (item) item.title = e.target.value;
+      }
+    });
   },
 
-  _appendMilestoneRow(container, title = "", completed = false) {
-    const itemDiv = document.createElement("div");
-    itemDiv.className = "flex items-center gap-2 milestone-item";
-    itemDiv.innerHTML = `
-      <input
-        type="checkbox"
-        class="milestone-checkbox rounded text-brand focus:ring-0 cursor-pointer"
-        ${completed ? "checked" : ""}
-      />
-      <input
-        type="text"
-        value="${title}"
-        placeholder="Enter milestone title..."
-        class="h-9 flex-1 rounded-lg border border-border bg-surface px-3 text-xs text-color focus:border-brand/80 focus:outline-none"
-      />
-      <button
-        type="button"
-        class="btn-remove-milestone h-9 w-9 flex items-center justify-center rounded-lg border border-border bg-surface text-secondary hover:text-red-500 transition cursor-pointer"
-      >
-        <i class="fa-regular fa-trash-can text-xs"></i>
-      </button>
-    `;
-    itemDiv.querySelector(".btn-remove-milestone").onclick = () =>
-      itemDiv.remove();
-    container.appendChild(itemDiv);
+  renderEditMilestones() {
+    const container = document.getElementById("goal-milestones-list");
+    const badge = document.getElementById("milestone-progress-badge");
+
+    const total = currentEditMilestones.length;
+    const completedCount = currentEditMilestones.filter(
+      (item) => item.completed,
+    ).length;
+
+    if (badge) {
+      badge.textContent = `${completedCount}/${total} Completed`;
+    }
+
+    if (!container) return;
+
+    container.innerHTML = this._generateListMarkup(
+      currentEditMilestones,
+      "No milestones defined yet.",
+      "fa-calendar-heart",
+    );
   },
 
-  _appendStepRow(container, stepText = "") {
-    const itemDiv = document.createElement("div");
-    itemDiv.className = "flex items-center gap-2 template-step-item";
-    itemDiv.innerHTML = `
-      <input
-        type="text"
-        value="${stepText}"
-        placeholder="Enter step instruction..."
-        class="h-9 flex-1 rounded-lg border border-border bg-surface px-3 text-xs text-color focus:border-brand/80 focus:outline-none"
-      />
-      <button
-        type="button"
-        class="btn-remove-step h-9 w-9 flex items-center justify-center rounded-lg border border-border bg-surface text-secondary hover:text-red-500 transition cursor-pointer"
-      >
-        <i class="fa-regular fa-trash-can text-xs"></i>
-      </button>
+  renderEditSteps() {
+    const container = document.getElementById("template-steps-list");
+    if (!container) return;
+    container.innerHTML = this._generateListMarkup(
+      currentEditSteps,
+      "No steps defined yet.",
+      "fa-stairs",
+    );
+  },
+
+  _generateListMarkup(items, emptyMessage, icon) {
+    if (!items || items.length === 0) {
+      return `
+        <div
+          class="w-full h-full min-h-55 sm:min-h-50 lg:min-h-45 overflow-y-auto scrollbar-thumb-surface-2 scrollbar-thin bg-surface rounded-2xl border border-dashed border-border/70 p-4 text-center flex flex-col justify-center items-center"
+        >
+          <div class="h-full flex flex-col justify-center items-center">
+            <div class="text-3xl">
+              <i class="fa-regular ${icon} text-brand/80"></i>
+            </div>
+            <p class="mt-3 text-secondary max-w-sm mx-auto text-sm">
+              ${emptyMessage}
+            </p>
+          </div>
+        </div>
+      `;
+    }
+
+    return `
+      <div class="w-full max-h-55 sm:max-h-50 lg:max-h-48 overflow-y-auto scrollbar-thumb-surface-2 scrollbar-thin bg-surface rounded-2xl border border-border/60 p-2 flex flex-col gap-2">
+        ${items
+          .map(
+            (item) => `
+              <div
+                data-item-id="${item.id}"
+                class="flex items-center justify-between gap-3 rounded-xl border border-border/70 bg-surface-2 p-1 shadow-sm transition"
+              >
+                <div class="flex items-center gap-3 flex-1 min-w-0">
+                  <input
+                    type="text"
+                    data-action="edit-text"
+                    value="${(item.title ?? "").replace(/"/g, "&quot;")}"
+                    class="item-title-input text-xs lg:text-sm text-color mx-2 bg-transparent outline-none w-full border-b min-h-7 py-1 ${
+                      item.isEditing ? "border-brand/50" : "border-transparent"
+                    }"
+                    ${item.isEditing ? "" : "readonly"}
+                  />
+                </div>
+
+                <div class="flex items-center gap-1 shrink-0">
+                  <button
+                    data-action="edit"
+                    type="button"
+                    class="edit-btn flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-surface hover:bg-brand/10 hover:cursor-pointer transition"
+                    title="${item.isEditing ? "Save changes" : "Edit item"}"
+                  >
+                    <i class="fa-regular ${
+                      item.isEditing ? "fa-floppy-disk" : "fa-pen-to-square"
+                    } text-blue-500/80 text-xs lg:text-sm"></i>
+                  </button>
+
+                  <button
+                    data-action="delete"
+                    type="button"
+                    class="delete-btn flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-surface hover:bg-red-600/10 hover:cursor-pointer transition"
+                    title="Delete item"
+                  >
+                    <i class="fa-regular fa-trash-can text-red-500/80 text-xs lg:text-sm"></i>
+                  </button>
+                </div>
+              </div>
+            `,
+          )
+          .join("")}
+      </div>
     `;
-    itemDiv.querySelector(".btn-remove-step").onclick = () => itemDiv.remove();
-    container.appendChild(itemDiv);
   },
 
   setupCreateAutocompletes() {
@@ -522,7 +708,6 @@ export const PlansFormController = {
   },
 
   populateEditModal(itemId) {
-    // Destroy previous autocompletes
     if (editGoalCategoryAutocomplete) editGoalCategoryAutocomplete.destroy();
     if (editGoalTimeframeAutocomplete) editGoalTimeframeAutocomplete.destroy();
     if (editGoalPriorityAutocomplete) editGoalPriorityAutocomplete.destroy();
@@ -706,19 +891,16 @@ export const PlansFormController = {
         editGoalEndDatePicker.bindEvents();
       }
 
-      // Milestones
-      const milestonesContainer = document.getElementById(
-        "edit-goal-milestones-list",
-      );
-      if (milestonesContainer) {
-        milestonesContainer.innerHTML = "";
-        const milestones = Array.isArray(currentItem.milestones)
-          ? currentItem.milestones
-          : [];
-        milestones.forEach((m) =>
-          this._appendMilestoneRow(milestonesContainer, m.title, m.completed),
-        );
-      }
+      const rawMilestones = Array.isArray(currentItem.milestones)
+        ? currentItem.milestones
+        : [];
+      currentEditMilestones = rawMilestones.map((m) => ({
+        id: m.id || generateId(),
+        title: typeof m === "string" ? m : m.title || "",
+        completed: m.completed || false,
+        isEditing: false,
+      }));
+      this.renderEditMilestones();
     } else if (activeTab === "daily") {
       // Daily Log Category
       const editDailyCategoryContainer = document.getElementById(
@@ -839,19 +1021,15 @@ export const PlansFormController = {
       const favCheckbox = document.getElementById("edit-template-favorite");
       if (favCheckbox) favCheckbox.checked = Boolean(currentItem.isFavorite);
 
-      // Template Steps
-      const stepsContainer = document.getElementById(
-        "edit-template-steps-list",
-      );
-      if (stepsContainer) {
-        stepsContainer.innerHTML = "";
-        const steps = Array.isArray(currentItem.structure)
-          ? currentItem.structure
-          : [];
-        steps.forEach((stepText) =>
-          this._appendStepRow(stepsContainer, stepText),
-        );
-      }
+      const rawSteps = Array.isArray(currentItem.structure)
+        ? currentItem.structure
+        : [];
+      currentEditSteps = rawSteps.map((s) => ({
+        id: generateId(),
+        title: typeof s === "string" ? s : s.title || "",
+        isEditing: false,
+      }));
+      this.renderEditSteps();
     }
   },
 
@@ -974,19 +1152,6 @@ export const PlansFormController = {
               ? createGoalEndDatePicker.value
               : null;
 
-            const milestoneElements = document.querySelectorAll(
-              "#create-goal-milestones-list .milestone-item input[type='text']",
-            );
-            const milestones = Array.from(milestoneElements)
-              .map((inp) => inp.value.trim())
-              .filter(Boolean)
-              .map((mTitle) => ({
-                id: generateId(),
-                title: mTitle,
-                completed: false,
-                createdAt: todayISO(),
-              }));
-
             const newGoal = {
               title,
               description,
@@ -998,7 +1163,6 @@ export const PlansFormController = {
               unit,
               startDate,
               endDate,
-              milestones,
             };
             StateManager.setGoals(
               PlanService.createGoal(StateManager.getGoals(), newGoal),
@@ -1046,19 +1210,11 @@ export const PlansFormController = {
               document.getElementById("create-template-favorite")?.checked ||
               false;
 
-            const stepElements = document.querySelectorAll(
-              "#create-template-steps-list .template-step-item input",
-            );
-            const structure = Array.from(stepElements)
-              .map((inp) => inp.value.trim())
-              .filter(Boolean);
-
             const newTemplate = {
               title,
               description,
               category,
               isFavorite,
-              structure,
             };
             StateManager.setTemplates(
               PlanService.createTemplate(
@@ -1204,19 +1360,12 @@ export const PlansFormController = {
             .getElementById("edit-goal-target")
             ?.value.trim();
 
-          const milestoneRows = document.querySelectorAll(
-            "#edit-goal-milestones-list .milestone-item",
-          );
-          const milestones = Array.from(milestoneRows)
-            .map((row) => ({
-              id: generateId(),
-              title:
-                row.querySelector("input[type='text']")?.value.trim() || "",
-              completed:
-                row.querySelector("input[type='checkbox']")?.checked || false,
-              createdAt: todayISO(),
-            }))
-            .filter((m) => m.title);
+          const milestones = currentEditMilestones.map((m) => ({
+            id: m.id || generateId(),
+            title: m.title.trim(),
+            completed: m.completed || false,
+            createdAt: todayISO(),
+          }));
 
           const updatedFields = {
             title: newTitle,
@@ -1284,11 +1433,8 @@ export const PlansFormController = {
             ),
           );
         } else if (activeTab === "templates") {
-          const stepInputs = document.querySelectorAll(
-            "#edit-template-steps-list .template-step-item input",
-          );
-          const structure = Array.from(stepInputs)
-            .map((inp) => inp.value.trim())
+          const structure = currentEditSteps
+            .map((s) => s.title.trim())
             .filter(Boolean);
 
           const updatedFields = {

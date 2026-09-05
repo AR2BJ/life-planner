@@ -20,6 +20,7 @@ import { PlansFormController } from "./plans/plans-form.controller.js";
 import { PlansView } from "@/views/plans-view.js";
 import { SettingsViewComponent } from "@/components/features/settings/settings-view.component.js";
 import { eventBus } from "@/services/event-bus.service.js";
+import { openMilestonesState } from "@/utils/helpers.js";
 import { renderPlanList } from "@/views/plans/plan-list.renderer.js";
 
 export const PlansController = {
@@ -489,6 +490,8 @@ export const PlansController = {
           try {
             StateManager.setView(v);
 
+            openMilestonesState.expandedGoalIds.clear();
+
             navButtons.forEach((nav) => {
               const dEl = document.getElementById(`nav-${nav}`);
               const mEl = document.getElementById(`mobile-${nav}`);
@@ -633,6 +636,8 @@ export const PlansController = {
 
   handleTabSwitch(tab) {
     StateManager.setTab(tab);
+
+    openMilestonesState.expandedGoalIds.clear();
 
     const searchInput = document.getElementById("search-plans");
     if (searchInput) {

@@ -1,4 +1,4 @@
-import { generateId, todayISO } from "@/utils/helpers.js";
+import { generateId, openMilestonesState, todayISO } from "@/utils/helpers.js";
 
 export const PlanService = {
   createGoal(currentGoals, goalData) {
@@ -100,12 +100,67 @@ export const PlanService = {
   toggleMilestone(currentGoals, goalId, milestoneId) {
     return currentGoals.map((g) => {
       if (g.id !== goalId) return g;
+
       const updatedMilestones = g.milestones.map((m) =>
         m.id === milestoneId ? { ...m, completed: !m.completed } : m,
       );
+
+      const allCompleted =
+        updatedMilestones.length > 0 &&
+        updatedMilestones.every((m) => m.completed);
+
+      if (!allCompleted) {
+        openMilestonesState.milestonesMemory.set(goalId, updatedMilestones);
+      }
+
+      let newStatus = g.status;
+      if (allCompleted) {
+        newStatus = "done";
+      } else if (updatedMilestones.some((m) => m.completed)) {
+        newStatus = "in_progress";
+      } else {
+        newStatus = "todo";
+      }
+
       return {
         ...g,
         milestones: updatedMilestones,
+        status: newStatus,
+        completedAt: newStatus === "done" ? g.completedAt || todayISO() : null,
+        updatedAt: todayISO(),
+      };
+    });
+  },
+
+  updateGoalStatus(currentGoals, goalId, newStatus) {
+    return currentGoals.map((g) => {
+      if (g.id !== goalId) return g;
+
+      let updatedMilestones = g.milestones || [];
+
+      if (newStatus === "done") {
+        openMilestonesState.milestonesMemory.set(goalId, g.milestones);
+        updatedMilestones = updatedMilestones.map((m) => ({
+          ...m,
+          completed: true,
+        }));
+      } else {
+        if (openMilestonesState.milestonesMemory.has(goalId)) {
+          updatedMilestones = openMilestonesState.milestonesMemory.get(goalId);
+          openMilestonesState.milestonesMemory.delete(goalId);
+        } else {
+          updatedMilestones = updatedMilestones.map((m) => ({
+            ...m,
+            completed: false,
+          }));
+        }
+      }
+
+      return {
+        ...g,
+        status: newStatus,
+        milestones: updatedMilestones,
+        completedAt: newStatus === "done" ? todayISO() : null,
         updatedAt: todayISO(),
       };
     });
