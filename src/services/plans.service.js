@@ -1,4 +1,9 @@
-import { generateId, openMilestonesState, todayISO } from "@/utils/helpers.js";
+import {
+  calculateGoalProgress,
+  generateId,
+  openMilestonesState,
+  todayISO,
+} from "@/utils/helpers.js";
 
 export const PlanService = {
   createGoal(currentGoals, goalData) {
@@ -76,22 +81,50 @@ export const PlanService = {
     });
   },
 
-  updateGoalProgress(currentGoals, goalId, newCurrentValue) {
-    return currentGoals.map((g) => {
-      if (g.id !== goalId) return g;
+  updateGoalProgress(goals, goalId, newCurrent) {
+    return goals.map((goal) => {
+      if (goal.id !== goalId) return goal;
 
-      const isPercent = g.unit === "%" || g.unit === "percentage";
-      const maxVal = isPercent ? 100 : g.targetValue;
-      const val = Math.max(0, Math.min(maxVal, newCurrentValue));
+      const target = Number(goal.targetValue) || 100;
+      const boundedCurrent = Math.min(target, Math.max(0, newCurrent));
 
-      const isDone = val >= g.targetValue;
-      const isInProgress = val > 0 && !isDone;
+      const isPercentageUnit =
+        !goal.unit || goal.unit === "%" || goal.unit === "percentage";
+      let updatedMilestones = Array.isArray(goal.milestones)
+        ? [...goal.milestones]
+        : [];
+
+      if (isPercentageUnit && updatedMilestones.length > 0) {
+        const progressRatio = boundedCurrent / target;
+        const countToComplete = Math.round(
+          progressRatio * updatedMilestones.length,
+        );
+        updatedMilestones = updatedMilestones.map((m, idx) => ({
+          ...m,
+          completed: idx < countToComplete,
+        }));
+      }
+
+      const updatedGoalCandidate = {
+        ...goal,
+        currentValue: boundedCurrent,
+        milestones: updatedMilestones,
+      };
+
+      const { isCompleted, isInProgress } =
+        calculateGoalProgress(updatedGoalCandidate);
+
+      const newStatus = isCompleted
+        ? "done"
+        : isInProgress
+          ? "in_progress"
+          : "todo";
 
       return {
-        ...g,
-        currentValue: val,
-        status: isDone ? "done" : isInProgress ? "in_progress" : "todo",
-        completedAt: isDone ? g.completedAt || todayISO() : null,
+        ...updatedGoalCandidate,
+        status: newStatus,
+        completedAt:
+          newStatus === "done" ? goal.completedAt || todayISO() : null,
         updatedAt: todayISO(),
       };
     });
@@ -105,26 +138,37 @@ export const PlanService = {
         m.id === milestoneId ? { ...m, completed: !m.completed } : m,
       );
 
-      const allCompleted =
-        updatedMilestones.length > 0 &&
-        updatedMilestones.every((m) => m.completed);
+      const totalMilestones = updatedMilestones.length;
+      const completedMilestones = updatedMilestones.filter(
+        (m) => m.completed,
+      ).length;
 
-      if (!allCompleted) {
-        openMilestonesState.milestonesMemory.set(goalId, updatedMilestones);
-      }
+      const isPercentageUnit =
+        !g.unit || g.unit === "%" || g.unit === "percentage";
+      const targetValue = Number(g.targetValue) || 100;
 
-      let newStatus = g.status;
-      if (allCompleted) {
-        newStatus = "done";
-      } else if (updatedMilestones.some((m) => m.completed)) {
-        newStatus = "in_progress";
-      } else {
-        newStatus = "todo";
-      }
+      const newCurrentValue =
+        isPercentageUnit && totalMilestones > 0
+          ? Math.round((completedMilestones / totalMilestones) * targetValue)
+          : g.currentValue;
+
+      const updatedGoalCandidate = {
+        ...g,
+        currentValue: newCurrentValue,
+        milestones: updatedMilestones,
+      };
+
+      const { isCompleted, isInProgress } =
+        calculateGoalProgress(updatedGoalCandidate);
+
+      const newStatus = isCompleted
+        ? "done"
+        : isInProgress
+          ? "in_progress"
+          : "todo";
 
       return {
-        ...g,
-        milestones: updatedMilestones,
+        ...updatedGoalCandidate,
         status: newStatus,
         completedAt: newStatus === "done" ? g.completedAt || todayISO() : null,
         updatedAt: todayISO(),
@@ -137,6 +181,8 @@ export const PlanService = {
       if (g.id !== goalId) return g;
 
       let updatedMilestones = g.milestones || [];
+      const targetValue = Number(g.targetValue) || 100;
+      let newCurrentValue = g.currentValue;
 
       if (newStatus === "done") {
         openMilestonesState.milestonesMemory.set(goalId, g.milestones);
@@ -144,20 +190,23 @@ export const PlanService = {
           ...m,
           completed: true,
         }));
+        newCurrentValue = targetValue;
+      } else if (newStatus === "todo") {
+        updatedMilestones = updatedMilestones.map((m) => ({
+          ...m,
+          completed: false,
+        }));
+        newCurrentValue = 0;
       } else {
         if (openMilestonesState.milestonesMemory.has(goalId)) {
           updatedMilestones = openMilestonesState.milestonesMemory.get(goalId);
           openMilestonesState.milestonesMemory.delete(goalId);
-        } else {
-          updatedMilestones = updatedMilestones.map((m) => ({
-            ...m,
-            completed: false,
-          }));
         }
       }
 
       return {
         ...g,
+        currentValue: newCurrentValue,
         status: newStatus,
         milestones: updatedMilestones,
         completedAt: newStatus === "done" ? todayISO() : null,

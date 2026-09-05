@@ -5,10 +5,13 @@ import {
   TEMPLATE_CATEGORIES,
   TIMEFRAME_OPTIONS,
 } from "@/utils/constants/options-value.constants";
-import { formatNumberWithCommas, openMilestonesState } from "@/utils/helpers";
+import {
+  calculateGoalProgress,
+  formatNumberWithCommas,
+  openMilestonesState,
+} from "@/utils/helpers";
 
 export const PlansItemComponent = {
-  // Combine all categories directly from source of truth
   _categoryRegistry: [
     ...GOAL_CATEGORIES,
     ...DAILY_LOG_CATEGORIES,
@@ -39,7 +42,6 @@ export const PlansItemComponent = {
       class: "bg-surface text-secondary border-border/60",
     };
 
-    // Extract solid icon class and make it regular for uniform badges
     const iconClass = categoryData.icon.replace("fa-solid", "fa-regular");
 
     return `
@@ -78,7 +80,7 @@ export const PlansItemComponent = {
 
     return `
       <span
-        class="inline-flex items-center gap-1 rounded-md border ${tfData.class} px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider"
+        class="inline-flex items-center gap-1 rounded-md border ${tfData.class} px-2 py-0.5 text-[10px] uppercase tracking-wider"
       >
         <i class="${iconClass} text-[9px]"></i>
         <span>${tfData.name}</span>
@@ -106,7 +108,6 @@ export const PlansItemComponent = {
       case "percentage":
         return 5;
       case "hrs":
-        return Math.max(1, Math.round(target * 0.05));
       case "km":
         return Math.max(1, Math.round(target * 0.05));
       case "books":
@@ -167,25 +168,30 @@ export const PlansItemComponent = {
     };
     const priorityClass = priorityStyles[priorityKey] || priorityStyles.low;
 
-    const target = Number(plan.targetValue) || 100;
-    const current = Number(plan.currentValue) || 0;
-    const isCompleted = plan.status === "done";
-    const isInProgress = plan.status === "in_progress";
+    const {
+      current,
+      target,
+      progressPercent,
+      isNumericUnit,
+      isCompleted,
+      isInProgress,
+      hasMilestones,
+    } = calculateGoalProgress(plan);
 
+    const milestones = Array.isArray(plan.milestones) ? plan.milestones : [];
     const isExpanded = openMilestonesState.expandedGoalIds.has(plan.id);
 
-    const isPercentUnit = plan.unit === "%" || plan.unit === "percentage";
-    const progressPercent = isPercentUnit
-      ? Math.min(100, Math.max(0, current))
-      : Math.min(100, Math.max(0, Math.round((current / (target || 1)) * 100)));
-
-    const statusKey = (plan.status || "todo").toLowerCase();
+    const statusKey = isCompleted
+      ? "done"
+      : isInProgress
+        ? "in_progress"
+        : "todo";
     const statusIcon = {
       todo: "fa-regular fa-square text-sky-400",
       in_progress: "fa-regular fa-arrow-progress text-brand",
       done: "fa-regular fa-square-check text-emerald-400",
     };
-    const statusIconClass = statusIcon[statusKey] || statusIcon.todo;
+    const statusIconClass = statusIcon[statusKey];
 
     const progressColor =
       progressPercent === 100
@@ -212,38 +218,41 @@ export const PlansItemComponent = {
     const categoryBadgeHtml = this._getCategoryBadgeHtml(plan.category);
     const timeframeBadgeHtml = this._getTimeframeBadgeHtml(plan.timeframe);
     const unitIconClass = this._getUnitIconClass(plan.unit);
-    const milestones = Array.isArray(plan.milestones) ? plan.milestones : [];
-    const completedMilestones = milestones.filter((m) => m.completed).length;
 
+    const completedMilestonesCount = milestones.filter(
+      (m) => m.completed,
+    ).length;
     const milestonesPercentage =
       milestones.length > 0
-        ? Math.round((completedMilestones / milestones.length) * 100)
+        ? Math.round((completedMilestonesCount / milestones.length) * 100)
         : 0;
 
     const milestonesProgressColor =
       milestonesPercentage === 100
         ? "bg-emerald-500/80"
         : milestonesPercentage <= 65 && milestonesPercentage >= 35
-          ? "bg-amber-500/80"
+          ? "bg-brand/80"
           : milestonesPercentage <= 35 && milestonesPercentage > 0
             ? "bg-red-500/80"
             : milestonesPercentage === 0
               ? "bg-slate-500/80"
-              : "bg-brand/80";
+              : "bg-sky-500/80";
 
     const milestonesPercentColor =
       milestonesPercentage === 100
         ? "text-emerald-500/80"
         : milestonesPercentage <= 65 && milestonesPercentage >= 35
-          ? "text-amber-500/80"
+          ? "text-brand/80"
           : milestonesPercentage <= 35 && milestonesPercentage > 0
             ? "text-red-500/80"
             : milestonesPercentage === 0
               ? "text-slate-500/80"
-              : "text-brand/80";
+              : "text-sky-500/80";
 
     const unitSymbol = plan.unit === "money" ? "$" : plan.unit || "%";
     const stepAmount = this._calculateStepAmount(plan.unit, target);
+
+    const showQuickStepButtons = isNumericUnit && hasMilestones;
 
     return `
       <div
@@ -268,7 +277,7 @@ export const PlansItemComponent = {
                   } px-2 py-0.5 text-[10px] uppercase font-semibold"
                 >
                   <i class="${statusIconClass} text-[9px]"></i>
-                  ${plan.status.replace("_", " ")}
+                  ${statusKey.replace("_", " ")}
                 </span>
                 ${categoryBadgeHtml} ${timeframeBadgeHtml}
                 ${
@@ -325,18 +334,24 @@ export const PlansItemComponent = {
             </div>
 
             <div class="flex items-center gap-2">
-              <button
-                data-id="${plan.id}"
-                data-step="-${stepAmount}"
-                title="Decrease by ${stepAmount} ${unitSymbol}"
-                class="quick-step-btn h-7 w-7 rounded-lg bg-surface border border-border flex items-center justify-center text-xs font-bold text-secondary hover:text-color hover:bg-surface-2 cursor-pointer transition shadow-xs ${
-                  progressPercent === 0
-                    ? "opacity-50 select-none pointer-events-none"
-                    : ""
-                }"
-              >
-                <i class="fa-regular fa-minus"></i>
-              </button>
+              ${
+                showQuickStepButtons
+                  ? `
+                      <button
+                        data-id="${plan.id}"
+                        data-step="-${stepAmount}"
+                        title="Decrease by ${stepAmount} ${unitSymbol}"
+                        class="quick-step-btn h-7 w-7 rounded-lg bg-surface border border-border flex items-center justify-center text-xs font-bold text-secondary hover:text-color hover:bg-surface-2 cursor-pointer transition shadow-xs ${
+                          progressPercent === 0
+                            ? "opacity-50 select-none pointer-events-none"
+                            : ""
+                        }"
+                      >
+                        <i class="fa-regular fa-minus"></i>
+                      </button>
+                    `
+                  : ""
+              }
 
               <div
                 class="w-24 sm:w-32 h-2 rounded-full bg-surface-2 overflow-hidden"
@@ -347,18 +362,24 @@ export const PlansItemComponent = {
                 ></div>
               </div>
 
-              <button
-                data-id="${plan.id}"
-                data-step="+${stepAmount}"
-                title="Increase by ${stepAmount} ${unitSymbol}"
-                class="quick-step-btn h-7 w-7 rounded-lg bg-surface border border-border flex items-center justify-center text-xs font-bold text-secondary hover:text-color hover:bg-surface-2 cursor-pointer transition shadow-xs ${
-                  progressPercent === target
-                    ? "opacity-50 select-none pointer-events-none"
-                    : ""
-                }"
-              >
-                <i class="fa-regular fa-plus"></i>
-              </button>
+              ${
+                showQuickStepButtons
+                  ? `
+                      <button
+                        data-id="${plan.id}"
+                        data-step="+${stepAmount}"
+                        title="Increase by ${stepAmount} ${unitSymbol}"
+                        class="quick-step-btn h-7 w-7 rounded-lg bg-surface border border-border flex items-center justify-center text-xs font-bold text-secondary hover:text-color hover:bg-surface-2 cursor-pointer transition shadow-xs ${
+                          progressPercent === 100
+                            ? "opacity-50 select-none pointer-events-none"
+                            : ""
+                        }"
+                      >
+                        <i class="fa-regular fa-plus"></i>
+                      </button>
+                    `
+                  : ""
+              }
 
               <span class="text-xs font-bold ${percentColor} min-w-9 text-end">
                 ${progressPercent}%
@@ -368,7 +389,7 @@ export const PlansItemComponent = {
         </div>
 
         ${
-          milestones.length > 0
+          hasMilestones
             ? `
                 <div class="border-t border-border/60 pt-2">
                   <button
@@ -384,24 +405,30 @@ export const PlansItemComponent = {
                         class="text-[11px] sm:text-xs font-bold text-secondary group-hover/milestone-hdr:text-color transition"
                       >
                         Milestones
-                        (${completedMilestones}/${milestones.length})
+                        (${completedMilestonesCount}/${milestones.length})
                       </span>
                     </div>
 
                     <div class="w-full sm:w-fit flex items-center gap-3">
-                      <div
-                        class="w-full sm:w-32 h-1.5 rounded-full bg-surface-2 overflow-hidden"
-                      >
-                        <div
-                          class="h-full ${milestonesProgressColor} transition-all duration-300"
-                          style="width: ${milestonesPercentage}%"
-                        ></div>
-                      </div>
+                      ${
+                        showQuickStepButtons
+                          ? `
+                            <div
+                              class="w-full sm:w-32 h-1.5 rounded-full bg-surface-2 overflow-hidden"
+                            >
+                              <div
+                                class="h-full ${milestonesProgressColor} transition-all duration-300"
+                                style="width: ${milestonesPercentage}%"
+                              ></div>
+                            </div>
 
-                      <span
-                        class="text-[11px] font-bold ${milestonesPercentColor}"
-                        >${milestonesPercentage}%</span
-                      >
+                            <span
+                              class="text-[11px] font-bold ${milestonesPercentColor}"
+                              >${milestonesPercentage}%</span
+                            >
+                          `
+                          : ""
+                      }
 
                       <div
                         class="milestone-chevron w-5 h-5 rounded-md flex items-center justify-center text-secondary group-hover/milestone-hdr:text-color transition-transform duration-300 ${

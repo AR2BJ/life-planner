@@ -29,6 +29,19 @@ export const PlansActionController = {
     StateManager.setGoals(updatedGoals);
     StateManager.save();
     this.mainController.refreshUI();
+
+    const updatedGoal = updatedGoals.find((g) => g.id === goalId);
+    const isCompleted =
+      updatedGoal?.status === "completed" || updatedGoal?.status === "done";
+
+    NotificationService.show({
+      type: isCompleted ? "success" : "info",
+      message: isCompleted
+        ? `Goal completed: "${targetGoal.title}"`
+        : `Updated progress for "${targetGoal.title}"`,
+      icon: isCompleted ? "fa-circle-check" : "fa-chart-line",
+      duration: 4000,
+    });
   },
 
   bindDynamicEvents() {
@@ -102,11 +115,14 @@ export const PlansActionController = {
 
         if (goal) {
           try {
+            const newCurrent = Math.max(0, (goal.currentValue || 0) + step);
+
             const updated = PlanService.updateGoalProgress(
               currentGoals,
               id,
-              step,
+              newCurrent,
             );
+            StateManager.setGoals(updated);
             StateManager.save();
             this.mainController.refreshUI();
 
