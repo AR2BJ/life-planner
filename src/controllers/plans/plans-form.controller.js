@@ -4,18 +4,26 @@ import {
   MOOD_OPTIONS,
   PLAN_STATES,
 } from "@/utils/constants/options-value.constants.js";
+import {
+  EditModalsComponent,
+  setupAccordionController,
+} from "@/components/modals/edit-modals.component.js";
 import { generateId, todayISO } from "@/utils/helpers.js";
 
 import { AutocompleteComponent } from "@/components/ui/autocomplete.component.js";
 import { DatePickerComponent } from "@/components/ui/date-picker.component.js";
 import { GlobalLoaderService } from "@/services/loader.service.js";
 import { NotificationService } from "@/services/notification.service.js";
+import { PlanService } from "@/services/plans.service.js";
 import { StateManager } from "@/models/state.model.js";
 
 let pendingDeleteId = null;
 let pendingEditId = null;
+let editingMetricKey = null;
 
-// References for Create Form
+let activeModalObjectives = [];
+let activeModalMetrics = {};
+
 let createPlanLifeAreaAutocomplete = null;
 let createPlanStateAutocomplete = null;
 let createPlanStartDatePicker = null;
@@ -28,7 +36,6 @@ let createLogPlanLinkAutocomplete = null;
 
 let createTemplateLifeAreaAutocomplete = null;
 
-// References for Edit Form
 let editPlanLifeAreaAutocomplete = null;
 let editPlanStateAutocomplete = null;
 let editPlanStartDatePicker = null;
@@ -55,9 +62,17 @@ export function setPendingEditId(id) {
 export const PlansFormController = {
   init(mainController) {
     this.mainController = mainController;
+
+    const accordionGroup = document.getElementById("edit-accordion-group");
+    if (accordionGroup) {
+      setupAccordionController(accordionGroup);
+    }
+
     this.setupCreateAutocompletes();
     this.bindFormEvents();
     this.bindAccordionEvents();
+    this.bindObjectiveEvents();
+    this.bindMetricEvents();
   },
 
   refreshUI() {
@@ -77,7 +92,7 @@ export const PlansFormController = {
       btnTextSpan.textContent = "Add Plan";
       if (toggleTitleSpan) toggleTitleSpan.textContent = "Create New Plan";
     } else if (activeTab === "logs") {
-      btnTextSpan.textContent = "Add Daily Log";
+      btnTextSpan.textContent = "Add Log";
       if (toggleTitleSpan) toggleTitleSpan.textContent = "Create New Log";
     } else if (activeTab === "templates") {
       btnTextSpan.textContent = "Add Template";
@@ -90,8 +105,10 @@ export const PlansFormController = {
     const tabFields = document.querySelectorAll(".plan-tab-fields");
 
     tabFields.forEach((fieldGroup) => {
-      const fieldTab = fieldGroup.getAttribute("data-tab-fields");
-      if (fieldTab === activeTab) {
+      const fieldTabsAttr = fieldGroup.getAttribute("data-tab-fields") || "";
+      const allowedTabs = fieldTabsAttr.split(",").map((t) => t.trim());
+
+      if (allowedTabs.includes(activeTab)) {
         fieldGroup.classList.remove("hidden");
         fieldGroup.classList.add("flex");
       } else {
@@ -122,8 +139,258 @@ export const PlansFormController = {
     });
   },
 
+  renderModalObjectives() {
+    const container = document.getElementById("plan-objectives-list");
+    const badge = document.getElementById("objective-progress-badge");
+    if (!container) return;
+
+    const total = activeModalObjectives.length;
+    const completedCount = activeModalObjectives.filter(
+      (o) => o.completed,
+    ).length;
+
+    if (badge) {
+      badge.textContent = `${completedCount}/${total} Done`;
+    }
+
+    if (total === 0) {
+      container.innerHTML = EditModalsComponent.renderEmptyState(
+        "No objectives defined yet.",
+        "fa-regular fa-bullseye-arrow",
+      );
+      return;
+    }
+
+    container.innerHTML = `
+    <div
+      class="w-full h-full max-h-55 sm:max-h-50 lg:max-h-48 overflow-y-auto scrollbar-thumb-surface-2 scrollbar-thin bg-surface rounded-2xl border border-border/60 p-2.5 flex flex-col justify-start gap-2.5"
+    >
+      ${activeModalObjectives
+        .map((obj) => EditModalsComponent.renderObjectiveItem(obj))
+        .join("")}
+    </div>
+  `;
+  },
+
+  renderModalMetrics() {
+    const container = document.getElementById("log-metrics-list");
+    if (!container) return;
+
+    const keys = Object.keys(activeModalMetrics || {});
+
+    if (keys.length === 0) {
+      container.innerHTML = EditModalsComponent.renderEmptyState(
+        "No quantitative metrics recorded.",
+        "fa-regular fa-chart-simple",
+      );
+      return;
+    }
+
+    container.innerHTML = `
+    <div class="w-full h-full max-h-55 sm:max-h-50 lg:max-h-48 overflow-y-auto scrollbar-thumb-surface-2 scrollbar-thin bg-surface rounded-2xl border border-border/60 p-2.5 flex flex-col justify-start gap-2.5">
+      ${keys
+        .map((key) =>
+          EditModalsComponent.renderMetricItem(key, activeModalMetrics[key]),
+        )
+        .join("")}
+    </div>
+  `;
+  },
+
+  resetMetricFormState() {
+    editingMetricKey = null;
+    const keyInput = document.getElementById("new-metric-key");
+    const valInput = document.getElementById("new-metric-val");
+    const unitInput = document.getElementById("new-metric-unit");
+
+    if (keyInput) keyInput.value = "";
+    if (valInput) valInput.value = "";
+    if (unitInput) unitInput.value = "";
+
+    const addMetricBtn = document.getElementById("btn-add-metric");
+    if (addMetricBtn) {
+      addMetricBtn.innerHTML = `<i class="fa-regular fa-plus"></i>`;
+      addMetricBtn.classList.replace("bg-blue-600/10", "bg-brand/10");
+      addMetricBtn.classList.replace(
+        "hover:bg-blue-600/20",
+        "hover:bg-brand/20",
+      );
+      addMetricBtn.classList.replace("text-blue-500/80", "text-brand/80");
+    }
+  },
+
+  bindObjectiveEvents() {
+    const container = document.getElementById("plan-objectives-list");
+    const addBtn = document.getElementById("btn-add-objective");
+    const input = document.getElementById("new-objective-input");
+
+    const handleAdd = () => {
+      if (!input) return;
+      const title = input.value.trim();
+      if (!title) return;
+
+      activeModalObjectives.push({
+        id: generateId(),
+        title,
+        completed: false,
+        isEditing: false,
+      });
+
+      input.value = "";
+      this.renderModalObjectives();
+    };
+
+    addBtn?.addEventListener("click", handleAdd);
+    input?.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        handleAdd();
+      }
+    });
+
+    container?.addEventListener("click", (e) => {
+      const target = e.target.closest("[data-action]");
+      if (!target) return;
+
+      const card = target.closest("[data-objective-id]");
+      if (!card) return;
+
+      const objId = card.dataset.objectiveId;
+      const action = target.dataset.action;
+
+      if (action === "delete-objective") {
+        const targetIndex = activeModalObjectives.findIndex(
+          (o) => o.id === objId,
+        );
+        if (targetIndex === -1) return;
+
+        const deletedItem = activeModalObjectives[targetIndex];
+        const title = deletedItem?.title || "Objective";
+
+        activeModalObjectives.splice(targetIndex, 1);
+        this.renderModalObjectives();
+
+        NotificationService.show({
+          type: "error",
+          message: `Objective "${title}" deleted`,
+          icon: "fa-trash-can",
+          duration: 5000,
+          undoAction: () => {
+            activeModalObjectives.splice(targetIndex, 0, deletedItem);
+            this.renderModalObjectives();
+          },
+        });
+      } else if (action === "edit-objective") {
+        const obj = activeModalObjectives.find((o) => o.id === objId);
+        if (obj) {
+          obj.isEditing = !obj.isEditing;
+          this.renderModalObjectives();
+
+          if (obj.isEditing) {
+            requestAnimationFrame(() => {
+              const el = container.querySelector(
+                `[data-objective-id="${objId}"] input[data-action="edit-objective-text"]`,
+              );
+              el?.focus();
+              el?.select();
+            });
+          }
+        }
+      }
+    });
+
+    container?.addEventListener("input", (e) => {
+      if (e.target.dataset.action === "edit-objective-text") {
+        const card = e.target.closest("[data-objective-id]");
+        if (!card) return;
+
+        const objId = card.dataset.objectiveId;
+        const obj = activeModalObjectives.find((o) => o.id === objId);
+        if (obj) {
+          obj.title = e.target.value;
+        }
+      }
+    });
+  },
+
+  bindMetricEvents() {
+    const container = document.getElementById("log-metrics-list");
+    const addMetricBtn = document.getElementById("btn-add-metric");
+    const keyInput = document.getElementById("new-metric-key");
+    const valInput = document.getElementById("new-metric-val");
+    const unitInput = document.getElementById("new-metric-unit");
+
+    const handleSaveMetric = () => {
+      const key = keyInput?.value.trim();
+      const value = valInput?.value.trim();
+      const unit = unitInput?.value.trim() || "";
+
+      if (!key || !value) return;
+
+      if (editingMetricKey && editingMetricKey !== key) {
+        delete activeModalMetrics[editingMetricKey];
+      }
+
+      activeModalMetrics[key] = { value, unit };
+      this.resetMetricFormState();
+      this.renderModalMetrics();
+    };
+
+    addMetricBtn?.addEventListener("click", handleSaveMetric);
+
+    container?.addEventListener("click", (e) => {
+      const target = e.target.closest("[data-action]");
+      if (!target) return;
+
+      const key = target.dataset.metricKey;
+      const action = target.dataset.action;
+
+      if (action === "delete-metric") {
+        const deletedMetricData = activeModalMetrics[key];
+        delete activeModalMetrics[key];
+
+        if (editingMetricKey === key) this.resetMetricFormState();
+        this.renderModalMetrics();
+
+        NotificationService.show({
+          type: "error",
+          message: `Metric "${key}" deleted`,
+          icon: "fa-trash-can",
+          duration: 5000,
+          undoAction: () => {
+            activeModalMetrics[key] = deletedMetricData;
+            this.renderModalMetrics();
+          },
+        });
+      } else if (action === "edit-metric") {
+        const metricData = activeModalMetrics[key];
+        if (!metricData) return;
+
+        editingMetricKey = key;
+        if (keyInput) keyInput.value = key;
+        if (valInput)
+          valInput.value =
+            typeof metricData === "object" ? metricData.value : metricData;
+        if (unitInput)
+          unitInput.value =
+            typeof metricData === "object" ? metricData.unit || "" : "";
+
+        if (addMetricBtn) {
+          addMetricBtn.innerHTML = `<i class="fa-regular fa-floppy-disk"></i>`;
+          addMetricBtn.classList.replace("bg-brand/10", "bg-blue-600/10");
+          addMetricBtn.classList.replace(
+            "hover:bg-brand/20",
+            "hover:bg-blue-600/20",
+          );
+          addMetricBtn.classList.replace("text-brand/80", "text-blue-500/80");
+        }
+
+        keyInput?.focus();
+      }
+    });
+  },
+
   setupCreateAutocompletes() {
-    // --- PLANS FIELDS ---
     const planLifeAreaContainer = document.getElementById(
       "create-plan-lifearea-autocomplete",
     );
@@ -195,7 +462,6 @@ export const PlansFormController = {
       createPlanEndDatePicker.bindEvents();
     }
 
-    // --- LOGS FIELDS ---
     const logDatePickerContainer = document.getElementById(
       "create-log-datepicker-container",
     );
@@ -277,7 +543,6 @@ export const PlansFormController = {
       );
     }
 
-    // --- TEMPLATES FIELDS ---
     const templateLifeAreaContainer = document.getElementById(
       "create-template-lifearea-autocomplete",
     );
@@ -309,6 +574,8 @@ export const PlansFormController = {
     if (editTemplateLifeAreaAutocomplete)
       editTemplateLifeAreaAutocomplete.destroy();
 
+    this.resetMetricFormState();
+
     const activeTab = StateManager.getActiveTab() || "plans";
     const stateData = StateManager.getState();
 
@@ -332,19 +599,29 @@ export const PlansFormController = {
     const editModal = document.getElementById("edit-modal");
     if (editModal) {
       document.querySelectorAll(".edit-tab-field").forEach((el) => {
-        const fieldTab = el.getAttribute("data-tab");
-        el.classList.toggle("hidden", fieldTab !== activeTab);
+        const fieldTabsAttr = el.getAttribute("data-tab") || "";
+        const allowedTabs = fieldTabsAttr.split(",").map((t) => t.trim());
+        el.classList.toggle("hidden", !allowedTabs.includes(activeTab));
       });
     }
 
     const titleInput = document.getElementById("edit-item-title");
     const descInput = document.getElementById("edit-item-desc");
 
-    if (titleInput) titleInput.value = currentItem.title || "";
-    if (descInput)
+    if (titleInput) {
+      titleInput.value = currentItem.title || currentItem.date || "";
+    }
+
+    if (descInput) {
       descInput.value = currentItem.description || currentItem.notes || "";
+    }
 
     if (activeTab === "plans") {
+      activeModalObjectives = JSON.parse(
+        JSON.stringify(currentItem.objectives || []),
+      );
+      this.renderModalObjectives();
+
       const editPlanLifeAreaContainer = document.getElementById(
         "edit-plan-lifearea-autocomplete",
       );
@@ -411,6 +688,14 @@ export const PlansFormController = {
         editPlanEndDatePicker.bindEvents();
       }
     } else if (activeTab === "logs") {
+      const editLogNotesInput = document.getElementById("edit-log-notes");
+      if (editLogNotesInput) editLogNotesInput.value = currentItem.notes || "";
+
+      activeModalMetrics = JSON.parse(
+        JSON.stringify(currentItem.metrics || {}),
+      );
+      this.renderModalMetrics();
+
       const editLogDatePickerContainer = document.getElementById(
         "edit-log-datepicker-container",
       );
@@ -516,38 +801,33 @@ export const PlansFormController = {
       if (optimalInput) optimalInput.value = currentItem.optimal || "";
       if (favCheckbox) favCheckbox.checked = Boolean(currentItem.isFavorite);
     }
+
+    if (this.mainController?.plansActionController?.resetEditModalAccordion) {
+      this.mainController.plansActionController.resetEditModalAccordion();
+    }
   },
 
   bindFormEvents() {
     this.updateAddButtonText();
     this.toggleFormTabFields();
 
-    const titleInput = document.getElementById("create-plan-title");
     const addBtn = document.getElementById("add-plan-btn");
 
     const handleCreateItem = () => {
       const activeTab = StateManager.getActiveTab() || "plans";
-      const title = titleInput?.value.trim();
-
-      if (activeTab !== "logs" && !title) {
-        NotificationService.show({
-          type: "error",
-          message: "Title cannot be empty",
-          icon: "fa-triangle-exclamation",
-          duration: 5000,
-        });
-        return;
-      }
 
       GlobalLoaderService.show(`Creating item...`);
 
       setTimeout(() => {
         try {
           const currentStateData = StateManager.getState();
+          const sharedTitle = document
+            .getElementById("create-item-title")
+            ?.value.trim();
+          const sharedDesc =
+            document.getElementById("create-item-desc")?.value.trim() || "";
 
           if (activeTab === "plans") {
-            const description =
-              document.getElementById("create-plan-desc")?.value.trim() || "";
             const lifeAreaId = createPlanLifeAreaAutocomplete
               ? createPlanLifeAreaAutocomplete.getValue()
               : "health";
@@ -561,21 +841,19 @@ export const PlansFormController = {
               ? createPlanEndDatePicker.value
               : null;
 
-            const newPlan = {
-              id: generateId(),
-              title,
-              description,
-              lifeAreaId,
-              state,
-              period: { startDate, endDate },
-              objectives: [],
-              createdAt: todayISO(),
-              updatedAt: todayISO(),
-            };
+            const updatedPlans = PlanService.createPlan(
+              currentStateData.plans || [],
+              {
+                title: sharedTitle,
+                description: sharedDesc,
+                lifeAreaId,
+                state,
+                period: { startDate, endDate },
+                objectives: [],
+              },
+            );
 
-            StateManager.save({
-              plans: [newPlan, ...(currentStateData.plans || [])],
-            });
+            StateManager.save({ plans: updatedPlans });
           } else if (activeTab === "logs") {
             const date = createLogDatePicker
               ? createLogDatePicker.value
@@ -586,8 +864,6 @@ export const PlansFormController = {
             const mood = createLogMoodAutocomplete
               ? createLogMoodAutocomplete.getValue()
               : "neutral";
-            const notes =
-              document.getElementById("create-log-notes")?.value.trim() || "";
 
             let planId = null;
             if (createLogPlanLinkAutocomplete) {
@@ -598,25 +874,21 @@ export const PlansFormController = {
               }
             }
 
-            const newLog = {
-              id: generateId(),
-              date,
-              planId,
-              energy,
-              mood,
-              metrics: {},
-              notes,
-              createdAt: todayISO(),
-              updatedAt: todayISO(),
-            };
+            const updatedLogs = PlanService.createLog(
+              currentStateData.logs || [],
+              {
+                title: sharedTitle,
+                description: sharedDesc,
+                date,
+                planId,
+                energy,
+                mood,
+                metrics: {},
+              },
+            );
 
-            StateManager.save({
-              logs: [newLog, ...(currentStateData.logs || [])],
-            });
+            StateManager.save({ logs: updatedLogs });
           } else if (activeTab === "templates") {
-            const description =
-              document.getElementById("create-template-desc")?.value.trim() ||
-              "";
             const baseline =
               document
                 .getElementById("create-template-baseline")
@@ -632,22 +904,19 @@ export const PlansFormController = {
               document.getElementById("create-template-favorite")?.checked ||
               false;
 
-            const newTemplate = {
-              id: generateId(),
-              title,
-              description,
-              lifeAreaId,
-              baseline,
-              optimal,
-              isFavorite,
-              usageCount: 0,
-              createdAt: todayISO(),
-              updatedAt: todayISO(),
-            };
+            const updatedTemplates = PlanService.createTemplate(
+              currentStateData.templates || [],
+              {
+                title: sharedTitle,
+                description: sharedDesc,
+                lifeAreaId,
+                baseline,
+                optimal,
+                isFavorite,
+              },
+            );
 
-            StateManager.save({
-              templates: [newTemplate, ...(currentStateData.templates || [])],
-            });
+            StateManager.save({ templates: updatedTemplates });
           }
 
           this.resetForms();
@@ -703,10 +972,8 @@ export const PlansFormController = {
 
   resetForms() {
     const inputsToClear = [
-      "create-plan-title",
-      "create-plan-desc",
-      "create-log-notes",
-      "create-template-desc",
+      "create-item-title",
+      "create-item-desc",
       "create-template-baseline",
       "create-template-optimal",
     ];
@@ -718,19 +985,18 @@ export const PlansFormController = {
     const favCheckbox = document.getElementById("create-template-favorite");
     if (favCheckbox) favCheckbox.checked = false;
 
-    // RESET AUTOCOMPLETES
     if (createPlanLifeAreaAutocomplete)
       createPlanLifeAreaAutocomplete.setValue("health");
     if (createPlanStateAutocomplete)
       createPlanStateAutocomplete.setValue("active");
     if (createLogEnergyAutocomplete) createLogEnergyAutocomplete.setValue(3);
-    if (createLogMoodAutocomplete) createLogMoodAutocomplete.setValue("neutral");
+    if (createLogMoodAutocomplete)
+      createLogMoodAutocomplete.setValue("neutral");
     if (createLogPlanLinkAutocomplete)
       createLogPlanLinkAutocomplete.setValue(null);
     if (createTemplateLifeAreaAutocomplete)
       createTemplateLifeAreaAutocomplete.setValue("health");
 
-    // RESET DATE PICKERS
     if (createPlanStartDatePicker) createPlanStartDatePicker.value = todayISO();
     if (createPlanEndDatePicker) createPlanEndDatePicker.value = "";
     if (createLogDatePicker) createLogDatePicker.value = todayISO();
@@ -754,15 +1020,19 @@ export const PlansFormController = {
       GlobalLoaderService.show(`Deleting item...`);
       setTimeout(() => {
         try {
-          const updatedList = list.filter(
-            (item) => String(item.id) !== String(id),
-          );
-
-          if (activeTab === "plans") StateManager.save({ plans: updatedList });
-          else if (activeTab === "logs")
-            StateManager.save({ logs: updatedList });
-          else if (activeTab === "templates")
-            StateManager.save({ templates: updatedList });
+          if (activeTab === "plans") {
+            const plans = PlanService.deletePlan(stateData.plans || [], id);
+            StateManager.save({ plans });
+          } else if (activeTab === "logs") {
+            const logs = PlanService.deleteLog(stateData.logs || [], id);
+            StateManager.save({ logs });
+          } else if (activeTab === "templates") {
+            const templates = PlanService.deleteTemplate(
+              stateData.templates || [],
+              id,
+            );
+            StateManager.save({ templates });
+          }
 
           if (this.mainController?.toggleModal)
             this.mainController.toggleModal("delete-modal", false);
@@ -771,9 +1041,28 @@ export const PlansFormController = {
           if (this.mainController?.refreshUI) this.mainController.refreshUI();
 
           NotificationService.show({
-            type: "error",
+            type: "warning",
             message: `Item deleted successfully`,
+            icon: "fa-trash-can",
             duration: 5000,
+            undoAction: () => {
+              const restoredState = StateManager.getState();
+              if (activeTab === "plans") {
+                StateManager.save({
+                  plans: [itemToDelete, ...(restoredState.plans || [])],
+                });
+              } else if (activeTab === "logs") {
+                StateManager.save({
+                  logs: [itemToDelete, ...(restoredState.logs || [])],
+                });
+              } else if (activeTab === "templates") {
+                StateManager.save({
+                  templates: [itemToDelete, ...(restoredState.templates || [])],
+                });
+              }
+              if (this.mainController?.refreshUI)
+                this.mainController.refreshUI();
+            },
           });
         } finally {
           GlobalLoaderService.hide();
@@ -783,23 +1072,11 @@ export const PlansFormController = {
   },
 
   executeEdit() {
-    const titleInput = document.getElementById("edit-item-title");
-    const descInput = document.getElementById("edit-item-desc");
-
     if (!pendingEditId) return;
 
-    const newTitle = titleInput?.value.trim() || "";
     const activeTab = StateManager.getActiveTab() || "plans";
-
-    if (activeTab !== "logs" && !newTitle) {
-      NotificationService.show({
-        type: "error",
-        message: "Title cannot be empty",
-        icon: "fa-triangle-exclamation",
-        duration: 5000,
-      });
-      return;
-    }
+    const titleInput = document.getElementById("edit-item-title");
+    const descInput = document.getElementById("edit-item-desc");
 
     GlobalLoaderService.show("Updating record...");
 
@@ -808,88 +1085,76 @@ export const PlansFormController = {
         const stateData = StateManager.getState();
 
         if (activeTab === "plans") {
-          const plans = (stateData.plans || []).map((p) => {
-            if (String(p.id) === String(pendingEditId)) {
-              return {
-                ...p,
-                title: newTitle,
-                description: descInput?.value.trim() || "",
-                lifeAreaId: editPlanLifeAreaAutocomplete
-                  ? editPlanLifeAreaAutocomplete.getValue()
-                  : p.lifeAreaId,
-                state: editPlanStateAutocomplete
-                  ? editPlanStateAutocomplete.getValue()
-                  : p.state,
-                period: {
-                  startDate: editPlanStartDatePicker
-                    ? editPlanStartDatePicker.value
-                    : p.period?.startDate,
-                  endDate: editPlanEndDatePicker
-                    ? editPlanEndDatePicker.value
-                    : p.period?.endDate,
-                },
-                updatedAt: todayISO(),
-              };
-            }
-            return p;
-          });
-          StateManager.save({ plans });
+          const updatedPlans = PlanService.editPlan(
+            stateData.plans || [],
+            pendingEditId,
+            {
+              title: titleInput?.value,
+              description: descInput?.value,
+              lifeAreaId: editPlanLifeAreaAutocomplete
+                ? editPlanLifeAreaAutocomplete.getValue()
+                : undefined,
+              state: editPlanStateAutocomplete
+                ? editPlanStateAutocomplete.getValue()
+                : undefined,
+              period: {
+                startDate: editPlanStartDatePicker
+                  ? editPlanStartDatePicker.value
+                  : undefined,
+                endDate: editPlanEndDatePicker
+                  ? editPlanEndDatePicker.value
+                  : undefined,
+              },
+              objectives: activeModalObjectives,
+            },
+          );
+          StateManager.save({ plans: updatedPlans });
         } else if (activeTab === "logs") {
-          const logs = (stateData.logs || []).map((l) => {
-            if (String(l.id) === String(pendingEditId)) {
-              let planId = l.planId;
-              if (editLogPlanLinkAutocomplete) {
-                const selectedItems =
-                  editLogPlanLinkAutocomplete.getSelectedItems();
-                if (selectedItems && selectedItems.length > 0) {
-                  planId = selectedItems[0].id || selectedItems[0].value;
-                }
-              }
+          let planId = undefined;
+          if (editLogPlanLinkAutocomplete) {
+            const selectedItems =
+              editLogPlanLinkAutocomplete.getSelectedItems();
+            if (selectedItems && selectedItems.length > 0) {
+              planId = selectedItems[0].id || selectedItems[0].value;
+            }
+          }
 
-              return {
-                ...l,
-                date: editLogDatePicker ? editLogDatePicker.value : l.date,
-                energy: editLogEnergyAutocomplete
-                  ? Number(editLogEnergyAutocomplete.getValue())
-                  : l.energy,
-                mood: editLogMoodAutocomplete
-                  ? editLogMoodAutocomplete.getValue()
-                  : l.mood,
-                planId,
-                notes: descInput?.value.trim() || "",
-                updatedAt: todayISO(),
-              };
-            }
-            return l;
-          });
-          StateManager.save({ logs });
+          const updatedLogs = PlanService.editLog(
+            stateData.logs || [],
+            pendingEditId,
+            {
+              title: titleInput?.value,
+              description: descInput?.value,
+              date: editLogDatePicker ? editLogDatePicker.value : undefined,
+              planId,
+              energy: editLogEnergyAutocomplete
+                ? Number(editLogEnergyAutocomplete.getValue())
+                : undefined,
+              mood: editLogMoodAutocomplete
+                ? editLogMoodAutocomplete.getValue()
+                : undefined,
+              metrics: activeModalMetrics,
+            },
+          );
+          StateManager.save({ logs: updatedLogs });
         } else if (activeTab === "templates") {
-          const templates = (stateData.templates || []).map((t) => {
-            if (String(t.id) === String(pendingEditId)) {
-              return {
-                ...t,
-                title: newTitle,
-                description: descInput?.value.trim() || "",
-                lifeAreaId: editTemplateLifeAreaAutocomplete
-                  ? editTemplateLifeAreaAutocomplete.getValue()
-                  : t.lifeAreaId,
-                baseline:
-                  document
-                    .getElementById("edit-template-baseline")
-                    ?.value.trim() || "",
-                optimal:
-                  document
-                    .getElementById("edit-template-optimal")
-                    ?.value.trim() || "",
-                isFavorite:
-                  document.getElementById("edit-template-favorite")?.checked ||
-                  false,
-                updatedAt: todayISO(),
-              };
-            }
-            return t;
-          });
-          StateManager.save({ templates });
+          const updatedTemplates = PlanService.editTemplate(
+            stateData.templates || [],
+            pendingEditId,
+            {
+              title: titleInput?.value,
+              description: descInput?.value,
+              lifeAreaId: editTemplateLifeAreaAutocomplete
+                ? editTemplateLifeAreaAutocomplete.getValue()
+                : undefined,
+              baseline: document.getElementById("edit-template-baseline")
+                ?.value,
+              optimal: document.getElementById("edit-template-optimal")?.value,
+              isFavorite: document.getElementById("edit-template-favorite")
+                ?.checked,
+            },
+          );
+          StateManager.save({ templates: updatedTemplates });
         }
 
         if (this.mainController?.toggleModal) {

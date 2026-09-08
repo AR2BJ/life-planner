@@ -5,7 +5,6 @@ export const PlansView = {
         id="plans-view"
         class="hidden w-full min-w-0 flex-col"
       >
-        <!-- Header Navigation Tabs & Search -->
         <div
           class="mb-6 flex flex-wrap sm:flex-nowrap gap-4 justify-center sm:justify-between items-center w-full"
         >
@@ -75,7 +74,6 @@ export const PlansView = {
           </div>
         </div>
 
-        <!-- Form Section -->
         <div
           id="create-form-wrapper"
           class="w-full min-w-0 mb-6"
@@ -108,44 +106,47 @@ export const PlansView = {
               id="plan-form-container"
               class="hidden p-5 bg-surface-2/20 animate-slide-down flex-col gap-4 rounded-b-2xl border-t border-border"
             >
-              <!-- Common Title field for Plans & Templates -->
               <div
                 id="create-title-wrapper"
-                class="w-full min-w-0 flex flex-col"
+                class="plan-tab-fields flex w-full min-w-0 flex-col"
+                data-tab-fields="plans,templates,logs"
               >
                 <label
-                  for="create-plan-title"
+                  for="create-item-title"
                   class="mb-1.5 block ps-3 text-xs font-semibold text-secondary"
                 >
                   Title <span class="text-red-700">*</span>
                 </label>
                 <input
-                  id="create-plan-title"
+                  id="create-item-title"
                   type="text"
                   placeholder="Enter title..."
                   class="h-11 w-full rounded-xl border border-border bg-surface-2 px-4 text-sm text-color placeholder:text-secondary/70 transition focus:border-brand/80 focus:outline-none"
                 />
               </div>
 
-              <!-- 1. PLANS TAB FIELDS -->
+              <div
+                id="create-desc-wrapper"
+                class="plan-tab-fields flex w-full min-w-0 flex-col"
+                data-tab-fields="plans,templates,logs"
+              >
+                <label
+                  for="create-item-desc"
+                  class="mb-1.5 block ps-3 text-xs font-semibold text-secondary"
+                >Description</label>
+                <textarea
+                  id="create-item-desc"
+                  rows="2"
+                  placeholder="Enter description..."
+                  class="w-full scrollbar-thin scrollbar-thumb-surface rounded-xl border border-border bg-surface-2 p-3 text-sm text-color placeholder:text-secondary/70 transition focus:border-brand/80 focus:outline-none resize-none"
+                ></textarea>
+              </div>
+
               <div
                 id="create-plans-fields"
                 class="plan-tab-fields flex flex-col gap-4"
                 data-tab-fields="plans"
               >
-                <div class="w-full min-w-0 flex flex-col">
-                  <label
-                    for="create-plan-desc"
-                    class="mb-1.5 block ps-3 text-xs font-semibold text-secondary"
-                  >Description</label>
-                  <textarea
-                    id="create-plan-desc"
-                    rows="2"
-                    placeholder="Enter description..."
-                    class="w-full scrollbar-thin scrollbar-thumb-surface rounded-xl border border-border bg-surface-2 p-3 text-sm text-color placeholder:text-secondary/70 transition focus:border-brand/80 focus:outline-none resize-none"
-                  ></textarea>
-                </div>
-
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div class="flex flex-col gap-1.5">
                     <div
@@ -177,7 +178,6 @@ export const PlansView = {
                 </div>
               </div>
 
-              <!-- 2. LOGS TAB FIELDS -->
               <div
                 id="create-logs-fields"
                 class="plan-tab-fields hidden flex-col gap-4"
@@ -210,40 +210,13 @@ export const PlansView = {
                     class="w-full"
                   ></div>
                 </div>
-
-                <div class="w-full min-w-0 flex flex-col">
-                  <label
-                    for="create-log-notes"
-                    class="mb-1.5 block ps-3 text-xs font-semibold text-secondary"
-                  >Notes</label>
-                  <textarea
-                    id="create-log-notes"
-                    rows="2"
-                    placeholder="Enter daily log notes..."
-                    class="w-full scrollbar-thin scrollbar-thumb-surface rounded-xl border border-border bg-surface-2 p-3 text-sm text-color placeholder:text-secondary/70 transition focus:border-brand/80 focus:outline-none resize-none"
-                  ></textarea>
-                </div>
               </div>
 
-              <!-- 3. TEMPLATES TAB FIELDS -->
               <div
                 id="create-templates-fields"
                 class="plan-tab-fields hidden flex-col gap-4"
                 data-tab-fields="templates"
               >
-                <div class="w-full min-w-0 flex flex-col">
-                  <label
-                    for="create-template-desc"
-                    class="mb-1.5 block ps-3 text-xs font-semibold text-secondary"
-                  >Description</label>
-                  <textarea
-                    id="create-template-desc"
-                    rows="2"
-                    placeholder="Enter template description..."
-                    class="w-full scrollbar-thin scrollbar-thumb-surface rounded-xl border border-border bg-surface-2 p-3 text-sm text-color placeholder:text-secondary/70 transition focus:border-brand/80 focus:outline-none resize-none"
-                  ></textarea>
-                </div>
-
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div class="w-full min-w-0">
                     <label
@@ -280,7 +253,7 @@ export const PlansView = {
                       class="w-full"
                     ></div>
                   </div>
-                  <div class="shrink-0 w-auto pt-2 sm:pt-4">
+                  <div class="shrink-0 w-auto pt-7">
                     <label
                       class="relative inline-flex items-center cursor-pointer gap-2.5 select-none"
                     >
@@ -300,7 +273,6 @@ export const PlansView = {
                 </div>
               </div>
 
-              <!-- Submit Footer -->
               <div
                 class="flex flex-col gap-3 border-t border-border pt-4 sm:flex-row sm:items-center sm:justify-between"
               >
@@ -320,7 +292,6 @@ export const PlansView = {
           </div>
         </div>
 
-        <!-- Filter & Sort Bar -->
         <div
           id="plan-filters-bar"
           class="flex flex-wrap lg:flex-nowrap items-stretch lg:items-center justify-between gap-6 border-b border-border pb-4 w-full"
@@ -378,7 +349,6 @@ export const PlansView = {
           </div>
         </div>
 
-        <!-- Render List Container -->
         <div
           id="plan-list"
           class="mt-6 w-full space-y-3"

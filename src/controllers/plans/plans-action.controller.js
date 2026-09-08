@@ -4,6 +4,7 @@ import {
 } from "./plans-form.controller.js";
 
 import { NotificationService } from "@/services/notification.service.js";
+import { PlanService } from "@/services/plans.service.js";
 import { StateManager } from "@/models/state.model.js";
 import { openObjectivesState } from "@/utils/helpers.js";
 
@@ -11,7 +12,6 @@ export const PlansActionController = {
   init(mainController) {
     this.mainController = mainController;
     this.bindDynamicEvents();
-    this.bindEditAccordionEvents();
   },
 
   handleToggleObjective(planId, objectiveId) {
@@ -19,23 +19,11 @@ export const PlansActionController = {
     const targetPlan = plans.find((p) => String(p.id) === String(planId));
     if (!targetPlan) return;
 
-    const updatedObjectives = (targetPlan.objectives || []).map((obj) => {
-      if (String(obj.id) === String(objectiveId)) {
-        return { ...obj, completed: !obj.completed };
-      }
-      return obj;
-    });
-
-    const updatedPlans = plans.map((p) => {
-      if (String(p.id) === String(planId)) {
-        return {
-          ...p,
-          objectives: updatedObjectives,
-          updatedAt: new Date().toISOString(),
-        };
-      }
-      return p;
-    });
+    const updatedPlans = PlanService.toggleObjective(
+      plans,
+      planId,
+      objectiveId,
+    );
 
     StateManager.save({ plans: updatedPlans });
     this.mainController.refreshUI();
@@ -55,15 +43,8 @@ export const PlansActionController = {
     );
     if (!targetTemplate) return;
 
-    const updatedTemplates = templates.map((t) => {
-      if (String(t.id) === String(templateId)) {
-        return {
-          ...t,
-          isFavorite: !t.isFavorite,
-          updatedAt: new Date().toISOString(),
-        };
-      }
-      return t;
+    const updatedTemplates = PlanService.editTemplate(templates, templateId, {
+      isFavorite: !targetTemplate.isFavorite,
     });
 
     StateManager.save({ templates: updatedTemplates });
@@ -79,49 +60,6 @@ export const PlansActionController = {
     });
   },
 
-  bindEditAccordionEvents() {
-    const accordionGroup = document.getElementById("edit-accordion-group");
-    if (!accordionGroup) return;
-
-    accordionGroup.addEventListener("click", (e) => {
-      const headerBtn = e.target.closest(".accordion-header");
-      if (!headerBtn) return;
-
-      e.preventDefault();
-
-      const clickedItem = headerBtn.closest(".accordion-item");
-      if (!clickedItem) return;
-
-      const allAccordionItems =
-        accordionGroup.querySelectorAll(".accordion-item");
-
-      allAccordionItems.forEach((item) => {
-        const content = item.querySelector(".accordion-content");
-        const icon = item.querySelector(".accordion-icon");
-
-        if (item === clickedItem) {
-          const isCurrentlyHidden = content.classList.contains("hidden");
-
-          if (isCurrentlyHidden) {
-            content.classList.remove("hidden");
-            content.classList.add("flex");
-            if (icon) icon.classList.add("rotate-180");
-          } else {
-            content.classList.add("hidden");
-            content.classList.remove("flex");
-            if (icon) icon.classList.remove("rotate-180");
-          }
-        } else {
-          if (content) {
-            content.classList.add("hidden");
-            content.classList.remove("flex");
-          }
-          if (icon) icon.classList.remove("rotate-180");
-        }
-      });
-    });
-  },
-
   bindDynamicEvents() {
     const listContainer = document.getElementById("plan-list");
     if (!listContainer) return;
@@ -130,21 +68,17 @@ export const PlansActionController = {
       const target = e.target;
       const activeTab = StateManager.getActiveTab() || "plans";
 
-      // ==========================================
-      // 1. TOGGLE MILESTONES/OBJECTIVES ACCORDION
-      // ==========================================
-      const toggleMilestonesBtn = target.closest(".toggle-milestones-btn");
-      if (toggleMilestonesBtn) {
+      // A. TOGGLE OBJECTIVES ACCORDION
+      const toggleObjectivesBtn = target.closest(".toggle-objectives-btn");
+      if (toggleObjectivesBtn) {
         e.stopPropagation();
-        const planId =
-          toggleMilestonesBtn.dataset.goalId ||
-          toggleMilestonesBtn.dataset.planId;
+        const planId = toggleObjectivesBtn.dataset.planId;
         if (!planId) return;
 
         const container = document.getElementById(
-          `milestones-container-${planId}`,
+          `objectives-container-${planId}`,
         );
-        const chevron = toggleMilestonesBtn.querySelector(".milestone-chevron");
+        const chevron = toggleObjectivesBtn.querySelector(".objective-chevron");
 
         if (openObjectivesState.expandedPlanIds.has(planId)) {
           openObjectivesState.expandedPlanIds.delete(planId);
@@ -158,17 +92,12 @@ export const PlansActionController = {
         return;
       }
 
-      // ==========================================
-      // 2. TOGGLE INDIVIDUAL OBJECTIVE/MILESTONE
-      // ==========================================
-      const milestoneToggle = target.closest(".milestone-toggle");
-      if (milestoneToggle) {
+      // B. TOGGLE INDIVIDUAL OBJECTIVE
+      const objectiveToggle = target.closest(".objective-toggle");
+      if (objectiveToggle) {
         e.stopPropagation();
-        const planId =
-          milestoneToggle.dataset.goalId || milestoneToggle.dataset.planId;
-        const objectiveId =
-          milestoneToggle.dataset.milestoneId ||
-          milestoneToggle.dataset.objectiveId;
+        const planId = objectiveToggle.dataset.planId;
+        const objectiveId = objectiveToggle.dataset.objectiveId;
 
         if (planId && objectiveId) {
           openObjectivesState.expandedPlanIds.add(planId);
@@ -177,9 +106,7 @@ export const PlansActionController = {
         return;
       }
 
-      // ==========================================
       // 3. TOGGLE TEMPLATE FAVORITE
-      // ==========================================
       const favoriteBtn = target.closest(".favorite-btn");
       if (favoriteBtn) {
         e.stopPropagation();
@@ -190,21 +117,20 @@ export const PlansActionController = {
         return;
       }
 
-      // ==========================================
       // 4. EDIT MODAL TRIGGER
-      // ==========================================
       const editBtn = target.closest(".edit-btn");
       if (editBtn) {
         e.stopPropagation();
         const id = editBtn.dataset.id;
+
+        this.resetEditModalAccordion();
+
         setPendingEditId(id);
         this.mainController.toggleModal("edit-modal", true);
         return;
       }
 
-      // ==========================================
       // 5. DELETE MODAL TRIGGER
-      // ==========================================
       const deleteBtn = target.closest(".delete-btn");
       if (deleteBtn) {
         e.stopPropagation();
@@ -214,9 +140,7 @@ export const PlansActionController = {
         return;
       }
 
-      // ==========================================
       // 6. DIRECT DELETE ITEM HANDLER
-      // ==========================================
       const directDeleteBtn = target.closest(".direct-delete-btn");
       if (directDeleteBtn) {
         e.stopPropagation();
@@ -226,18 +150,15 @@ export const PlansActionController = {
         const currentState = StateManager.getState();
 
         if (activeTab === "plans") {
-          const plans = (currentState.plans || []).filter(
-            (p) => String(p.id) !== String(id),
-          );
+          const plans = PlanService.deletePlan(currentState.plans || [], id);
           StateManager.save({ plans });
         } else if (activeTab === "logs") {
-          const logs = (currentState.logs || []).filter(
-            (l) => String(l.id) !== String(id),
-          );
+          const logs = PlanService.deleteLog(currentState.logs || [], id);
           StateManager.save({ logs });
         } else if (activeTab === "templates") {
-          const templates = (currentState.templates || []).filter(
-            (t) => String(t.id) !== String(id),
+          const templates = PlanService.deleteTemplate(
+            currentState.templates || [],
+            id,
           );
           StateManager.save({ templates });
         }
@@ -250,6 +171,30 @@ export const PlansActionController = {
           icon: "fa-trash-can",
           duration: 4000,
         });
+      }
+    });
+  },
+
+  resetEditModalAccordion() {
+    const accordionGroup = document.getElementById("edit-accordion-group");
+    if (!accordionGroup) return;
+
+    const visibleItems = Array.from(
+      accordionGroup.querySelectorAll(".accordion-item"),
+    ).filter((item) => !item.classList.contains("hidden"));
+
+    visibleItems.forEach((item, index) => {
+      const content = item.querySelector(".accordion-content");
+      const icon = item.querySelector(".accordion-icon");
+
+      if (index === 0) {
+        content?.classList.remove("hidden");
+        content?.classList.add("flex");
+        icon?.classList.add("rotate-180");
+      } else {
+        content?.classList.add("hidden");
+        content?.classList.remove("flex");
+        icon?.classList.remove("rotate-180");
       }
     });
   },

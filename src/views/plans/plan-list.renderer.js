@@ -10,7 +10,7 @@ export function renderPlanList(items, activeTab = "plans") {
     const totalCount = items.length;
     const labels = {
       plans: totalCount === 1 ? "plan" : "plans",
-      logs: totalCount === 1 ? "log entry" : "log entries",
+      logs: totalCount === 1 ? "log" : "logs",
       templates: totalCount === 1 ? "template" : "templates",
     };
 
@@ -34,8 +34,8 @@ export function renderPlanList(items, activeTab = "plans") {
     },
     logs: {
       icon: "<i class='fa-regular fa-calendar-day text-brand/60'></i>",
-      title: "No daily log entries",
-      description: "Log daily energy, mood, and progress alignment.",
+      title: "No log entries",
+      description: "Log energy, mood, and progress alignment.",
     },
     templates: {
       icon: "<i class='fa-regular fa-layer-group text-brand/60'></i>",

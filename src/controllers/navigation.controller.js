@@ -131,8 +131,8 @@ export class NavigationController {
         if (key === "c") return dispatchAsyncClick("btn-toggle-plan-form");
         if (key === "t") return dispatchAsyncClick("theme-toggle");
         if (key === "n") return dispatchAsyncClick("menu-toggle");
-        if (key === "g") return dispatchAsyncClick("tab-goals");
-        if (key === "d") return dispatchAsyncClick("tab-daily");
+        if (key === "g") return dispatchAsyncClick("tab-plans");
+        if (key === "d") return dispatchAsyncClick("tab-logs");
         if (key === "x") return dispatchAsyncClick("tab-templates");
 
         if (key === "r") {

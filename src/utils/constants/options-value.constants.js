@@ -35,8 +35,8 @@ export const PLAN_STATES = [
   {
     id: "active",
     name: "Active",
-    icon: "fa-solid fa-play text-emerald-500/80",
-    class: "bg-emerald-500/10 text-emerald-500/80 border-emerald-500/20",
+    icon: "fa-solid fa-play text-cyan-500/80",
+    class: "bg-cyan-500/10 text-cyan-500/80 border-cyan-500/20",
   },
   {
     id: "paused",
@@ -47,8 +47,8 @@ export const PLAN_STATES = [
   {
     id: "completed",
     name: "Completed",
-    icon: "fa-solid fa-check-double text-cyan-500/80",
-    class: "bg-cyan-500/10 text-cyan-500/80 border-cyan-500/20",
+    icon: "fa-solid fa-check-double text-emerald-500/80",
+    class: "bg-emerald-500/10 text-emerald-500/80 border-emerald-500/20",
   },
 ];
 

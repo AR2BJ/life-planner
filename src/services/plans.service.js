@@ -75,15 +75,39 @@ export const PlanService = {
     return currentPlans.map((p) => {
       if (String(p.id) !== String(planId)) return p;
 
-      const updatedObjectives = p.objectives.map((obj) =>
-        String(obj.id) === String(objectiveId)
-          ? { ...obj, completed: !obj.completed }
-          : obj,
-      );
+      let previousState = p._previousState || p.state || "active";
+
+      const updatedObjectives = (p.objectives || []).map((obj) => {
+        if (String(obj.id) === String(objectiveId)) {
+          return { ...obj, completed: !obj.completed };
+        }
+        return obj;
+      });
+
+      const allCompleted =
+        updatedObjectives.length > 0 &&
+        updatedObjectives.every((obj) => obj.completed);
+      let newUIControlState = p.state;
+
+      if (allCompleted) {
+        if (p.state !== "completed") {
+          previousState = p.state;
+        }
+        newUIControlState = "completed";
+      } else {
+        if (p.state === "completed") {
+          newUIControlState =
+            previousState && previousState !== "completed"
+              ? previousState
+              : "active";
+        }
+      }
 
       return {
         ...p,
         objectives: updatedObjectives,
+        state: newUIControlState,
+        _previousState: previousState,
         updatedAt: todayISO(),
       };
     });
@@ -97,8 +121,17 @@ export const PlanService = {
   // 2. LOGS
   // ==========================================
   createLog(currentLogs = [], logData = {}) {
+    const rawTitle = typeof logData === "string" ? logData : logData.title;
+    const cleanedTitle = (rawTitle || "").trim().replace(/\s+/g, " ");
+
+    if (!cleanedTitle || cleanedTitle.length < 2 || cleanedTitle.length > 120) {
+      throw new Error("Log title must be between 2 and 120 characters");
+    }
+
     const newLog = {
       id: String(logData.id || generateId()),
+      title: cleanedTitle,
+      description: (logData.description || "").trim(),
       date: logData.date || todayISO(),
       planId: logData.planId ? String(logData.planId) : null,
       energy: Math.min(5, Math.max(1, Number(logData.energy) || 3)),
@@ -107,7 +140,6 @@ export const PlanService = {
         logData.metrics && typeof logData.metrics === "object"
           ? logData.metrics
           : {},
-      notes: (logData.notes || logData.description || "").trim(),
       createdAt: todayISO(),
       updatedAt: todayISO(),
     };
@@ -119,16 +151,21 @@ export const PlanService = {
     const log = currentLogs.find((l) => String(l.id) === String(logId));
     if (!log) throw new Error("Log not found");
 
+    let cleanedTitle = log.title;
+    if (updatedFields.title !== undefined) {
+      cleanedTitle = updatedFields.title.trim().replace(/\s+/g, " ");
+      if (cleanedTitle.length < 2 || cleanedTitle.length > 120) {
+        throw new Error("Log title must be between 2 and 120 characters");
+      }
+    }
+
     return currentLogs.map((l) => {
       if (String(l.id) !== String(logId)) return l;
 
       return {
         ...l,
         ...updatedFields,
-        notes:
-          updatedFields.notes !== undefined
-            ? updatedFields.notes.trim()
-            : l.notes,
+        title: cleanedTitle,
         energy:
           updatedFields.energy !== undefined
             ? Math.min(5, Math.max(1, Number(updatedFields.energy)))

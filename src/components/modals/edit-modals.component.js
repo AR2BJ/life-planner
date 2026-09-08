@@ -1,106 +1,104 @@
 export const EditModalsComponent = {
-  renderObjectiveItem(objective) {
-    const isCompleted = Boolean(objective.completed);
+  renderEmptyState(message, iconClass = "fa-regular fa-list-check") {
+    return `
+      <div class="w-full h-full min-h-45 overflow-y-auto scrollbar-thumb-surface-2 scrollbar-thin bg-surface rounded-2xl border border-dashed border-border/70 p-4 text-center flex flex-col justify-center items-center">
+        <div class="h-full flex flex-col justify-center items-center">
+          <div class="text-3xl text-brand/80">
+            <i class="${iconClass}"></i>
+          </div>
+          <p class="mt-3 text-secondary max-w-sm mx-auto text-xs lg:text-sm">
+            ${message}
+          </p>
+        </div>
+      </div>
+    `;
+  },
 
+  renderObjectiveItem(obj) {
     return `
       <div
-        class="group flex items-center justify-between gap-3 p-2.5 lg:p-3 rounded-xl bg-surface border border-border/80 hover:border-border transition"
+        data-objective-id="${obj.id}"
+        class="subtask-item flex items-center justify-between gap-3 rounded-xl border border-border/70 bg-surface-2 p-1 shadow-sm transition"
       >
-        <div class="flex items-center gap-3 min-w-0 flex-1">
+        <div class="flex items-center gap-3 flex-1 min-w-0">
+          <input
+            type="text"
+            data-action="edit-objective-text"
+            value="${(obj.title ?? "").replace(/"/g, "&quot;")}"
+            class="subtask-title-input text-sm text-color mx-3 bg-transparent outline-none w-full border-b min-h-7 py-1 ${
+              obj.isEditing ? "border-brand/50" : "border-transparent"
+            } ${obj.completed ? "line-through text-muted" : ""}"
+            ${obj.isEditing ? "" : "readonly"}
+          />
+        </div>
+
+        <div class="flex items-center gap-1 shrink-0">
           <button
             type="button"
-            data-objective-id="${objective.id}"
-            class="toggle-objective-btn shrink-0 w-6 h-6 rounded-lg flex items-center justify-center text-base transition cursor-pointer ${
-              isCompleted ? "text-brand" : "text-secondary hover:text-color"
-            }"
+            data-action="edit-objective"
+            class="edit-btn flex h-8 w-8 sm:w-10 sm:h-10 items-center justify-center rounded-lg sm:rounded-xl border border-border bg-surface hover:bg-blue-600/10 hover:cursor-pointer transition"
+            title="${obj.isEditing ? "Save changes" : "Edit item"}"
           >
             <i
-              class="${
-                isCompleted
-                  ? "fa-solid fa-square-check"
-                  : "fa-regular fa-square"
-              }"
+              class="fa-regular ${
+                obj.isEditing ? "fa-floppy-disk" : "fa-pen-to-square"
+              } text-blue-500/80 text-base"
             ></i>
           </button>
 
-          <span
-            class="text-xs lg:text-sm text-color truncate ${
-              isCompleted ? "line-through text-secondary" : ""
-            }"
-          >
-            ${objective.title}
-          </span>
-        </div>
-
-        <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition">
           <button
             type="button"
-            data-objective-id="${objective.id}"
-            class="edit-objective-btn w-7 h-7 rounded-lg bg-surface-2 hover:bg-brand/10 text-secondary hover:text-brand flex items-center justify-center transition cursor-pointer shrink-0"
+            data-action="delete-objective"
+            class="delete-btn flex h-8 w-8 sm:w-10 sm:h-10 items-center justify-center rounded-lg sm:rounded-xl border border-border bg-surface hover:bg-red-600/10 hover:cursor-pointer transition"
+            title="Delete item"
           >
-            <i class="fa-regular fa-pen text-xs"></i>
-          </button>
-          <button
-            type="button"
-            data-objective-id="${objective.id}"
-            class="delete-objective-btn w-7 h-7 rounded-lg bg-surface-2 hover:bg-red-600/10 text-secondary hover:text-red-500 flex items-center justify-center transition cursor-pointer shrink-0"
-          >
-            <i class="fa-regular fa-trash-can text-xs"></i>
+            <i
+              class="fa-regular fa-trash-can text-red-500/80 text-base"
+            ></i>
           </button>
         </div>
       </div>
     `;
   },
 
-  renderMetricItem(metricKey, metricData) {
+  renderMetricItem(key, metricData) {
     const value =
       typeof metricData === "object" ? metricData.value : metricData;
     const unit = typeof metricData === "object" ? metricData.unit || "" : "";
 
     return `
       <div
-        class="group flex items-center justify-between gap-3 p-2.5 lg:p-3 rounded-xl bg-surface border border-border/80 hover:border-border transition"
+        data-metric-key="${key}"
+        class="subtask-item flex items-center justify-between gap-3 rounded-xl border border-border/70 bg-surface-2 p-1 shadow-sm transition"
       >
-        <div class="flex items-center gap-3 min-w-0 flex-1">
-          <div class="w-7 h-7 rounded-lg bg-brand/10 text-brand flex items-center justify-center text-xs shrink-0 font-bold">
-            <i class="fa-regular fa-chart-simple"></i>
-          </div>
-          <div class="flex flex-col min-w-0 flex-1">
-            <span class="text-xs lg:text-sm text-color font-semibold truncate">
-              ${metricKey}
-            </span>
-            <span class="text-[11px] text-secondary truncate">
-              Value: <strong class="text-color">${value}</strong> ${unit}
-            </span>
-          </div>
+        <div class="flex items-center gap-2 flex-1 min-w-0 ms-3">
+          <span class="text-sm font-semibold text-color shrink-0">${key}:</span>
+          <span class="text-sm text-secondary truncate">${value} ${unit}</span>
         </div>
 
-        <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition">
+        <div class="flex items-center gap-1 shrink-0">
           <button
             type="button"
-            data-metric-key="${metricKey}"
-            data-metric-value="${value}"
-            data-metric-unit="${unit}"
-            class="edit-metric-btn w-7 h-7 rounded-lg bg-surface-2 hover:bg-brand/10 text-secondary hover:text-brand flex items-center justify-center transition cursor-pointer shrink-0"
+            data-action="edit-metric"
+            data-metric-key="${key}"
+            class="edit-btn flex h-8 w-8 sm:w-10 sm:h-10 items-center justify-center rounded-lg sm:rounded-xl border border-border bg-surface hover:bg-blue-600/10 hover:cursor-pointer transition"
+            title="Edit metric"
           >
-            <i class="fa-regular fa-pen text-xs"></i>
+            <i
+              class="fa-regular fa-pen-to-square text-blue-500/80 text-base"
+            ></i>
           </button>
+
           <button
             type="button"
-            data-metric-key="${metricKey}"
-            class="delete-metric-btn w-7 h-7 rounded-lg bg-surface-2 hover:bg-red-600/10 text-secondary hover:text-red-500 flex items-center justify-center transition cursor-pointer shrink-0"
+            data-action="delete-metric"
+            data-metric-key="${key}"
+            class="delete-btn flex h-8 w-8 sm:w-10 sm:h-10 items-center justify-center rounded-lg sm:rounded-xl border border-border bg-surface hover:bg-red-600/10 hover:cursor-pointer transition"
+            title="Delete metric"
           >
-            <i class="fa-regular fa-trash-can text-xs"></i>
+            <i class="fa-regular fa-trash-can text-red-500/80 text-base"></i>
           </button>
         </div>
-      </div>
-    `;
-  },
-
-  renderEmptyState(message = "No items added yet.") {
-    return `
-      <div class="w-full flex flex-col items-center justify-center p-4 rounded-xl border-2 border-dashed border-border/70 text-center bg-surface-2/30">
-        <p class="text-xs text-secondary font-medium">${message}</p>
       </div>
     `;
   },
@@ -114,7 +112,6 @@ export const EditModalsComponent = {
         <div
           class="bg-surface xs:rounded-t-3xl lg:rounded-2xl p-4 lg:p-6 max-w-3xl w-full h-dvh xs:h-[96.5dvh] sm:h-[95dvh] lg:h-auto lg:max-h-[90vh] shadow-2xl flex flex-col border border-border overflow-hidden"
         >
-          <!-- Modal Header -->
           <div
             class="flex items-center justify-between border-b border-border pb-4 shrink-0"
           >
@@ -131,7 +128,7 @@ export const EditModalsComponent = {
                 <p
                   class="text-[11px] w-40 xs:w-auto lg:text-xs text-secondary truncate"
                 >
-                  Update plan properties, tracking metrics, and custom settings.
+                  Update plan properties, logs, templates, and metrics.
                 </p>
               </div>
             </div>
@@ -145,12 +142,10 @@ export const EditModalsComponent = {
             </button>
           </div>
 
-          <!-- Accordion Group Container -->
           <div
             id="edit-accordion-group"
             class="flex-1 min-h-0 flex flex-col gap-3 py-4 overflow-y-auto scrollbar-thin scrollbar-thumb-surface-2 pe-1"
           >
-            <!-- SECTION 1: BASIC INFORMATION -->
             <div
               class="accordion-item flex flex-col rounded-2xl border border-border/60 bg-surface-2/60 overflow-hidden shrink-0 transition-all duration-300"
             >
@@ -171,7 +166,7 @@ export const EditModalsComponent = {
                       Basic Information
                     </h4>
                     <p class="text-[10px] lg:text-xs leading-4 text-secondary">
-                      Title, area, and core strategy settings.
+                      Title, description, and primary settings.
                     </p>
                   </div>
                 </div>
@@ -183,7 +178,8 @@ export const EditModalsComponent = {
               <div class="accordion-content p-3.5 lg:p-4 flex flex-col gap-3.5">
                 <div
                   id="edit-title-container"
-                  class="flex flex-col flex-1 min-w-0"
+                  class="edit-tab-field flex flex-col flex-1 min-w-0"
+                  data-tab="plans,templates,logs"
                 >
                   <label
                     for="edit-item-title"
@@ -199,56 +195,59 @@ export const EditModalsComponent = {
                   />
                 </div>
 
-                <div class="flex flex-col sm:flex-row items-stretch sm:items-end gap-3.5 w-full">
-                  <div class="flex flex-col flex-1 min-w-0">
-                    <div
-                      id="edit-plan-lifearea-container"
-                      class="edit-tab-field w-full"
-                      data-tab="plans"
-                    >
-                      <div
-                        id="edit-plan-lifearea-autocomplete"
-                        class="w-full"
-                      ></div>
-                    </div>
+                <div
+                  id="edit-plan-lifearea-container"
+                  class="edit-tab-field flex flex-col w-full"
+                  data-tab="plans"
+                >
+                  <div
+                    id="edit-plan-lifearea-autocomplete"
+                    class="w-full"
+                  ></div>
+                </div>
+
+                <div
+                  id="edit-template-lifearea-wrapper"
+                  class="edit-tab-field hidden flex-col sm:flex-row items-stretch sm:items-end gap-3.5 w-full"
+                  data-tab="templates"
+                >
+                  <div
+                    class="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full"
+                  >
                     <div
                       id="edit-template-lifearea-container"
-                      class="edit-tab-field hidden w-full"
-                      data-tab="templates"
+                      class="w-full flex-1 min-w-0"
                     >
                       <div
                         id="edit-template-lifearea-autocomplete"
                         class="w-full"
                       ></div>
                     </div>
-                  </div>
-
-                  <div
-                    class="edit-tab-field hidden shrink-0 w-auto h-10 lg:h-11 items-center justify-start sm:justify-end pt-2.5"
-                    data-tab="templates"
-                  >
-                    <label
-                      class="relative inline-flex items-center cursor-pointer gap-2.5 select-none"
-                    >
-                      <input
-                        id="edit-template-favorite"
-                        type="checkbox"
-                        class="sr-only peer"
-                      />
-                      <div
-                        class="w-10 h-5.5 bg-surface-3 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4.5 after:w-4.5 after:transition-all peer-checked:bg-brand"
-                      ></div>
-                      <span
-                        class="text-xs font-semibold text-secondary whitespace-nowrap"
-                        >Mark as Favorite</span
+                    <div class="shrink-0 w-auto pt-7">
+                      <label
+                        class="relative inline-flex items-center cursor-pointer gap-2.5 select-none"
                       >
-                    </label>
+                        <input
+                          id="edit-template-favorite"
+                          type="checkbox"
+                          class="sr-only peer"
+                        />
+                        <div
+                          class="w-10 h-5.5 bg-surface-3 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4.5 after:w-4.5 after:transition-all peer-checked:bg-brand"
+                        ></div>
+                        <span
+                          class="text-xs font-semibold text-secondary whitespace-nowrap"
+                          >Mark as Favorite</span
+                        >
+                      </label>
+                    </div>
                   </div>
                 </div>
 
                 <div
                   id="edit-desc-container"
-                  class="w-full flex flex-col"
+                  class="edit-tab-field flex flex-col w-full"
+                  data-tab="plans,templates,logs"
                 >
                   <label
                     for="edit-item-desc"
@@ -259,14 +258,13 @@ export const EditModalsComponent = {
                   <textarea
                     id="edit-item-desc"
                     rows="2"
-                    placeholder="Enter description or content..."
+                    placeholder="Enter description..."
                     class="w-full scrollbar-thin scrollbar-thumb-surface rounded-xl border border-border bg-surface p-3 text-sm text-color placeholder:text-secondary/70 transition focus:border-brand/80 focus:outline-none resize-none"
                   ></textarea>
                 </div>
               </div>
             </div>
 
-            <!-- SECTION 2: PLANS - SCHEDULE & LIFECYCLE -->
             <div
               id="accordion-plan-lifecycle"
               class="accordion-item edit-tab-field flex flex-col rounded-2xl border border-border/60 bg-surface-2/60 overflow-hidden shrink-0 transition-all duration-300"
@@ -319,7 +317,6 @@ export const EditModalsComponent = {
               </div>
             </div>
 
-            <!-- SECTION 3: PLANS - OBJECTIVES CHECKLIST -->
             <div
               id="accordion-plan-objectives"
               class="accordion-item edit-tab-field flex flex-col rounded-2xl border border-border/60 bg-surface-2/60 overflow-hidden shrink-0 transition-all duration-300"
@@ -388,7 +385,6 @@ export const EditModalsComponent = {
               </div>
             </div>
 
-            <!-- SECTION 4: LOGS - LINKAGE, STATE & NOTES -->
             <div
               id="accordion-log-fields"
               class="accordion-item edit-tab-field hidden flex-col rounded-2xl border border-border/60 bg-surface-2/60 overflow-hidden shrink-0 transition-all duration-300"
@@ -411,7 +407,8 @@ export const EditModalsComponent = {
                       Log Details & Linkage
                     </h4>
                     <p class="text-[10px] lg:text-xs leading-4 text-secondary">
-                      Entry date, energy level, mood state, and parent plan link.
+                      Entry date, energy level, mood state, and parent plan
+                      link.
                     </p>
                   </div>
                 </div>
@@ -442,25 +439,9 @@ export const EditModalsComponent = {
                   id="edit-log-plan-link-autocomplete"
                   class="w-full"
                 ></div>
-
-                <div class="w-full flex flex-col">
-                  <label
-                    for="edit-log-notes"
-                    class="mb-1.5 block ps-3 text-xs font-semibold text-secondary"
-                  >
-                    Log Notes
-                  </label>
-                  <textarea
-                    id="edit-log-notes"
-                    rows="3"
-                    placeholder="Enter daily reflections or detailed observations..."
-                    class="w-full scrollbar-thin scrollbar-thumb-surface rounded-xl border border-border bg-surface p-3 text-sm text-color placeholder:text-secondary/70 transition focus:border-brand/80 focus:outline-none resize-none"
-                  ></textarea>
-                </div>
               </div>
             </div>
 
-            <!-- SECTION 5: LOGS - QUANTITATIVE METRICS -->
             <div
               id="accordion-log-metrics"
               class="accordion-item edit-tab-field hidden flex-col rounded-2xl border border-border/60 bg-surface-2/60 overflow-hidden shrink-0 transition-all duration-300"
@@ -509,7 +490,7 @@ export const EditModalsComponent = {
                     placeholder="Value (e.g. 7.5)"
                     class="h-10 lg:h-11 rounded-xl border border-border bg-surface px-3 text-xs lg:text-sm text-color placeholder:text-secondary/70 focus:border-brand/80 focus:outline-none"
                   />
-                  <div id="metric-actions-container" class="flex gap-2">
+                  <div class="flex gap-2">
                     <input
                       id="new-metric-unit"
                       type="text"
@@ -519,7 +500,7 @@ export const EditModalsComponent = {
                     <button
                       id="btn-add-metric"
                       type="button"
-                      class="h-10 lg:h-11 px-4 rounded-xl bg-brand/10 text-brand/80 transition hover:bg-brand/20 font-semibold text-xs lg:text-sm flex items-center justify-center shrink-0 cursor-pointer"
+                      class="h-10 lg:h-11 px-3 rounded-xl bg-brand/10 text-brand/80 transition hover:bg-brand/20 font-semibold text-xs lg:text-sm flex items-center justify-center shrink-0 cursor-pointer"
                     >
                       <i class="fa-regular fa-plus"></i>
                     </button>
@@ -533,7 +514,6 @@ export const EditModalsComponent = {
               </div>
             </div>
 
-            <!-- SECTION 6: TEMPLATES - STRATEGY BASELINES -->
             <div
               id="accordion-template-strategies"
               class="accordion-item edit-tab-field hidden flex-col rounded-2xl border border-border/60 bg-surface-2/60 overflow-hidden shrink-0 transition-all duration-300"
@@ -547,16 +527,15 @@ export const EditModalsComponent = {
                   <div
                     class="flex h-9 w-9 lg:h-10 lg:w-10 shrink-0 self-start items-center justify-center rounded-lg lg:rounded-xl bg-brand/10 text-brand/80"
                   >
-                    <i
-                      class="fa-regular fa-compass text-sm lg:text-base"
-                    ></i>
+                    <i class="fa-regular fa-compass text-sm lg:text-base"></i>
                   </div>
                   <div>
                     <h4 class="text-xs lg:text-sm font-semibold text-color">
                       Execution Benchmarks
                     </h4>
                     <p class="text-[10px] lg:text-xs leading-4 text-secondary">
-                      Set baseline strategy standards and optimal performance goals.
+                      Set baseline strategy standards and optimal performance
+                      goals.
                     </p>
                   </div>
                 </div>
@@ -602,7 +581,6 @@ export const EditModalsComponent = {
             </div>
           </div>
 
-          <!-- Modal Action Buttons -->
           <div
             class="grid grid-cols-2 gap-3 pt-3 border-t border-border shrink-0 w-full bg-surface mt-auto"
           >
@@ -628,38 +606,44 @@ export const EditModalsComponent = {
   },
 };
 
-export function setupAccordionController(accordionContainer) {
-  if (!accordionContainer) return;
+export function setupAccordionController(accordionGroupElement) {
+  if (!accordionGroupElement || accordionGroupElement.dataset.accordionBound)
+    return;
 
-  accordionContainer.addEventListener("click", (event) => {
+  accordionGroupElement.dataset.accordionBound = "true";
+
+  accordionGroupElement.addEventListener("click", (event) => {
     const headerBtn = event.target.closest(".accordion-header");
     if (!headerBtn) return;
+
+    event.preventDefault();
 
     const clickedItem = headerBtn.closest(".accordion-item");
     if (!clickedItem) return;
 
-    const allItems = accordionContainer.querySelectorAll(".accordion-item");
+    const allItems = Array.from(
+      accordionGroupElement.querySelectorAll(".accordion-item"),
+    ).filter((item) => !item.classList.contains("hidden"));
 
     allItems.forEach((item) => {
       const content = item.querySelector(".accordion-content");
       const icon = item.querySelector(".accordion-icon");
 
       if (item === clickedItem) {
-        const isCurrentlyHidden = content.classList.contains("hidden");
-
-        if (isCurrentlyHidden) {
-          content.classList.remove("hidden");
-          content.classList.add("flex");
-          if (icon) icon.classList.add("rotate-180");
+        const isHidden = content?.classList.contains("hidden");
+        if (isHidden) {
+          content?.classList.remove("hidden");
+          content?.classList.add("flex");
+          icon?.classList.add("rotate-180");
         } else {
-          content.classList.add("hidden");
-          content.classList.remove("flex");
-          if (icon) icon.classList.remove("rotate-180");
+          content?.classList.add("hidden");
+          content?.classList.remove("flex");
+          icon?.classList.remove("rotate-180");
         }
       } else {
-        content.classList.add("hidden");
-        content.classList.remove("flex");
-        if (icon) icon.classList.remove("rotate-180");
+        content?.classList.add("hidden");
+        content?.classList.remove("flex");
+        icon?.classList.remove("rotate-180");
       }
     });
   });

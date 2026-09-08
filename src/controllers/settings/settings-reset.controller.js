@@ -71,9 +71,9 @@ export const SettingsResetController = {
 
   executeApplicationReset() {
     const previousPayload = localStorage.getItem(STORAGE_KEY);
-    const previousGoals = StateManager.getGoals().map((goal) => ({ ...goal }));
-    const previousDailyLogs = StateManager.getDailyLogs().map((daily) => ({
-      ...daily,
+    const previousPlans = StateManager.getPlans().map((plan) => ({ ...plan }));
+    const previousLogs = StateManager.getLogs().map((log) => ({
+      ...log,
     }));
     const previousTemplates = StateManager.getTemplates().map((temp) => ({
       ...temp,
@@ -87,15 +87,15 @@ export const SettingsResetController = {
       try {
         localStorage.removeItem(STORAGE_KEY);
 
-        state.goals = [];
-        state.dailyLogs = [];
+        state.plans = [];
+        state.logs = [];
         state.templates = [];
-        state.activeTab = "goals";
+        state.activeTab = "plans";
         state.currentView = "plans";
 
         renderPlanList([], state.activeTab);
 
-        PlansController.handleTabSwitch("goals");
+        PlansController.handleTabSwitch("plans");
 
         PlansController.refreshUI();
 
@@ -117,19 +117,19 @@ export const SettingsResetController = {
                 }
 
                 StateManager.save(
-                  previousGoals || [],
-                  previousDailyLogs || [],
+                  previousPlans || [],
+                  previousLogs || [],
                   previousTemplates || [],
                 );
 
-                state.goals = previousGoals || [];
-                state.dailyLogs = previousDailyLogs || [];
+                state.plans = previousPlans || [];
+                state.logs = previousLogs || [];
                 state.templates = previousTemplates || [];
 
-                state.activeTab = "goals";
+                state.activeTab = "plans";
                 state.currentView = "plans";
 
-                PlansController.handleTabSwitch("goals");
+                PlansController.handleTabSwitch("plans");
 
                 renderPlanList(
                   StateManager.getFilteredPlans(),

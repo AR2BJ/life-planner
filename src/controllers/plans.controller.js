@@ -549,12 +549,8 @@ export const PlansController = {
     }
 
     // 5. Internal Sub-Tabs Handling
-    const plansBtn =
-      document.getElementById("tab-goals") ||
-      document.getElementById("tab-plans");
-    const logsBtn =
-      document.getElementById("tab-daily") ||
-      document.getElementById("tab-logs");
+    const plansBtn = document.getElementById("tab-plans");
+    const logsBtn = document.getElementById("tab-logs");
     const templatesBtn = document.getElementById("tab-templates");
 
     const handleTabClick = (targetTab, loaderText) => {
@@ -798,12 +794,8 @@ export const PlansController = {
   },
 
   setupTabIndicatorObserver() {
-    const plansBtn =
-      document.getElementById("tab-goals") ||
-      document.getElementById("tab-plans");
-    const logsBtn =
-      document.getElementById("tab-daily") ||
-      document.getElementById("tab-logs");
+    const plansBtn = document.getElementById("tab-plans");
+    const logsBtn = document.getElementById("tab-logs");
     const templatesBtn = document.getElementById("tab-templates");
 
     if (!plansBtn || !logsBtn || !templatesBtn) return;
@@ -824,12 +816,8 @@ export const PlansController = {
 
   updateTabStyles(tab) {
     const indicator = document.getElementById("tab-indicator");
-    const plansBtn =
-      document.getElementById("tab-goals") ||
-      document.getElementById("tab-plans");
-    const logsBtn =
-      document.getElementById("tab-daily") ||
-      document.getElementById("tab-logs");
+    const plansBtn = document.getElementById("tab-plans");
+    const logsBtn = document.getElementById("tab-logs");
     const templatesBtn = document.getElementById("tab-templates");
 
     if (!indicator || !plansBtn || !logsBtn || !templatesBtn) return;

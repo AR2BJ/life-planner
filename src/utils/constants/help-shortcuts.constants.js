@@ -63,9 +63,9 @@ export const HELP_SHORTCUTS = [
         keys: [["/"]],
       },
       {
-        label: "Switch View Status (Goals / Daily Logs / Templates)",
+        label: "Switch View Status (Plans / Logs / Templates)",
         icon: "fa-eye",
-        keys: [["Alt"], [["G"], ["D"], ["X"]]],
+        keys: [["Alt"], [["P"], ["L"], ["X"]]],
       },
       {
         label: "Switch Analytics Views (1 - 3)",

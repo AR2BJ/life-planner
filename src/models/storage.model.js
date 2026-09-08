@@ -29,12 +29,13 @@ export function normalizePlan(data = {}) {
 export function normalizeLog(data = {}) {
   return {
     id: String(data.id || generateId()),
+    title: data.title || "Untitled Log",
+    description: data.description || "",
     date: data.date || todayISO(),
     planId: data.planId ? String(data.planId) : null,
     energy: Number(data.energy) || 3,
     mood: data.mood || "stable",
     metrics: data.metrics || {},
-    notes: data.notes || "",
     createdAt: data.createdAt || todayISO(),
     updatedAt: data.updatedAt || todayISO(),
   };
