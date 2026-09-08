@@ -5,37 +5,62 @@ class StoreService {
     StateManager.init();
   }
 
-  // Getters
-  get goals() {
-    return StateManager.getGoals();
+  // --- GETTERS ---
+  get plans() {
+    return StateManager.getPlans();
   }
 
-  get dailyLogs() {
-    return StateManager.getDailyLogs();
+  get logs() {
+    return StateManager.getLogs();
   }
 
   get templates() {
     return StateManager.getTemplates();
   }
 
-  get filteredGoals() {
-    return StateManager.getFilteredGoals();
+  get activeTab() {
+    return StateManager.getActiveTab();
   }
 
-  // Setters / Actions
-  setGoals(goals) {
-    state.goals = goals;
+  get filteredData() {
+    return StateManager.getFilteredDataForActiveTab();
+  }
+
+  get lifeAreas() {
+    return StateManager.getLifeAreas();
+  }
+
+  // --- SETTERS & MUTATIONS ---
+  setPlans(plans) {
+    state.plans = plans;
     StateManager.save();
   }
 
-  setDailyLogs(dailyLogs) {
-    state.dailyLogs = dailyLogs;
+  setLogs(logs) {
+    state.logs = logs;
     StateManager.save();
   }
 
   setTemplates(templates) {
     state.templates = templates;
     StateManager.save();
+  }
+
+  // --- UI CONTROLS ---
+  setTab(tab) {
+    StateManager.setTab(tab);
+  }
+
+  setLifeAreaFilter(lifeAreaId) {
+    StateManager.setLifeAreaFilter(lifeAreaId);
+  }
+
+  setSortBy(sortBy) {
+    StateManager.setSortBy(sortBy);
+  }
+
+  setSearchQuery(query) {
+    StateManager.setSearchQuery(query);
   }
 }
 

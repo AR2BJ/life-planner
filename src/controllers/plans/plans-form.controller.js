@@ -1,62 +1,45 @@
 import {
-  DAILY_LOG_CATEGORIES,
-  DAILY_MOOD_OPTIONS,
-  GOAL_CATEGORIES,
-  GOAL_PRIORITY_OPTIONS,
-  GOAL_UNIT_OPTIONS,
-  TEMPLATE_CATEGORIES,
-  TIMEFRAME_OPTIONS,
-} from "@/utils/constants/options-value.constants";
-import {
-  formatNumberWithCommas,
-  generateId,
-  getUnitConfig,
-  parseFormattedNumber,
-  todayISO,
-} from "@/utils/helpers.js";
+  ENERGY_LEVEL_OPTIONS,
+  LIFE_AREAS,
+  MOOD_OPTIONS,
+  PLAN_STATES,
+} from "@/utils/constants/options-value.constants.js";
+import { generateId, todayISO } from "@/utils/helpers.js";
 
 import { AutocompleteComponent } from "@/components/ui/autocomplete.component.js";
 import { DatePickerComponent } from "@/components/ui/date-picker.component.js";
 import { GlobalLoaderService } from "@/services/loader.service.js";
 import { NotificationService } from "@/services/notification.service.js";
-import { PlanService } from "@/services/plans.service.js";
 import { StateManager } from "@/models/state.model.js";
 
 let pendingDeleteId = null;
 let pendingEditId = null;
 
-let currentEditMilestones = [];
-let currentEditSteps = [];
+// References for Create Form
+let createPlanLifeAreaAutocomplete = null;
+let createPlanStateAutocomplete = null;
+let createPlanStartDatePicker = null;
+let createPlanEndDatePicker = null;
 
-// Autocomplete & DatePicker references for Create Form
-let createGoalCategoryAutocomplete = null;
-let createGoalTimeframeAutocomplete = null;
-let createGoalPriorityAutocomplete = null;
-let createGoalUnitAutocomplete = null;
-let createGoalStartDatePicker = null;
-let createGoalEndDatePicker = null;
+let createLogDatePicker = null;
+let createLogEnergyAutocomplete = null;
+let createLogMoodAutocomplete = null;
+let createLogPlanLinkAutocomplete = null;
 
-let createDailyCategoryAutocomplete = null;
-let createDailyMoodAutocomplete = null;
-let createDailyDatePicker = null;
-let createDailyGoalLinkAutocomplete = null;
+let createTemplateLifeAreaAutocomplete = null;
 
-let createTemplateCategoryAutocomplete = null;
+// References for Edit Form
+let editPlanLifeAreaAutocomplete = null;
+let editPlanStateAutocomplete = null;
+let editPlanStartDatePicker = null;
+let editPlanEndDatePicker = null;
 
-// Autocomplete & DatePicker references for Edit Form
-let editGoalCategoryAutocomplete = null;
-let editGoalTimeframeAutocomplete = null;
-let editGoalPriorityAutocomplete = null;
-let editGoalUnitAutocomplete = null;
-let editGoalStartDatePicker = null;
-let editGoalEndDatePicker = null;
+let editLogDatePicker = null;
+let editLogEnergyAutocomplete = null;
+let editLogMoodAutocomplete = null;
+let editLogPlanLinkAutocomplete = null;
 
-let editDailyCategoryAutocomplete = null;
-let editDailyMoodAutocomplete = null;
-let editDailyDatePicker = null;
-let editDailyGoalLinkAutocomplete = null;
-
-let editTemplateCategoryAutocomplete = null;
+let editTemplateLifeAreaAutocomplete = null;
 
 export function setPendingDeleteId(id) {
   pendingDeleteId = id;
@@ -74,871 +57,399 @@ export const PlansFormController = {
     this.mainController = mainController;
     this.setupCreateAutocompletes();
     this.bindFormEvents();
-    this.bindEditItemEvents();
     this.bindAccordionEvents();
   },
 
   refreshUI() {
     this.setupCreateAutocompletes();
-    this.bindTargetInputValidation();
-    this.bindCurrentInputValidation();
     this.updateAddButtonText();
+    this.toggleFormTabFields();
   },
 
   updateAddButtonText() {
-    const activeTab = StateManager.getPlansTab
-      ? StateManager.getPlansTab()
-      : "goals";
+    const activeTab = StateManager.getActiveTab() || "plans";
     const btnTextSpan = document.getElementById("add-plan-btn-text");
+    const toggleTitleSpan = document.getElementById("form-toggle-title");
+
     if (!btnTextSpan) return;
 
-    if (activeTab === "goals") {
-      btnTextSpan.textContent = "Add Goal";
-    } else if (activeTab === "daily") {
+    if (activeTab === "plans") {
+      btnTextSpan.textContent = "Add Plan";
+      if (toggleTitleSpan) toggleTitleSpan.textContent = "Create New Plan";
+    } else if (activeTab === "logs") {
       btnTextSpan.textContent = "Add Daily Log";
+      if (toggleTitleSpan) toggleTitleSpan.textContent = "Create New Log";
     } else if (activeTab === "templates") {
       btnTextSpan.textContent = "Add Template";
+      if (toggleTitleSpan) toggleTitleSpan.textContent = "Create New Template";
     }
+  },
+
+  toggleFormTabFields() {
+    const activeTab = StateManager.getActiveTab() || "plans";
+    const tabFields = document.querySelectorAll(".plan-tab-fields");
+
+    tabFields.forEach((fieldGroup) => {
+      const fieldTab = fieldGroup.getAttribute("data-tab-fields");
+      if (fieldTab === activeTab) {
+        fieldGroup.classList.remove("hidden");
+        fieldGroup.classList.add("flex");
+      } else {
+        fieldGroup.classList.add("hidden");
+        fieldGroup.classList.remove("flex");
+      }
+    });
+
+    this.updateAddButtonText();
   },
 
   bindAccordionEvents() {
-    const accordionGroup = document.getElementById("edit-accordion-group");
-    if (!accordionGroup) return;
+    const btnToggleForm = document.getElementById("btn-toggle-plan-form");
+    const formContainer = document.getElementById("plan-form-container");
+    const chevronContainer = document.getElementById("form-chevron");
 
-    accordionGroup.addEventListener("click", (e) => {
-      const header = e.target.closest(".accordion-header");
-      if (!header) return;
+    if (!btnToggleForm || !formContainer) return;
 
-      const currentItem = header.closest(".accordion-item");
-      const currentContent = currentItem.querySelector(".accordion-content");
+    btnToggleForm.addEventListener("click", () => {
+      const isHidden = formContainer.classList.contains("hidden");
 
-      if (!currentContent.classList.contains("hidden")) return;
+      formContainer.classList.toggle("hidden", !isHidden);
+      formContainer.classList.toggle("flex", isHidden);
 
-      const visibleItems = Array.from(
-        accordionGroup.querySelectorAll(".accordion-item"),
-      ).filter((item) => !item.classList.contains("hidden"));
-
-      const currentIndex = visibleItems.indexOf(currentItem);
-
-      visibleItems.forEach((item, index) => {
-        const content = item.querySelector(".accordion-content");
-        const icon = item.querySelector(".accordion-icon");
-        const itemHeader = item.querySelector(".accordion-header");
-
-        if (index === currentIndex) {
-          content.classList.replace("hidden", "flex");
-        } else {
-          content.classList.replace("flex", "hidden");
-        }
-
-        itemHeader?.classList.toggle("border-b", index === currentIndex);
-        icon?.classList.toggle("fa-chevron-up", index === currentIndex);
-        icon?.classList.toggle("fa-chevron-down", index !== currentIndex);
-      });
-    });
-  },
-
-  resetAccordionToFirstItem() {
-    const accordionGroup = document.getElementById("edit-accordion-group");
-    if (!accordionGroup) return;
-
-    const visibleItems = Array.from(
-      accordionGroup.querySelectorAll(".accordion-item"),
-    ).filter((item) => !item.classList.contains("hidden"));
-
-    visibleItems.forEach((item, index) => {
-      const header = item.querySelector(".accordion-header");
-      const content = item.querySelector(".accordion-content");
-      const icon = item.querySelector(".accordion-icon");
-
-      if (index === 0) {
-        content.classList.replace("hidden", "flex");
-        header?.classList.add("border-b");
-        if (icon) {
-          icon.classList.remove("fa-chevron-down");
-          icon.classList.add("fa-chevron-up");
-        }
-      } else {
-        content.classList.replace("flex", "hidden");
-        header?.classList.remove("border-b");
-        if (icon) {
-          icon.classList.remove("fa-chevron-up");
-          icon.classList.add("fa-chevron-down");
-        }
+      if (chevronContainer) {
+        chevronContainer.classList.toggle("rotate-180", isHidden);
       }
     });
-  },
-
-  bindEditItemEvents() {
-    // --- Edit Milestones ---
-    const addMilestoneBtn = document.getElementById("btn-add-milestone");
-    const newMilestoneInput = document.getElementById("new-milestone-input");
-    const milestonesContainer = document.getElementById("goal-milestones-list");
-
-    const handleAddMilestone = () => {
-      if (!newMilestoneInput) return;
-      const title = newMilestoneInput.value.trim();
-      if (!title) return;
-
-      currentEditMilestones.push({
-        id: generateId(),
-        title,
-        completed: false,
-        isEditing: false,
-      });
-
-      newMilestoneInput.value = "";
-      this.renderEditMilestones();
-    };
-
-    addMilestoneBtn?.addEventListener("click", handleAddMilestone);
-    newMilestoneInput?.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        handleAddMilestone();
-      }
-    });
-
-    milestonesContainer?.addEventListener("click", (e) => {
-      const target = e.target.closest("[data-action]");
-      if (!target) return;
-
-      const card = target.closest("[data-item-id]");
-      if (!card) return;
-
-      const itemId = card.dataset.itemId;
-      const action = target.dataset.action;
-
-      if (action === "delete") {
-        const index = currentEditMilestones.findIndex((m) => m.id === itemId);
-        if (index === -1) return;
-        const removedItem = currentEditMilestones[index];
-
-        currentEditMilestones.splice(index, 1);
-        this.renderEditMilestones();
-
-        NotificationService.show({
-          type: "error",
-          message: `Milestone "${removedItem.title}" deleted`,
-          duration: 4000,
-          undoAction: () => {
-            currentEditMilestones.splice(index, 0, removedItem);
-            this.renderEditMilestones();
-          },
-        });
-      } else if (action === "toggle") {
-        const item = currentEditMilestones.find((m) => m.id === itemId);
-        if (item) {
-          item.completed = !item.completed;
-          this.renderEditMilestones();
-        }
-      } else if (action === "edit") {
-        const item = currentEditMilestones.find((m) => m.id === itemId);
-        if (item) {
-          item.isEditing = !item.isEditing;
-          this.renderEditMilestones();
-
-          if (item.isEditing) {
-            requestAnimationFrame(() => {
-              const input = milestonesContainer?.querySelector(
-                `[data-item-id="${itemId}"] .item-title-input`,
-              );
-              input?.focus();
-              input?.select();
-            });
-          }
-        }
-      }
-    });
-
-    milestonesContainer?.addEventListener("input", (e) => {
-      if (e.target.dataset.action === "edit-text") {
-        const card = e.target.closest("[data-item-id]");
-        if (!card) return;
-        const item = currentEditMilestones.find(
-          (m) => m.id === card.dataset.itemId,
-        );
-        if (item) item.title = e.target.value;
-      }
-    });
-
-    // --- Edit Steps ---
-    const addStepBtn = document.getElementById("add-step-btn");
-    const newStepInput = document.getElementById("new-step-input");
-    const stepsContainer = document.getElementById("template-steps-list");
-
-    const handleAddStep = () => {
-      if (!newStepInput) return;
-      const title = newStepInput.value.trim();
-      if (!title) return;
-
-      currentEditSteps.push({
-        id: generateId(),
-        title,
-        isEditing: false,
-      });
-
-      newStepInput.value = "";
-      this.renderEditSteps();
-    };
-
-    addStepBtn?.addEventListener("click", handleAddStep);
-    newStepInput?.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        handleAddStep();
-      }
-    });
-
-    stepsContainer?.addEventListener("click", (e) => {
-      const target = e.target.closest("[data-action]");
-      if (!target) return;
-
-      const card = target.closest("[data-item-id]");
-      if (!card) return;
-
-      const itemId = card.dataset.itemId;
-      const action = target.dataset.action;
-
-      if (action === "delete") {
-        const index = currentEditSteps.findIndex((s) => s.id === itemId);
-        if (index === -1) return;
-        const removedItem = currentEditSteps[index];
-
-        currentEditSteps.splice(index, 1);
-        this.renderEditSteps();
-
-        NotificationService.show({
-          type: "error",
-          message: `Step "${removedItem.title}" deleted`,
-          duration: 4000,
-          undoAction: () => {
-            currentEditSteps.splice(index, 0, removedItem);
-            this.renderEditSteps();
-          },
-        });
-      } else if (action === "edit") {
-        const item = currentEditSteps.find((s) => s.id === itemId);
-        if (item) {
-          item.isEditing = !item.isEditing;
-          this.renderEditSteps();
-
-          if (item.isEditing) {
-            requestAnimationFrame(() => {
-              const input = stepsContainer?.querySelector(
-                `[data-item-id="${itemId}"] .item-title-input`,
-              );
-              input?.focus();
-              input?.select();
-            });
-          }
-        }
-      }
-    });
-
-    stepsContainer?.addEventListener("input", (e) => {
-      if (e.target.dataset.action === "edit-text") {
-        const card = e.target.closest("[data-item-id]");
-        if (!card) return;
-        const item = currentEditSteps.find((s) => s.id === card.dataset.itemId);
-        if (item) item.title = e.target.value;
-      }
-    });
-  },
-
-  renderEditMilestones() {
-    const container = document.getElementById("goal-milestones-list");
-    const badge = document.getElementById("milestone-progress-badge");
-
-    const total = currentEditMilestones.length;
-    const completedCount = currentEditMilestones.filter(
-      (item) => item.completed,
-    ).length;
-
-    if (badge) {
-      badge.textContent = `${completedCount}/${total} Completed`;
-    }
-
-    if (!container) return;
-
-    container.innerHTML = this._generateListMarkup(
-      currentEditMilestones,
-      "No milestones defined yet.",
-      "fa-calendar-heart",
-    );
-  },
-
-  renderEditSteps() {
-    const container = document.getElementById("template-steps-list");
-    if (!container) return;
-    container.innerHTML = this._generateListMarkup(
-      currentEditSteps,
-      "No steps defined yet.",
-      "fa-stairs",
-    );
-  },
-
-  _generateListMarkup(items, emptyMessage, icon) {
-    if (!items || items.length === 0) {
-      return `
-        <div
-          class="w-full h-full min-h-55 sm:min-h-50 lg:min-h-45 overflow-y-auto scrollbar-thumb-surface-2 scrollbar-thin bg-surface rounded-2xl border border-dashed border-border/70 p-4 text-center flex flex-col justify-center items-center"
-        >
-          <div class="h-full flex flex-col justify-center items-center">
-            <div class="text-3xl">
-              <i class="fa-regular ${icon} text-brand/80"></i>
-            </div>
-            <p class="mt-3 text-secondary max-w-sm mx-auto text-sm">
-              ${emptyMessage}
-            </p>
-          </div>
-        </div>
-      `;
-    }
-
-    return `
-      <div class="w-full max-h-55 sm:max-h-50 lg:max-h-48 overflow-y-auto scrollbar-thumb-surface-2 scrollbar-thin bg-surface rounded-2xl border border-border/60 p-2 flex flex-col gap-2">
-        ${items
-          .map(
-            (item) => `
-              <div
-                data-item-id="${item.id}"
-                class="flex items-center justify-between gap-3 rounded-xl border border-border/70 bg-surface-2 p-1 shadow-sm transition"
-              >
-                <div class="flex items-center gap-3 flex-1 min-w-0">
-                  <input
-                    type="text"
-                    data-action="edit-text"
-                    value="${(item.title ?? "").replace(/"/g, "&quot;")}"
-                    class="item-title-input text-xs lg:text-sm text-color mx-2 bg-transparent outline-none w-full border-b min-h-7 py-1 ${
-                      item.isEditing ? "border-brand/50" : "border-transparent"
-                    }"
-                    ${item.isEditing ? "" : "readonly"}
-                  />
-                </div>
-
-                <div class="flex items-center gap-1 shrink-0">
-                  <button
-                    data-action="edit"
-                    type="button"
-                    class="edit-btn flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-surface hover:bg-brand/10 hover:cursor-pointer transition"
-                    title="${item.isEditing ? "Save changes" : "Edit item"}"
-                  >
-                    <i class="fa-regular ${
-                      item.isEditing ? "fa-floppy-disk" : "fa-pen-to-square"
-                    } text-blue-500/80 text-xs lg:text-sm"></i>
-                  </button>
-
-                  <button
-                    data-action="delete"
-                    type="button"
-                    class="delete-btn flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-surface hover:bg-red-600/10 hover:cursor-pointer transition"
-                    title="Delete item"
-                  >
-                    <i class="fa-regular fa-trash-can text-red-500/80 text-xs lg:text-sm"></i>
-                  </button>
-                </div>
-              </div>
-            `,
-          )
-          .join("")}
-      </div>
-    `;
   },
 
   setupCreateAutocompletes() {
-    const goalCategoryOptions = GOAL_CATEGORIES.map((cat) => ({
-      value: cat.id,
-      label: cat.name,
-      icon: cat.icon,
-    }));
-    const unitOptions = GOAL_UNIT_OPTIONS.map((u) => ({
-      value: u.id,
-      label: u.name,
-      icon: u.icon,
-    }));
-    const timeframeOptions = TIMEFRAME_OPTIONS.map((tf) => ({
-      value: tf.id,
-      label: tf.name,
-      icon: tf.icon,
-    }));
-    const priorityOptions = GOAL_PRIORITY_OPTIONS.map((p) => ({
-      value: p.id,
-      label: p.name,
-      icon: p.icon,
-    }));
-    const dailyLogCategoryOptions = DAILY_LOG_CATEGORIES.map((cat) => ({
-      value: cat.id,
-      label: cat.name,
-      icon: cat.icon,
-    }));
-    const moodOptions = DAILY_MOOD_OPTIONS.map((m) => ({
-      value: m.id,
-      label: m.name,
-      icon: m.icon,
-    }));
-    const templateCategoryOptions = TEMPLATE_CATEGORIES.map((cat) => ({
-      value: cat.id,
-      label: cat.name,
-      icon: cat.icon,
-    }));
-
-    const goalCatContainer = document.getElementById(
-      "create-goal-category-autocomplete",
+    // --- PLANS FIELDS ---
+    const planLifeAreaContainer = document.getElementById(
+      "create-plan-lifearea-autocomplete",
     );
-    if (goalCatContainer) {
-      if (createGoalCategoryAutocomplete)
-        createGoalCategoryAutocomplete.destroy();
-      createGoalCategoryAutocomplete = new AutocompleteComponent(
-        goalCatContainer,
-        goalCategoryOptions,
+    if (planLifeAreaContainer) {
+      if (createPlanLifeAreaAutocomplete)
+        createPlanLifeAreaAutocomplete.destroy();
+      createPlanLifeAreaAutocomplete = new AutocompleteComponent(
+        planLifeAreaContainer,
+        LIFE_AREAS,
         {
-          label: "Category",
-          itemTitle: "label",
-          itemValue: "value",
+          label: "Life Area",
+          itemTitle: "name",
+          itemValue: "id",
           itemIcon: "icon",
-          defaultValue: "general",
-          placeholder: "Select category...",
+          defaultValue: "health",
+          placeholder: "Select life area...",
         },
       );
-      createGoalCategoryAutocomplete.setValue("general");
+      createPlanLifeAreaAutocomplete.setValue("health");
     }
 
-    const timeframeContainer = document.getElementById(
-      "create-goal-timeframe-autocomplete",
+    const planStateContainer = document.getElementById(
+      "create-plan-state-autocomplete",
     );
-    if (timeframeContainer) {
-      if (createGoalTimeframeAutocomplete)
-        createGoalTimeframeAutocomplete.destroy();
-      createGoalTimeframeAutocomplete = new AutocompleteComponent(
-        timeframeContainer,
-        timeframeOptions,
+    if (planStateContainer) {
+      if (createPlanStateAutocomplete) createPlanStateAutocomplete.destroy();
+      createPlanStateAutocomplete = new AutocompleteComponent(
+        planStateContainer,
+        PLAN_STATES,
         {
-          label: "Timeframe",
-          itemTitle: "label",
-          itemValue: "value",
+          label: "Status",
+          itemTitle: "name",
+          itemValue: "id",
           itemIcon: "icon",
-          defaultValue: "yearly",
-          placeholder: "Select timeframe...",
+          defaultValue: "active",
+          placeholder: "Select state...",
         },
       );
-      createGoalTimeframeAutocomplete.setValue("yearly");
+      createPlanStateAutocomplete.setValue("active");
     }
 
-    const priorityContainer = document.getElementById(
-      "create-goal-priority-autocomplete",
+    const planStartDateContainer = document.getElementById(
+      "create-plan-startdate-container",
     );
-    if (priorityContainer) {
-      if (createGoalPriorityAutocomplete)
-        createGoalPriorityAutocomplete.destroy();
-      createGoalPriorityAutocomplete = new AutocompleteComponent(
-        priorityContainer,
-        priorityOptions,
-        {
-          label: "Priority",
-          itemTitle: "label",
-          itemValue: "value",
-          itemIcon: "icon",
-          defaultValue: "medium",
-          placeholder: "Select priority...",
-        },
-      );
-      createGoalPriorityAutocomplete.setValue("low");
-    }
-
-    const unitContainer = document.getElementById(
-      "create-goal-unit-autocomplete",
-    );
-    if (unitContainer) {
-      if (createGoalUnitAutocomplete) createGoalUnitAutocomplete.destroy();
-      createGoalUnitAutocomplete = new AutocompleteComponent(
-        unitContainer,
-        unitOptions,
-        {
-          label: "Unit",
-          itemTitle: "label",
-          itemValue: "value",
-          itemIcon: "icon",
-          defaultValue: "%",
-          placeholder: "Select unit...",
-          onChange: (selectedUnit) => {
-            const targetInput = document.getElementById("create-goal-target");
-            if (targetInput) {
-              const config = getUnitConfig(selectedUnit);
-              targetInput.value = formatNumberWithCommas(config.defaultValue);
-            }
-          },
-        },
-      );
-      createGoalUnitAutocomplete.setValue("%");
-    }
-
-    const startDateContainer = document.getElementById(
-      "create-goal-startdate-container",
-    );
-    if (startDateContainer) {
-      createGoalStartDatePicker = new DatePickerComponent({
-        id: "create-goal-startdate",
+    if (planStartDateContainer) {
+      createPlanStartDatePicker = new DatePickerComponent({
+        id: "create-plan-startdate",
         value: todayISO(),
         label: "Start Date",
         placeholder: "Select start date...",
         background: "surface-2",
       });
-      startDateContainer.innerHTML = createGoalStartDatePicker.render();
-      createGoalStartDatePicker.bindEvents();
+      planStartDateContainer.innerHTML = createPlanStartDatePicker.render();
+      createPlanStartDatePicker.bindEvents();
     }
 
-    const endDateContainer = document.getElementById(
-      "create-goal-enddate-container",
+    const planEndDateContainer = document.getElementById(
+      "create-plan-enddate-container",
     );
-    if (endDateContainer) {
-      createGoalEndDatePicker = new DatePickerComponent({
-        id: "create-goal-enddate",
+    if (planEndDateContainer) {
+      createPlanEndDatePicker = new DatePickerComponent({
+        id: "create-plan-enddate",
         value: "",
         label: "End Date (Optional)",
         placeholder: "Select end date...",
         background: "surface-2",
       });
-      endDateContainer.innerHTML = createGoalEndDatePicker.render();
-      createGoalEndDatePicker.bindEvents();
+      planEndDateContainer.innerHTML = createPlanEndDatePicker.render();
+      createPlanEndDatePicker.bindEvents();
     }
 
-    const dailyCatContainer = document.getElementById(
-      "create-daily-category-autocomplete",
+    // --- LOGS FIELDS ---
+    const logDatePickerContainer = document.getElementById(
+      "create-log-datepicker-container",
     );
-    if (dailyCatContainer) {
-      if (createDailyCategoryAutocomplete)
-        createDailyCategoryAutocomplete.destroy();
-      createDailyCategoryAutocomplete = new AutocompleteComponent(
-        dailyCatContainer,
-        dailyLogCategoryOptions,
+    if (logDatePickerContainer) {
+      createLogDatePicker = new DatePickerComponent({
+        id: "create-log-datepicker",
+        value: todayISO(),
+        label: "Date",
+        placeholder: "Select log date...",
+        background: "surface-2",
+      });
+      logDatePickerContainer.innerHTML = createLogDatePicker.render();
+      createLogDatePicker.bindEvents();
+    }
+
+    const logEnergyContainer = document.getElementById(
+      "create-log-energy-autocomplete",
+    );
+    if (logEnergyContainer) {
+      if (createLogEnergyAutocomplete) createLogEnergyAutocomplete.destroy();
+      createLogEnergyAutocomplete = new AutocompleteComponent(
+        logEnergyContainer,
+        ENERGY_LEVEL_OPTIONS,
         {
-          label: "Category",
+          label: "Energy Level",
           itemTitle: "label",
           itemValue: "value",
           itemIcon: "icon",
-          defaultValue: "journal",
-          placeholder: "Select log category...",
+          defaultValue: 3,
+          placeholder: "Select energy level...",
         },
       );
-      createDailyCategoryAutocomplete.setValue("journal");
+      createLogEnergyAutocomplete.setValue(3);
     }
 
-    const moodContainer = document.getElementById(
-      "create-daily-mood-autocomplete",
+    const logMoodContainer = document.getElementById(
+      "create-log-mood-autocomplete",
     );
-    if (moodContainer) {
-      if (createDailyMoodAutocomplete) createDailyMoodAutocomplete.destroy();
-      createDailyMoodAutocomplete = new AutocompleteComponent(
-        moodContainer,
-        moodOptions,
+    if (logMoodContainer) {
+      if (createLogMoodAutocomplete) createLogMoodAutocomplete.destroy();
+      createLogMoodAutocomplete = new AutocompleteComponent(
+        logMoodContainer,
+        MOOD_OPTIONS,
         {
           label: "Mood",
           itemTitle: "label",
           itemValue: "value",
           itemIcon: "icon",
-          defaultValue: "good",
+          defaultValue: "neutral",
           placeholder: "Select mood...",
         },
       );
-      createDailyMoodAutocomplete.setValue("good");
+      createLogMoodAutocomplete.setValue("neutral");
     }
 
-    const dailyDatePickerContainer = document.getElementById(
-      "create-daily-datepicker-container",
+    const logPlanLinkContainer = document.getElementById(
+      "create-log-plan-link-autocomplete",
     );
-    if (dailyDatePickerContainer) {
-      createDailyDatePicker = new DatePickerComponent({
-        id: "create-daily-datepicker",
-        value: todayISO(),
-        label: "Date",
-        placeholder: "Select date...",
-        background: "surface-2",
-      });
-      dailyDatePickerContainer.innerHTML = createDailyDatePicker.render();
-      createDailyDatePicker.bindEvents();
-    }
-
-    const goalLinkContainer = document.getElementById(
-      "create-daily-goal-link-autocomplete",
-    );
-    if (goalLinkContainer) {
-      if (createDailyGoalLinkAutocomplete)
-        createDailyGoalLinkAutocomplete.destroy();
-      const goals = StateManager.getGoals() || [];
-      const goalLinkOptions = goals.map((g) => ({
-        id: g.id,
-        title: g.title,
+    if (logPlanLinkContainer) {
+      if (createLogPlanLinkAutocomplete)
+        createLogPlanLinkAutocomplete.destroy();
+      const plans = StateManager.getPlans() || [];
+      const planOptions = plans.map((p) => ({
+        id: p.id,
+        title: p.title,
         icon: "fa-regular fa-bullseye text-brand/80",
       }));
 
-      createDailyGoalLinkAutocomplete = new AutocompleteComponent(
-        goalLinkContainer,
-        goalLinkOptions,
+      createLogPlanLinkAutocomplete = new AutocompleteComponent(
+        logPlanLinkContainer,
+        planOptions,
         {
-          label: "Link to Goal (Optional)",
+          label: "Link to Plan (Optional)",
           itemTitle: "title",
           itemValue: "id",
           itemIcon: "icon",
-          placeholder: "Select goal to link...",
+          placeholder: "Select plan to link...",
         },
       );
     }
 
-    const templateCatContainer = document.getElementById(
-      "create-template-category-autocomplete",
+    // --- TEMPLATES FIELDS ---
+    const templateLifeAreaContainer = document.getElementById(
+      "create-template-lifearea-autocomplete",
     );
-    if (templateCatContainer) {
-      if (createTemplateCategoryAutocomplete)
-        createTemplateCategoryAutocomplete.destroy();
-      createTemplateCategoryAutocomplete = new AutocompleteComponent(
-        templateCatContainer,
-        templateCategoryOptions,
+    if (templateLifeAreaContainer) {
+      if (createTemplateLifeAreaAutocomplete)
+        createTemplateLifeAreaAutocomplete.destroy();
+      createTemplateLifeAreaAutocomplete = new AutocompleteComponent(
+        templateLifeAreaContainer,
+        LIFE_AREAS,
         {
-          label: "Category",
-          itemTitle: "label",
-          itemValue: "value",
+          label: "Life Area",
+          itemTitle: "name",
+          itemValue: "id",
           itemIcon: "icon",
-          defaultValue: "workflow",
-          placeholder: "Select template category...",
+          defaultValue: "health",
+          placeholder: "Select life area...",
         },
       );
-      createTemplateCategoryAutocomplete.setValue("workflow");
+      createTemplateLifeAreaAutocomplete.setValue("health");
     }
   },
 
   populateEditModal(itemId) {
-    if (editGoalCategoryAutocomplete) editGoalCategoryAutocomplete.destroy();
-    if (editGoalTimeframeAutocomplete) editGoalTimeframeAutocomplete.destroy();
-    if (editGoalPriorityAutocomplete) editGoalPriorityAutocomplete.destroy();
-    if (editGoalUnitAutocomplete) editGoalUnitAutocomplete.destroy();
-    if (editDailyCategoryAutocomplete) editDailyCategoryAutocomplete.destroy();
-    if (editDailyMoodAutocomplete) editDailyMoodAutocomplete.destroy();
-    if (editDailyGoalLinkAutocomplete) editDailyGoalLinkAutocomplete.destroy();
-    if (editTemplateCategoryAutocomplete)
-      editTemplateCategoryAutocomplete.destroy();
+    if (editPlanLifeAreaAutocomplete) editPlanLifeAreaAutocomplete.destroy();
+    if (editPlanStateAutocomplete) editPlanStateAutocomplete.destroy();
+    if (editLogEnergyAutocomplete) editLogEnergyAutocomplete.destroy();
+    if (editLogMoodAutocomplete) editLogMoodAutocomplete.destroy();
+    if (editLogPlanLinkAutocomplete) editLogPlanLinkAutocomplete.destroy();
+    if (editTemplateLifeAreaAutocomplete)
+      editTemplateLifeAreaAutocomplete.destroy();
 
-    const activeTab = StateManager.getPlansTab
-      ? StateManager.getPlansTab()
-      : "goals";
+    const activeTab = StateManager.getActiveTab() || "plans";
+    const stateData = StateManager.getState();
 
     let currentItem = null;
-    if (activeTab === "goals")
-      currentItem = StateManager.getGoals().find((g) => g.id === itemId);
-    else if (activeTab === "daily")
-      currentItem = StateManager.getDailyLogs().find((l) => l.id === itemId);
-    else if (activeTab === "templates")
-      currentItem = StateManager.getTemplates().find((t) => t.id === itemId);
+    if (activeTab === "plans") {
+      currentItem = (stateData.plans || []).find(
+        (p) => String(p.id) === String(itemId),
+      );
+    } else if (activeTab === "logs") {
+      currentItem = (stateData.logs || []).find(
+        (l) => String(l.id) === String(itemId),
+      );
+    } else if (activeTab === "templates") {
+      currentItem = (stateData.templates || []).find(
+        (t) => String(t.id) === String(itemId),
+      );
+    }
 
     if (!currentItem) return;
 
-    // Toggle Tab specific accordion elements
     const editModal = document.getElementById("edit-modal");
     if (editModal) {
       document.querySelectorAll(".edit-tab-field").forEach((el) => {
         const fieldTab = el.getAttribute("data-tab");
         el.classList.toggle("hidden", fieldTab !== activeTab);
-        if (fieldTab === activeTab && el.classList.contains("accordion-item")) {
-          el.classList.add("flex");
-        }
       });
     }
 
-    this.resetAccordionToFirstItem();
-
-    // Populate common basic fields
     const titleInput = document.getElementById("edit-item-title");
     const descInput = document.getElementById("edit-item-desc");
 
     if (titleInput) titleInput.value = currentItem.title || "";
-    if (descInput) descInput.value = currentItem.description || "";
+    if (descInput)
+      descInput.value = currentItem.description || currentItem.notes || "";
 
-    if (activeTab === "goals") {
-      // Goal Category
-      const editGoalCategoryContainer = document.getElementById(
-        "edit-goal-category-autocomplete",
+    if (activeTab === "plans") {
+      const editPlanLifeAreaContainer = document.getElementById(
+        "edit-plan-lifearea-autocomplete",
       );
-      if (editGoalCategoryContainer) {
-        editGoalCategoryAutocomplete = new AutocompleteComponent(
-          editGoalCategoryContainer,
-          GOAL_CATEGORIES.map((cat) => ({
-            value: cat.id,
-            label: cat.name,
-            icon: cat.icon,
-          })),
+      if (editPlanLifeAreaContainer) {
+        editPlanLifeAreaAutocomplete = new AutocompleteComponent(
+          editPlanLifeAreaContainer,
+          LIFE_AREAS,
           {
-            label: "Category",
-            itemTitle: "label",
-            itemValue: "value",
+            label: "Life Area",
+            itemTitle: "name",
+            itemValue: "id",
             itemIcon: "icon",
             containerClass: "bg-surface!",
           },
         );
-        editGoalCategoryAutocomplete.setValue(
-          currentItem.category || "general",
+        editPlanLifeAreaAutocomplete.setValue(
+          currentItem.lifeAreaId || "health",
         );
       }
 
-      // Timeframe
-      const editGoalTimeframeContainer = document.getElementById(
-        "edit-goal-timeframe-autocomplete",
+      const editPlanStateContainer = document.getElementById(
+        "edit-plan-state-autocomplete",
       );
-      if (editGoalTimeframeContainer) {
-        editGoalTimeframeAutocomplete = new AutocompleteComponent(
-          editGoalTimeframeContainer,
-          TIMEFRAME_OPTIONS.map((tf) => ({
-            value: tf.id,
-            label: tf.name,
-            icon: tf.icon,
-          })),
+      if (editPlanStateContainer) {
+        editPlanStateAutocomplete = new AutocompleteComponent(
+          editPlanStateContainer,
+          PLAN_STATES,
           {
-            label: "Timeframe",
-            itemTitle: "label",
-            itemValue: "value",
+            label: "Status",
+            itemTitle: "name",
+            itemValue: "id",
             itemIcon: "icon",
             containerClass: "bg-surface!",
           },
         );
-        editGoalTimeframeAutocomplete.setValue(
-          currentItem.timeframe || "yearly",
-        );
+        editPlanStateAutocomplete.setValue(currentItem.state || "active");
       }
 
-      // Priority
-      const editGoalPriorityContainer = document.getElementById(
-        "edit-goal-priority-autocomplete",
+      const editStartDateContainer = document.getElementById(
+        "edit-plan-startdate-container",
       );
-      if (editGoalPriorityContainer) {
-        editGoalPriorityAutocomplete = new AutocompleteComponent(
-          editGoalPriorityContainer,
-          GOAL_PRIORITY_OPTIONS.map((p) => ({
-            value: p.id,
-            label: p.name,
-            icon: p.icon,
-          })),
-          {
-            label: "Priority",
-            itemTitle: "label",
-            itemValue: "value",
-            itemIcon: "icon",
-            containerClass: "bg-surface!",
-          },
-        );
-        editGoalPriorityAutocomplete.setValue(currentItem.priority || "low");
-      }
-
-      // Unit
-      const editGoalUnitContainer = document.getElementById(
-        "edit-goal-unit-autocomplete",
-      );
-      if (editGoalUnitContainer) {
-        editGoalUnitAutocomplete = new AutocompleteComponent(
-          editGoalUnitContainer,
-          GOAL_UNIT_OPTIONS.map((u) => ({
-            value: u.id,
-            label: u.name,
-            icon: u.icon,
-          })),
-          {
-            label: "Unit",
-            itemTitle: "label",
-            itemValue: "value",
-            itemIcon: "icon",
-            containerClass: "bg-surface!",
-          },
-        );
-        editGoalUnitAutocomplete.setValue(currentItem.unit || "%");
-      }
-
-      // Current & Target values
-      const currentValInput = document.getElementById("edit-goal-current");
-      const targetValInput = document.getElementById("edit-goal-target");
-      if (currentValInput)
-        currentValInput.value = formatNumberWithCommas(
-          currentItem.currentValue || 0,
-        );
-      if (targetValInput)
-        targetValInput.value = formatNumberWithCommas(
-          currentItem.targetValue || 100,
-        );
-
-      // Start & End Date Pickers
-      const startDateContainer = document.getElementById(
-        "edit-goal-startdate-container",
-      );
-      if (startDateContainer) {
-        editGoalStartDatePicker = new DatePickerComponent({
-          id: "edit-goal-startdate",
-          value: currentItem.startDate || todayISO(),
+      if (editStartDateContainer) {
+        editPlanStartDatePicker = new DatePickerComponent({
+          id: "edit-plan-startdate",
+          value: currentItem.period?.startDate || todayISO(),
           label: "Start Date",
           background: "surface",
         });
-        startDateContainer.innerHTML = editGoalStartDatePicker.render();
-        editGoalStartDatePicker.bindEvents();
+        editStartDateContainer.innerHTML = editPlanStartDatePicker.render();
+        editPlanStartDatePicker.bindEvents();
       }
 
-      const endDateContainer = document.getElementById(
-        "edit-goal-enddate-container",
+      const editEndDateContainer = document.getElementById(
+        "edit-plan-enddate-container",
       );
-      if (endDateContainer) {
-        editGoalEndDatePicker = new DatePickerComponent({
-          id: "edit-goal-enddate",
-          value: currentItem.endDate || "",
+      if (editEndDateContainer) {
+        editPlanEndDatePicker = new DatePickerComponent({
+          id: "edit-plan-enddate",
+          value: currentItem.period?.endDate || "",
           label: "End Date (Optional)",
           background: "surface",
         });
-        endDateContainer.innerHTML = editGoalEndDatePicker.render();
-        editGoalEndDatePicker.bindEvents();
+        editEndDateContainer.innerHTML = editPlanEndDatePicker.render();
+        editPlanEndDatePicker.bindEvents();
+      }
+    } else if (activeTab === "logs") {
+      const editLogDatePickerContainer = document.getElementById(
+        "edit-log-datepicker-container",
+      );
+      if (editLogDatePickerContainer) {
+        editLogDatePicker = new DatePickerComponent({
+          id: "edit-log-datepicker",
+          value: currentItem.date || todayISO(),
+          label: "Date",
+          background: "surface",
+        });
+        editLogDatePickerContainer.innerHTML = editLogDatePicker.render();
+        editLogDatePicker.bindEvents();
       }
 
-      const rawMilestones = Array.isArray(currentItem.milestones)
-        ? currentItem.milestones
-        : [];
-      currentEditMilestones = rawMilestones.map((m) => ({
-        id: m.id || generateId(),
-        title: typeof m === "string" ? m : m.title || "",
-        completed: m.completed || false,
-        isEditing: false,
-      }));
-      this.renderEditMilestones();
-    } else if (activeTab === "daily") {
-      // Daily Log Category
-      const editDailyCategoryContainer = document.getElementById(
-        "edit-daily-category-autocomplete",
+      const editLogEnergyContainer = document.getElementById(
+        "edit-log-energy-autocomplete",
       );
-      if (editDailyCategoryContainer) {
-        editDailyCategoryAutocomplete = new AutocompleteComponent(
-          editDailyCategoryContainer,
-          DAILY_LOG_CATEGORIES.map((cat) => ({
-            value: cat.id,
-            label: cat.name,
-            icon: cat.icon,
-          })),
+      if (editLogEnergyContainer) {
+        editLogEnergyAutocomplete = new AutocompleteComponent(
+          editLogEnergyContainer,
+          ENERGY_LEVEL_OPTIONS,
           {
-            label: "Category",
+            label: "Energy Level",
             itemTitle: "label",
             itemValue: "value",
             itemIcon: "icon",
             containerClass: "bg-surface!",
           },
         );
-        editDailyCategoryAutocomplete.setValue(
-          currentItem.category || "journal",
-        );
+        editLogEnergyAutocomplete.setValue(currentItem.energy || 3);
       }
 
-      // Mood
-      const editDailyMoodContainer = document.getElementById(
-        "edit-daily-mood-autocomplete",
+      const editLogMoodContainer = document.getElementById(
+        "edit-log-mood-autocomplete",
       );
-      if (editDailyMoodContainer) {
-        editDailyMoodAutocomplete = new AutocompleteComponent(
-          editDailyMoodContainer,
-          DAILY_MOOD_OPTIONS.map((m) => ({
-            value: m.id,
-            label: m.name,
-            icon: m.icon,
-          })),
+      if (editLogMoodContainer) {
+        editLogMoodAutocomplete = new AutocompleteComponent(
+          editLogMoodContainer,
+          MOOD_OPTIONS,
           {
             label: "Mood",
             itemTitle: "label",
@@ -947,167 +458,78 @@ export const PlansFormController = {
             containerClass: "bg-surface!",
           },
         );
-        editDailyMoodAutocomplete.setValue(currentItem.mood || "good");
+        editLogMoodAutocomplete.setValue(currentItem.mood || "neutral");
       }
 
-      // Date Picker
-      const editDailyDatePickerContainer = document.getElementById(
-        "edit-daily-datepicker-container",
+      const editLogPlanLinkContainer = document.getElementById(
+        "edit-log-plan-link-autocomplete",
       );
-      if (editDailyDatePickerContainer) {
-        editDailyDatePicker = new DatePickerComponent({
-          id: "edit-daily-datepicker",
-          value: currentItem.date || todayISO(),
-          label: "Date",
-          background: "surface",
-        });
-        editDailyDatePickerContainer.innerHTML = editDailyDatePicker.render();
-        editDailyDatePicker.bindEvents();
-      }
-
-      // Linked Goal Autocomplete
-      const editGoalLinkContainer = document.getElementById(
-        "edit-daily-goal-link-autocomplete",
-      );
-      if (editGoalLinkContainer) {
-        const goals = StateManager.getGoals() || [];
-        const goalLinkOptions = goals.map((g) => ({
-          id: g.id,
-          title: g.title,
+      if (editLogPlanLinkContainer) {
+        const plans = StateManager.getPlans() || [];
+        const planOptions = plans.map((p) => ({
+          id: p.id,
+          title: p.title,
           icon: "fa-regular fa-bullseye text-brand/80",
         }));
-        editDailyGoalLinkAutocomplete = new AutocompleteComponent(
-          editGoalLinkContainer,
-          goalLinkOptions,
+
+        editLogPlanLinkAutocomplete = new AutocompleteComponent(
+          editLogPlanLinkContainer,
+          planOptions,
           {
-            label: "Link to Goal (Optional)",
+            label: "Link to Plan (Optional)",
             itemTitle: "title",
             itemValue: "id",
             itemIcon: "icon",
             containerClass: "bg-surface!",
           },
         );
-        if (currentItem.linkedGoal?.id) {
-          editDailyGoalLinkAutocomplete.setValue(currentItem.linkedGoal.id);
+        if (currentItem.planId) {
+          editLogPlanLinkAutocomplete.setValue(currentItem.planId);
         }
       }
     } else if (activeTab === "templates") {
-      // Template Category
-      const editTemplateCategoryContainer = document.getElementById(
-        "edit-template-category-autocomplete",
+      const editTemplateLifeAreaContainer = document.getElementById(
+        "edit-template-lifearea-autocomplete",
       );
-      if (editTemplateCategoryContainer) {
-        editTemplateCategoryAutocomplete = new AutocompleteComponent(
-          editTemplateCategoryContainer,
-          TEMPLATE_CATEGORIES.map((cat) => ({
-            value: cat.id,
-            label: cat.name,
-            icon: cat.icon,
-          })),
+      if (editTemplateLifeAreaContainer) {
+        editTemplateLifeAreaAutocomplete = new AutocompleteComponent(
+          editTemplateLifeAreaContainer,
+          LIFE_AREAS,
           {
-            label: "Category",
-            itemTitle: "label",
-            itemValue: "value",
+            label: "Life Area",
+            itemTitle: "name",
+            itemValue: "id",
             itemIcon: "icon",
             containerClass: "bg-surface!",
           },
         );
-        editTemplateCategoryAutocomplete.setValue(
-          currentItem.category || "workflow",
+        editTemplateLifeAreaAutocomplete.setValue(
+          currentItem.lifeAreaId || "health",
         );
       }
 
-      // Favorite Checkbox
+      const baselineInput = document.getElementById("edit-template-baseline");
+      const optimalInput = document.getElementById("edit-template-optimal");
       const favCheckbox = document.getElementById("edit-template-favorite");
-      if (favCheckbox) favCheckbox.checked = Boolean(currentItem.isFavorite);
 
-      const rawSteps = Array.isArray(currentItem.structure)
-        ? currentItem.structure
-        : [];
-      currentEditSteps = rawSteps.map((s) => ({
-        id: generateId(),
-        title: typeof s === "string" ? s : s.title || "",
-        isEditing: false,
-      }));
-      this.renderEditSteps();
+      if (baselineInput) baselineInput.value = currentItem.baseline || "";
+      if (optimalInput) optimalInput.value = currentItem.optimal || "";
+      if (favCheckbox) favCheckbox.checked = Boolean(currentItem.isFavorite);
     }
   },
 
-  bindTargetInputValidation() {
-    const targetInput = document.getElementById("create-goal-target");
-    if (!targetInput) return;
-
-    targetInput.addEventListener("input", (e) => {
-      let rawValue = e.target.value.replace(/\D/g, "");
-      if (!rawValue) {
-        e.target.value = "";
-        return;
-      }
-
-      const selectedUnit = createGoalUnitAutocomplete
-        ? createGoalUnitAutocomplete.getValue()
-        : "%";
-      const config = getUnitConfig(selectedUnit);
-
-      let numValue = parseInt(rawValue, 10);
-      if (numValue > config.max) {
-        numValue = config.max;
-        NotificationService.show({
-          type: "warning",
-          message: `Target value for "${selectedUnit}" cannot exceed ${config.max.toLocaleString()}`,
-          icon: "fa-triangle-exclamation",
-          duration: 5000,
-        });
-      }
-
-      e.target.value = formatNumberWithCommas(numValue);
-    });
-  },
-
-  bindCurrentInputValidation() {
-    const targetInput = document.getElementById("create-goal-target");
-    const currentInput = document.getElementById("create-goal-current");
-    if (!currentInput || !targetInput) return;
-
-    currentInput.addEventListener("input", (e) => {
-      let rawValue = e.target.value.replace(/\D/g, "");
-      if (!rawValue) {
-        e.target.value = "";
-        return;
-      }
-
-      let numValue = parseInt(rawValue, 10);
-      if (numValue > parseInt(targetInput.value.replaceAll(",", ""), 10)) {
-        numValue = parseInt(targetInput.value.replaceAll(",", ""), 10);
-        NotificationService.show({
-          type: "warning",
-          message: "Current value cannot exceed from target value",
-          icon: "fa-triangle-exclamation",
-          duration: 5000,
-        });
-      }
-
-      e.target.value = formatNumberWithCommas(numValue);
-    });
-  },
-
   bindFormEvents() {
-    this.bindTargetInputValidation();
-    this.bindCurrentInputValidation();
     this.updateAddButtonText();
+    this.toggleFormTabFields();
 
     const titleInput = document.getElementById("create-plan-title");
-    const descInput = document.getElementById("create-plan-desc");
     const addBtn = document.getElementById("add-plan-btn");
 
     const handleCreateItem = () => {
-      const activeTab = StateManager.getPlansTab
-        ? StateManager.getPlansTab()
-        : "goals";
+      const activeTab = StateManager.getActiveTab() || "plans";
       const title = titleInput?.value.trim();
-      const description = descInput?.value.trim() || "";
 
-      if (!title) {
+      if (activeTab !== "logs" && !title) {
         NotificationService.show({
           type: "error",
           message: "Title cannot be empty",
@@ -1117,117 +539,118 @@ export const PlansFormController = {
         return;
       }
 
-      GlobalLoaderService.show(`Creating item "${title}"...`);
+      GlobalLoaderService.show(`Creating item...`);
 
       setTimeout(() => {
         try {
-          if (activeTab === "goals") {
-            const currentRaw = document
-              .getElementById("create-goal-current")
-              ?.value.trim();
-            const targetRaw = document
-              .getElementById("create-goal-target")
-              ?.value.trim();
+          const currentStateData = StateManager.getState();
 
-            const category = createGoalCategoryAutocomplete
-              ? createGoalCategoryAutocomplete.getValue()
-              : "general";
-            const timeframe = createGoalTimeframeAutocomplete
-              ? createGoalTimeframeAutocomplete.getValue()
-              : "yearly";
-            const priority = createGoalPriorityAutocomplete
-              ? createGoalPriorityAutocomplete.getValue()
-              : "low";
-            const unit = createGoalUnitAutocomplete
-              ? createGoalUnitAutocomplete.getValue()
-              : "%";
-
-            const currentValue = parseFormattedNumber(currentRaw) || 0;
-            const targetValue = parseFormattedNumber(targetRaw) || 100;
-
-            const startDate = createGoalStartDatePicker
-              ? createGoalStartDatePicker.value
+          if (activeTab === "plans") {
+            const description =
+              document.getElementById("create-plan-desc")?.value.trim() || "";
+            const lifeAreaId = createPlanLifeAreaAutocomplete
+              ? createPlanLifeAreaAutocomplete.getValue()
+              : "health";
+            const state = createPlanStateAutocomplete
+              ? createPlanStateAutocomplete.getValue()
+              : "active";
+            const startDate = createPlanStartDatePicker
+              ? createPlanStartDatePicker.value
               : todayISO();
-            const endDate = createGoalEndDatePicker
-              ? createGoalEndDatePicker.value
+            const endDate = createPlanEndDatePicker
+              ? createPlanEndDatePicker.value
               : null;
 
-            const newGoal = {
+            const newPlan = {
+              id: generateId(),
               title,
               description,
-              category,
-              timeframe,
-              priority,
-              currentValue,
-              targetValue,
-              unit,
-              startDate,
-              endDate,
+              lifeAreaId,
+              state,
+              period: { startDate, endDate },
+              objectives: [],
+              createdAt: todayISO(),
+              updatedAt: todayISO(),
             };
-            StateManager.setGoals(
-              PlanService.createGoal(StateManager.getGoals(), newGoal),
-            );
-          } else if (activeTab === "daily") {
-            const category = createDailyCategoryAutocomplete
-              ? createDailyCategoryAutocomplete.getValue()
-              : "journal";
-            const mood = createDailyMoodAutocomplete
-              ? createDailyMoodAutocomplete.getValue()
-              : "good";
-            const date = createDailyDatePicker
-              ? createDailyDatePicker.value
-              : todayISO();
 
-            let linkedGoal = null;
-            if (createDailyGoalLinkAutocomplete) {
+            StateManager.save({
+              plans: [newPlan, ...(currentStateData.plans || [])],
+            });
+          } else if (activeTab === "logs") {
+            const date = createLogDatePicker
+              ? createLogDatePicker.value
+              : todayISO();
+            const energy = createLogEnergyAutocomplete
+              ? Number(createLogEnergyAutocomplete.getValue())
+              : 3;
+            const mood = createLogMoodAutocomplete
+              ? createLogMoodAutocomplete.getValue()
+              : "neutral";
+            const notes =
+              document.getElementById("create-log-notes")?.value.trim() || "";
+
+            let planId = null;
+            if (createLogPlanLinkAutocomplete) {
               const selectedItems =
-                createDailyGoalLinkAutocomplete.getSelectedItems();
+                createLogPlanLinkAutocomplete.getSelectedItems();
               if (selectedItems && selectedItems.length > 0) {
-                const item = selectedItems[0];
-                linkedGoal = {
-                  id: item.id || item.value,
-                  title: item.title || item.label,
-                };
+                planId = selectedItems[0].id || selectedItems[0].value;
               }
             }
 
             const newLog = {
-              title,
-              description,
+              id: generateId(),
               date,
-              category,
+              planId,
+              energy,
               mood,
-              linkedGoal,
+              metrics: {},
+              notes,
+              createdAt: todayISO(),
+              updatedAt: todayISO(),
             };
-            StateManager.setDailyLogs(
-              PlanService.createDailyLog(StateManager.getDailyLogs(), newLog),
-            );
+
+            StateManager.save({
+              logs: [newLog, ...(currentStateData.logs || [])],
+            });
           } else if (activeTab === "templates") {
-            const category = createTemplateCategoryAutocomplete
-              ? createTemplateCategoryAutocomplete.getValue()
-              : "workflow";
+            const description =
+              document.getElementById("create-template-desc")?.value.trim() ||
+              "";
+            const baseline =
+              document
+                .getElementById("create-template-baseline")
+                ?.value.trim() || "";
+            const optimal =
+              document
+                .getElementById("create-template-optimal")
+                ?.value.trim() || "";
+            const lifeAreaId = createTemplateLifeAreaAutocomplete
+              ? createTemplateLifeAreaAutocomplete.getValue()
+              : "health";
             const isFavorite =
               document.getElementById("create-template-favorite")?.checked ||
               false;
 
             const newTemplate = {
+              id: generateId(),
               title,
               description,
-              category,
+              lifeAreaId,
+              baseline,
+              optimal,
               isFavorite,
+              usageCount: 0,
+              createdAt: todayISO(),
+              updatedAt: todayISO(),
             };
-            StateManager.setTemplates(
-              PlanService.createTemplate(
-                StateManager.getTemplates(),
-                newTemplate,
-              ),
-            );
+
+            StateManager.save({
+              templates: [newTemplate, ...(currentStateData.templates || [])],
+            });
           }
 
-          StateManager.save();
-
-          if (titleInput) titleInput.value = "";
-          if (descInput) descInput.value = "";
+          this.resetForms();
 
           if (
             this.mainController &&
@@ -1238,7 +661,7 @@ export const PlansFormController = {
 
           NotificationService.show({
             type: "success",
-            message: `"${title}" created successfully!`,
+            message: `Item created successfully!`,
             icon: "fa-check",
             duration: 5000,
           });
@@ -1278,37 +701,69 @@ export const PlansFormController = {
     );
   },
 
+  resetForms() {
+    const inputsToClear = [
+      "create-plan-title",
+      "create-plan-desc",
+      "create-log-notes",
+      "create-template-desc",
+      "create-template-baseline",
+      "create-template-optimal",
+    ];
+    inputsToClear.forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) el.value = "";
+    });
+
+    const favCheckbox = document.getElementById("create-template-favorite");
+    if (favCheckbox) favCheckbox.checked = false;
+
+    // RESET AUTOCOMPLETES
+    if (createPlanLifeAreaAutocomplete)
+      createPlanLifeAreaAutocomplete.setValue("health");
+    if (createPlanStateAutocomplete)
+      createPlanStateAutocomplete.setValue("active");
+    if (createLogEnergyAutocomplete) createLogEnergyAutocomplete.setValue(3);
+    if (createLogMoodAutocomplete) createLogMoodAutocomplete.setValue("neutral");
+    if (createLogPlanLinkAutocomplete)
+      createLogPlanLinkAutocomplete.setValue(null);
+    if (createTemplateLifeAreaAutocomplete)
+      createTemplateLifeAreaAutocomplete.setValue("health");
+
+    // RESET DATE PICKERS
+    if (createPlanStartDatePicker) createPlanStartDatePicker.value = todayISO();
+    if (createPlanEndDatePicker) createPlanEndDatePicker.value = "";
+    if (createLogDatePicker) createLogDatePicker.value = todayISO();
+  },
+
   executeDelete() {
     const id = pendingDeleteId;
     if (!id) return;
 
-    const activeTab = StateManager.getPlansTab
-      ? StateManager.getPlansTab()
-      : "goals";
-    let currentItems = [];
-    if (activeTab === "goals") currentItems = StateManager.getGoals();
-    else if (activeTab === "daily") currentItems = StateManager.getDailyLogs();
-    else if (activeTab === "templates")
-      currentItems = StateManager.getTemplates();
+    const activeTab = StateManager.getActiveTab() || "plans";
+    const stateData = StateManager.getState();
 
-    const itemToDelete = currentItems.find((h) => h.id === id);
+    let list = [];
+    if (activeTab === "plans") list = stateData.plans || [];
+    else if (activeTab === "logs") list = stateData.logs || [];
+    else if (activeTab === "templates") list = stateData.templates || [];
+
+    const itemToDelete = list.find((item) => String(item.id) === String(id));
 
     if (itemToDelete) {
-      GlobalLoaderService.show(`Purging "${itemToDelete.title}"...`);
+      GlobalLoaderService.show(`Deleting item...`);
       setTimeout(() => {
         try {
-          if (activeTab === "goals")
-            StateManager.setGoals(PlanService.deleteGoal(currentItems, id));
-          else if (activeTab === "daily")
-            StateManager.setDailyLogs(
-              PlanService.deleteDailyLog(currentItems, id),
-            );
-          else if (activeTab === "templates")
-            StateManager.setTemplates(
-              PlanService.deleteTemplate(currentItems, id),
-            );
+          const updatedList = list.filter(
+            (item) => String(item.id) !== String(id),
+          );
 
-          StateManager.save();
+          if (activeTab === "plans") StateManager.save({ plans: updatedList });
+          else if (activeTab === "logs")
+            StateManager.save({ logs: updatedList });
+          else if (activeTab === "templates")
+            StateManager.save({ templates: updatedList });
+
           if (this.mainController?.toggleModal)
             this.mainController.toggleModal("delete-modal", false);
           pendingDeleteId = null;
@@ -1317,7 +772,7 @@ export const PlansFormController = {
 
           NotificationService.show({
             type: "error",
-            message: `Deleted "${itemToDelete.title}"`,
+            message: `Item deleted successfully`,
             duration: 5000,
           });
         } finally {
@@ -1331,10 +786,12 @@ export const PlansFormController = {
     const titleInput = document.getElementById("edit-item-title");
     const descInput = document.getElementById("edit-item-desc");
 
-    if (!pendingEditId || !titleInput) return;
+    if (!pendingEditId) return;
 
-    const newTitle = titleInput.value.trim();
-    if (!newTitle) {
+    const newTitle = titleInput?.value.trim() || "";
+    const activeTab = StateManager.getActiveTab() || "plans";
+
+    if (activeTab !== "logs" && !newTitle) {
       NotificationService.show({
         type: "error",
         message: "Title cannot be empty",
@@ -1344,121 +801,97 @@ export const PlansFormController = {
       return;
     }
 
-    const activeTab = StateManager.getPlansTab
-      ? StateManager.getPlansTab()
-      : "goals";
-
     GlobalLoaderService.show("Updating record...");
 
     setTimeout(() => {
       try {
-        if (activeTab === "goals") {
-          const currentValRaw = document
-            .getElementById("edit-goal-current")
-            ?.value.trim();
-          const targetValRaw = document
-            .getElementById("edit-goal-target")
-            ?.value.trim();
+        const stateData = StateManager.getState();
 
-          const milestones = currentEditMilestones.map((m) => ({
-            id: m.id || generateId(),
-            title: m.title.trim(),
-            completed: m.completed || false,
-            createdAt: todayISO(),
-          }));
-
-          const updatedFields = {
-            title: newTitle,
-            description: descInput?.value.trim() || "",
-            category: editGoalCategoryAutocomplete
-              ? editGoalCategoryAutocomplete.getValue()
-              : "general",
-            timeframe: editGoalTimeframeAutocomplete
-              ? editGoalTimeframeAutocomplete.getValue()
-              : "yearly",
-            priority: editGoalPriorityAutocomplete
-              ? editGoalPriorityAutocomplete.getValue()
-              : "low",
-            unit: editGoalUnitAutocomplete
-              ? editGoalUnitAutocomplete.getValue()
-              : "%",
-            currentValue: parseFormattedNumber(currentValRaw) || 0,
-            targetValue: parseFormattedNumber(targetValRaw) || 100,
-            startDate: editGoalStartDatePicker
-              ? editGoalStartDatePicker.value
-              : todayISO(),
-            endDate: editGoalEndDatePicker ? editGoalEndDatePicker.value : null,
-            milestones,
-          };
-
-          StateManager.setGoals(
-            PlanService.editGoal(
-              StateManager.getGoals(),
-              pendingEditId,
-              updatedFields,
-            ),
-          );
-        } else if (activeTab === "daily") {
-          let linkedGoal = null;
-          if (editDailyGoalLinkAutocomplete) {
-            const selectedItems =
-              editDailyGoalLinkAutocomplete.getSelectedItems();
-            if (selectedItems && selectedItems.length > 0) {
-              const item = selectedItems[0];
-              linkedGoal = {
-                id: item.id || item.value,
-                title: item.title || item.label,
+        if (activeTab === "plans") {
+          const plans = (stateData.plans || []).map((p) => {
+            if (String(p.id) === String(pendingEditId)) {
+              return {
+                ...p,
+                title: newTitle,
+                description: descInput?.value.trim() || "",
+                lifeAreaId: editPlanLifeAreaAutocomplete
+                  ? editPlanLifeAreaAutocomplete.getValue()
+                  : p.lifeAreaId,
+                state: editPlanStateAutocomplete
+                  ? editPlanStateAutocomplete.getValue()
+                  : p.state,
+                period: {
+                  startDate: editPlanStartDatePicker
+                    ? editPlanStartDatePicker.value
+                    : p.period?.startDate,
+                  endDate: editPlanEndDatePicker
+                    ? editPlanEndDatePicker.value
+                    : p.period?.endDate,
+                },
+                updatedAt: todayISO(),
               };
             }
-          }
+            return p;
+          });
+          StateManager.save({ plans });
+        } else if (activeTab === "logs") {
+          const logs = (stateData.logs || []).map((l) => {
+            if (String(l.id) === String(pendingEditId)) {
+              let planId = l.planId;
+              if (editLogPlanLinkAutocomplete) {
+                const selectedItems =
+                  editLogPlanLinkAutocomplete.getSelectedItems();
+                if (selectedItems && selectedItems.length > 0) {
+                  planId = selectedItems[0].id || selectedItems[0].value;
+                }
+              }
 
-          const updatedFields = {
-            title: newTitle,
-            description: descInput?.value.trim() || "",
-            category: editDailyCategoryAutocomplete
-              ? editDailyCategoryAutocomplete.getValue()
-              : "journal",
-            mood: editDailyMoodAutocomplete
-              ? editDailyMoodAutocomplete.getValue()
-              : "good",
-            date: editDailyDatePicker ? editDailyDatePicker.value : todayISO(),
-            linkedGoal,
-          };
-
-          StateManager.setDailyLogs(
-            PlanService.editDailyLog(
-              StateManager.getDailyLogs(),
-              pendingEditId,
-              updatedFields,
-            ),
-          );
+              return {
+                ...l,
+                date: editLogDatePicker ? editLogDatePicker.value : l.date,
+                energy: editLogEnergyAutocomplete
+                  ? Number(editLogEnergyAutocomplete.getValue())
+                  : l.energy,
+                mood: editLogMoodAutocomplete
+                  ? editLogMoodAutocomplete.getValue()
+                  : l.mood,
+                planId,
+                notes: descInput?.value.trim() || "",
+                updatedAt: todayISO(),
+              };
+            }
+            return l;
+          });
+          StateManager.save({ logs });
         } else if (activeTab === "templates") {
-          const structure = currentEditSteps
-            .map((s) => s.title.trim())
-            .filter(Boolean);
-
-          const updatedFields = {
-            title: newTitle,
-            description: descInput?.value.trim() || "",
-            category: editTemplateCategoryAutocomplete
-              ? editTemplateCategoryAutocomplete.getValue()
-              : "workflow",
-            isFavorite:
-              document.getElementById("edit-template-favorite")?.checked ||
-              false,
-            structure,
-          };
-
-          StateManager.setTemplates(
-            PlanService.editTemplate(
-              StateManager.getTemplates(),
-              pendingEditId,
-              updatedFields,
-            ),
-          );
+          const templates = (stateData.templates || []).map((t) => {
+            if (String(t.id) === String(pendingEditId)) {
+              return {
+                ...t,
+                title: newTitle,
+                description: descInput?.value.trim() || "",
+                lifeAreaId: editTemplateLifeAreaAutocomplete
+                  ? editTemplateLifeAreaAutocomplete.getValue()
+                  : t.lifeAreaId,
+                baseline:
+                  document
+                    .getElementById("edit-template-baseline")
+                    ?.value.trim() || "",
+                optimal:
+                  document
+                    .getElementById("edit-template-optimal")
+                    ?.value.trim() || "",
+                isFavorite:
+                  document.getElementById("edit-template-favorite")?.checked ||
+                  false,
+                updatedAt: todayISO(),
+              };
+            }
+            return t;
+          });
+          StateManager.save({ templates });
         }
 
-        StateManager.save();
         if (this.mainController?.toggleModal) {
           this.mainController.toggleModal("edit-modal", false);
         }
@@ -1471,7 +904,7 @@ export const PlansFormController = {
 
         NotificationService.show({
           type: "success",
-          message: `"${newTitle}" updated successfully!`,
+          message: `Record updated successfully!`,
           icon: "fa-check",
           duration: 5000,
         });

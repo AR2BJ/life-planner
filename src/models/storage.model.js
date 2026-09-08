@@ -3,94 +3,70 @@ import { generateId, todayISO } from "@/utils/helpers.js";
 export const STORAGE_KEY = "life_planner";
 export const STORAGE_VERSION = 1;
 
-function normalizeGoal(goal) {
+export function normalizePlan(data = {}) {
   return {
-    id: String(goal.id || generateId()),
-    title: goal.title || "Untitled Goal",
-    description: goal.description || "",
-    status: goal.status || "todo",
-    priority: goal.priority || "low",
-    category: goal.category || "general",
-    timeframe: goal.timeframe || "yearly",
-    targetValue: Number(goal.targetValue) || 100,
-    currentValue: Number(goal.currentValue) || 0,
-    unit: goal.unit || "%",
-    startDate: goal.startDate || todayISO(),
-    endDate: goal.endDate || null,
-    createdAt: goal.createdAt || todayISO(),
-    updatedAt: goal.updatedAt || todayISO(),
-    completedAt: goal.completedAt || null,
-    milestones: Array.isArray(goal.milestones)
-      ? goal.milestones.map((m) => ({
-          id: String(m.id || generateId()),
-          title: m.title || "",
-          completed: Boolean(m.completed),
-          createdAt: m.createdAt || todayISO(),
+    id: String(data.id || generateId()),
+    title: data.title || "Untitled Plan",
+    description: data.description || "",
+    lifeAreaId: data.lifeAreaId ? String(data.lifeAreaId) : "health",
+    state: data.state || "active",
+    period: {
+      startDate: data.period?.startDate || todayISO(),
+      endDate: data.period?.endDate || null,
+    },
+    objectives: Array.isArray(data.objectives)
+      ? data.objectives.map((obj) => ({
+          id: String(obj.id || generateId()),
+          title: obj.title || "",
+          completed: Boolean(obj.completed),
         }))
       : [],
+    createdAt: data.createdAt || todayISO(),
+    updatedAt: data.updatedAt || todayISO(),
   };
 }
 
-function normalizeDailyLog(log) {
+export function normalizeLog(data = {}) {
   return {
-    id: String(log.id || generateId()),
-    title: log.title || "Daily Log Entry",
-    description: log.description || log.content || "",
-    category: log.category || "journal",
-    mood: log.mood || "good",
-    date: log.date || todayISO(),
-    linkedGoal: {
-      id: String(log.linkedGoal.id || generateId()),
-      title: log.linkedGoal.title || "",
-    },
-    createdAt: log.createdAt || todayISO(),
-    updatedAt: log.updatedAt || todayISO(),
+    id: String(data.id || generateId()),
+    date: data.date || todayISO(),
+    planId: data.planId ? String(data.planId) : null,
+    energy: Number(data.energy) || 3,
+    mood: data.mood || "stable",
+    metrics: data.metrics || {},
+    notes: data.notes || "",
+    createdAt: data.createdAt || todayISO(),
+    updatedAt: data.updatedAt || todayISO(),
   };
 }
 
-function normalizeTemplate(template) {
+export function normalizeTemplate(data = {}) {
   return {
-    id: String(template.id || generateId()),
-    title: template.title || "Untitled Template",
-    description: template.description || "",
-    category: template.category || "workflow",
-    structure: Array.isArray(template.structure) ? template.structure : [],
-    isFavorite: Boolean(template.isFavorite),
-    createdAt: template.createdAt || todayISO(),
-    updatedAt: template.updatedAt || todayISO(),
-  };
-}
-
-function migrateData(data) {
-  const goals = Array.isArray(data.goals)
-    ? data.goals
-    : Array.isArray(data.plans)
-      ? data.plans
-      : [];
-  const dailyLogs = Array.isArray(data.dailyLogs) ? data.dailyLogs : [];
-  const templates = Array.isArray(data.templates) ? data.templates : [];
-
-  return {
-    version: STORAGE_VERSION,
-    goals: goals.map(normalizeGoal),
-    dailyLogs: dailyLogs.map(normalizeDailyLog),
-    templates: templates.map(normalizeTemplate),
+    id: String(data.id || generateId()),
+    title: data.title || "Untitled Template",
+    description: data.description || "",
+    lifeAreaId: data.lifeAreaId ? String(data.lifeAreaId) : "health",
+    baseline: data.baseline || "",
+    optimal: data.optimal || "",
+    isFavorite: Boolean(data.isFavorite),
+    usageCount: Number(data.usageCount) || 0,
+    createdAt: data.createdAt || todayISO(),
+    updatedAt: data.updatedAt || todayISO(),
   };
 }
 
 export function saveToStorage(data) {
   try {
-    localStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify({
-        version: STORAGE_VERSION,
-        goals: data.goals || [],
-        dailyLogs: data.dailyLogs || [],
-        templates: data.templates || [],
-      }),
-    );
+    const payload = {
+      version: STORAGE_VERSION,
+      templates: data.templates || [],
+      plans: data.plans || [],
+      logs: data.logs || [],
+    };
+
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
   } catch (error) {
-    console.error("Failed to save data to localStorage:", error);
+    console.error("Failed to save data structure:", error);
   }
 }
 
@@ -100,9 +76,15 @@ export function loadFromStorage() {
     if (!raw) return null;
 
     const data = JSON.parse(raw);
-    return migrateData(data);
+
+    return {
+      version: STORAGE_VERSION,
+      templates: (data.templates || []).map(normalizeTemplate),
+      plans: (data.plans || []).map(normalizePlan),
+      logs: (data.logs || []).map(normalizeLog),
+    };
   } catch (error) {
-    console.error("Failed to load data from localStorage:", error);
+    console.error("Failed to load data structure:", error);
     return null;
   }
 }

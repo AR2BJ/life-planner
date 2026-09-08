@@ -1,46 +1,124 @@
-import { StateManager, state } from "@/models/state.model.js";
 import {
   setPendingDeleteId,
   setPendingEditId,
 } from "./plans-form.controller.js";
 
 import { NotificationService } from "@/services/notification.service.js";
-import { PlanService } from "@/services/plans.service.js";
-import { openMilestonesState } from "@/utils/helpers.js";
+import { StateManager } from "@/models/state.model.js";
+import { openObjectivesState } from "@/utils/helpers.js";
 
 export const PlansActionController = {
   init(mainController) {
     this.mainController = mainController;
     this.bindDynamicEvents();
+    this.bindEditAccordionEvents();
   },
 
-  handleQuickStep(goalId, stepVal) {
-    const goals = StateManager.getGoals();
-    const targetGoal = goals.find((g) => g.id === goalId);
-    if (!targetGoal) return;
+  handleToggleObjective(planId, objectiveId) {
+    const plans = StateManager.getPlans() || [];
+    const targetPlan = plans.find((p) => String(p.id) === String(planId));
+    if (!targetPlan) return;
 
-    const newCurrent = Math.max(0, targetGoal.currentValue + stepVal);
-    const updatedGoals = PlanService.updateGoalProgress(
-      goals,
-      goalId,
-      newCurrent,
-    );
+    const updatedObjectives = (targetPlan.objectives || []).map((obj) => {
+      if (String(obj.id) === String(objectiveId)) {
+        return { ...obj, completed: !obj.completed };
+      }
+      return obj;
+    });
 
-    StateManager.setGoals(updatedGoals);
-    StateManager.save();
+    const updatedPlans = plans.map((p) => {
+      if (String(p.id) === String(planId)) {
+        return {
+          ...p,
+          objectives: updatedObjectives,
+          updatedAt: new Date().toISOString(),
+        };
+      }
+      return p;
+    });
+
+    StateManager.save({ plans: updatedPlans });
     this.mainController.refreshUI();
 
-    const updatedGoal = updatedGoals.find((g) => g.id === goalId);
-    const isCompleted =
-      updatedGoal?.status === "completed" || updatedGoal?.status === "done";
+    NotificationService.show({
+      type: "info",
+      message: `Objective updated for "${targetPlan.title}"`,
+      icon: "fa-list-check",
+      duration: 3000,
+    });
+  },
+
+  handleToggleTemplateFavorite(templateId) {
+    const templates = StateManager.getTemplates() || [];
+    const targetTemplate = templates.find(
+      (t) => String(t.id) === String(templateId),
+    );
+    if (!targetTemplate) return;
+
+    const updatedTemplates = templates.map((t) => {
+      if (String(t.id) === String(templateId)) {
+        return {
+          ...t,
+          isFavorite: !t.isFavorite,
+          updatedAt: new Date().toISOString(),
+        };
+      }
+      return t;
+    });
+
+    StateManager.save({ templates: updatedTemplates });
+    this.mainController.refreshUI();
 
     NotificationService.show({
-      type: isCompleted ? "success" : "info",
-      message: isCompleted
-        ? `Goal completed: "${targetGoal.title}"`
-        : `Updated progress for "${targetGoal.title}"`,
-      icon: isCompleted ? "fa-circle-check" : "fa-chart-line",
-      duration: 4000,
+      type: "info",
+      message: !targetTemplate.isFavorite
+        ? `Marked "${targetTemplate.title}" as favorite`
+        : `Removed "${targetTemplate.title}" from favorites`,
+      icon: "fa-star",
+      duration: 3000,
+    });
+  },
+
+  bindEditAccordionEvents() {
+    const accordionGroup = document.getElementById("edit-accordion-group");
+    if (!accordionGroup) return;
+
+    accordionGroup.addEventListener("click", (e) => {
+      const headerBtn = e.target.closest(".accordion-header");
+      if (!headerBtn) return;
+
+      e.preventDefault();
+
+      const clickedItem = headerBtn.closest(".accordion-item");
+      if (!clickedItem) return;
+
+      const allAccordionItems =
+        accordionGroup.querySelectorAll(".accordion-item");
+
+      allAccordionItems.forEach((item) => {
+        const content = item.querySelector(".accordion-content");
+        const icon = item.querySelector(".accordion-icon");
+
+        if (item === clickedItem) {
+          const isCurrentlyHidden = content.classList.contains("hidden");
+
+          if (isCurrentlyHidden) {
+            content.classList.remove("hidden");
+            content.classList.add("flex");
+            if (icon) icon.classList.add("rotate-180");
+          } else {
+            content.classList.add("hidden");
+            content.classList.remove("flex");
+            if (icon) icon.classList.remove("rotate-180");
+          }
+        } else {
+          if (content) {
+            content.classList.add("hidden");
+            content.classList.remove("flex");
+          }
+          if (icon) icon.classList.remove("rotate-180");
+        }
+      });
     });
   },
 
@@ -50,28 +128,30 @@ export const PlansActionController = {
 
     listContainer.addEventListener("click", (e) => {
       const target = e.target;
-      const activeTab = StateManager.getPlansTab();
+      const activeTab = StateManager.getActiveTab() || "plans";
 
       // ==========================================
-      // 1. TOGGLE MILESTONES DROPDOWN (ACCORDION)
+      // 1. TOGGLE MILESTONES/OBJECTIVES ACCORDION
       // ==========================================
       const toggleMilestonesBtn = target.closest(".toggle-milestones-btn");
       if (toggleMilestonesBtn) {
         e.stopPropagation();
-        const goalId = toggleMilestonesBtn.dataset.goalId;
-        if (!goalId) return;
+        const planId =
+          toggleMilestonesBtn.dataset.goalId ||
+          toggleMilestonesBtn.dataset.planId;
+        if (!planId) return;
 
         const container = document.getElementById(
-          `milestones-container-${goalId}`,
+          `milestones-container-${planId}`,
         );
         const chevron = toggleMilestonesBtn.querySelector(".milestone-chevron");
 
-        if (openMilestonesState.expandedGoalIds.has(goalId)) {
-          openMilestonesState.expandedGoalIds.delete(goalId);
+        if (openObjectivesState.expandedPlanIds.has(planId)) {
+          openObjectivesState.expandedPlanIds.delete(planId);
           if (container) container.classList.add("hidden");
           if (chevron) chevron.classList.remove("rotate-180");
         } else {
-          openMilestonesState.expandedGoalIds.add(goalId);
+          openObjectivesState.expandedPlanIds.add(planId);
           if (container) container.classList.remove("hidden");
           if (chevron) chevron.classList.add("rotate-180");
         }
@@ -79,125 +159,43 @@ export const PlansActionController = {
       }
 
       // ==========================================
-      // 2. TOGGLE INDIVIDUAL MILESTONE CHECKBOX
+      // 2. TOGGLE INDIVIDUAL OBJECTIVE/MILESTONE
       // ==========================================
       const milestoneToggle = target.closest(".milestone-toggle");
       if (milestoneToggle) {
         e.stopPropagation();
-        const goalId = milestoneToggle.dataset.goalId;
-        const milestoneId = milestoneToggle.dataset.milestoneId;
+        const planId =
+          milestoneToggle.dataset.goalId || milestoneToggle.dataset.planId;
+        const objectiveId =
+          milestoneToggle.dataset.milestoneId ||
+          milestoneToggle.dataset.objectiveId;
 
-        if (goalId && milestoneId) {
-          openMilestonesState.expandedGoalIds.add(goalId);
-
-          const updatedGoals = PlanService.toggleMilestone(
-            StateManager.getGoals(),
-            goalId,
-            milestoneId,
-          );
-
-          StateManager.setGoals(updatedGoals);
-          StateManager.save();
-          this.mainController.refreshUI();
+        if (planId && objectiveId) {
+          openObjectivesState.expandedPlanIds.add(planId);
+          this.handleToggleObjective(planId, objectiveId);
         }
         return;
       }
 
       // ==========================================
-      // 3. GOAL PROGRESS / INCREMENT HANDLER
-      // ==========================================
-      const progressBtn = target.closest(".progress-btn");
-      if (progressBtn) {
-        const id = progressBtn.dataset.id;
-        const step = Number(progressBtn.dataset.step) || 1;
-        const currentGoals = StateManager.getGoals();
-        const goal = currentGoals.find((g) => g.id === id);
-
-        if (goal) {
-          try {
-            const newCurrent = Math.max(0, (goal.currentValue || 0) + step);
-
-            const updated = PlanService.updateGoalProgress(
-              currentGoals,
-              id,
-              newCurrent,
-            );
-            StateManager.setGoals(updated);
-            StateManager.save();
-            this.mainController.refreshUI();
-
-            const updatedGoal = updated.find((g) => g.id === id);
-            const isCompleted =
-              updatedGoal?.status === "completed" ||
-              updatedGoal?.status === "done";
-
-            NotificationService.show({
-              type: isCompleted ? "success" : "info",
-              message: isCompleted
-                ? `Goal completed: "${goal.title}"`
-                : `Updated progress for "${goal.title}"`,
-              icon: isCompleted ? "fa-circle-check" : "fa-chart-line",
-              duration: 4000,
-            });
-          } catch (error) {
-            NotificationService.show({
-              type: "error",
-              message: error.message || "Failed to update goal progress",
-            });
-          }
-        }
-        return;
-      }
-
-      const stepBtn = target.closest(".quick-step-btn");
-      if (stepBtn) {
-        e.stopPropagation();
-        const goalId = stepBtn.dataset.id;
-        const stepVal = Number(stepBtn.dataset.step) || 0;
-        this.handleQuickStep(goalId, stepVal);
-        return;
-      }
-
-      // ==========================================
-      // 4. TOGGLE TEMPLATE FAVORITE
+      // 3. TOGGLE TEMPLATE FAVORITE
       // ==========================================
       const favoriteBtn = target.closest(".favorite-btn");
       if (favoriteBtn) {
+        e.stopPropagation();
         const id = favoriteBtn.dataset.id;
-        const currentTemplates = StateManager.getTemplates();
-        const template = currentTemplates.find((t) => t.id === id);
-
-        if (template) {
-          try {
-            const updated = PlanService.toggleTemplateFavorite(
-              currentTemplates,
-              id,
-            );
-            StateManager.save();
-            this.mainController.refreshUI();
-
-            NotificationService.show({
-              type: "info",
-              message: template.isFavorite
-                ? `Removed "${template.title}" from favorites`
-                : `Marked "${template.title}" as favorite`,
-              duration: 3000,
-            });
-          } catch (error) {
-            NotificationService.show({
-              type: "error",
-              message: error.message || "Failed to toggle favorite",
-            });
-          }
+        if (id) {
+          this.handleToggleTemplateFavorite(id);
         }
         return;
       }
 
       // ==========================================
-      // 5. EDIT MODAL TRIGGER
+      // 4. EDIT MODAL TRIGGER
       // ==========================================
       const editBtn = target.closest(".edit-btn");
       if (editBtn) {
+        e.stopPropagation();
         const id = editBtn.dataset.id;
         setPendingEditId(id);
         this.mainController.toggleModal("edit-modal", true);
@@ -205,10 +203,11 @@ export const PlansActionController = {
       }
 
       // ==========================================
-      // 6. DELETE MODAL TRIGGER
+      // 5. DELETE MODAL TRIGGER
       // ==========================================
       const deleteBtn = target.closest(".delete-btn");
       if (deleteBtn) {
+        e.stopPropagation();
         const id = deleteBtn.dataset.id;
         setPendingDeleteId(id);
         this.mainController.toggleModal("delete-modal", true);
@@ -216,59 +215,41 @@ export const PlansActionController = {
       }
 
       // ==========================================
-      // 7. DIRECT DELETE ITEM HANDLER
+      // 6. DIRECT DELETE ITEM HANDLER
       // ==========================================
       const directDeleteBtn = target.closest(".direct-delete-btn");
       if (directDeleteBtn) {
+        e.stopPropagation();
         const id = directDeleteBtn.dataset.id;
+        if (!id) return;
 
-        if (activeTab === "goals") {
-          const currentGoals = StateManager.getGoals();
-          const targetGoal = currentGoals.find((g) => g.id === id);
+        const currentState = StateManager.getState();
 
-          if (targetGoal) {
-            const updated = PlanService.deleteGoal(currentGoals, id);
-            StateManager.save(updated, state.dailyLogs, state.templates);
-            this.mainController.refreshUI();
-
-            NotificationService.show({
-              type: "info",
-              message: `Deleted goal: "${targetGoal.title}"`,
-              duration: 5000,
-            });
-          }
-        } else if (activeTab === "daily") {
-          const currentLogs = StateManager.getDailyLogs();
-          const targetLog = currentLogs.find((l) => l.id === id);
-
-          if (targetLog) {
-            const updated = PlanService.deleteDailyLog(currentLogs, id);
-            StateManager.save(state.goals, updated, state.templates);
-            this.mainController.refreshUI();
-
-            NotificationService.show({
-              type: "info",
-              message: "Daily log deleted",
-              duration: 5000,
-            });
-          }
+        if (activeTab === "plans") {
+          const plans = (currentState.plans || []).filter(
+            (p) => String(p.id) !== String(id),
+          );
+          StateManager.save({ plans });
+        } else if (activeTab === "logs") {
+          const logs = (currentState.logs || []).filter(
+            (l) => String(l.id) !== String(id),
+          );
+          StateManager.save({ logs });
         } else if (activeTab === "templates") {
-          const currentTemplates = StateManager.getTemplates();
-          const targetTemplate = currentTemplates.find((t) => t.id === id);
-
-          if (targetTemplate) {
-            const updated = PlanService.deleteTemplate(currentTemplates, id);
-            StateManager.save(state.goals, state.dailyLogs, updated);
-            this.mainController.refreshUI();
-
-            NotificationService.show({
-              type: "info",
-              message: `Deleted template: "${targetTemplate.title}"`,
-              duration: 5000,
-            });
-          }
+          const templates = (currentState.templates || []).filter(
+            (t) => String(t.id) !== String(id),
+          );
+          StateManager.save({ templates });
         }
-        return;
+
+        this.mainController.refreshUI();
+
+        NotificationService.show({
+          type: "info",
+          message: "Item deleted successfully",
+          icon: "fa-trash-can",
+          duration: 4000,
+        });
       }
     });
   },

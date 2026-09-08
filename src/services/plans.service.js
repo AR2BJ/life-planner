@@ -1,238 +1,113 @@
-import {
-  calculateGoalProgress,
-  generateId,
-  openMilestonesState,
-  todayISO,
-} from "@/utils/helpers.js";
+import { generateId, todayISO } from "@/utils/helpers.js";
 
 export const PlanService = {
-  createGoal(currentGoals, goalData) {
-    const rawTitle = typeof goalData === "string" ? goalData : goalData.title;
+  // ==========================================
+  // 1. PLANS
+  // ==========================================
+  createPlan(currentPlans = [], planData = {}) {
+    const rawTitle = typeof planData === "string" ? planData : planData.title;
     const cleanedTitle = (rawTitle || "").trim().replace(/\s+/g, " ");
 
     if (!cleanedTitle || cleanedTitle.length < 2 || cleanedTitle.length > 120) {
-      throw new Error("Goal title must be between 2 and 120 characters");
+      throw new Error("Plan title must be between 2 and 120 characters");
     }
 
-    const targetValue = Number(goalData.targetValue) || 100;
-    const currentValue = Number(goalData.currentValue) || 0;
-    const isDone = currentValue >= targetValue && targetValue > 0;
-    const isInProgress = currentValue > 0 && !isDone;
-
-    const newGoal = {
-      id: generateId(),
+    const newPlan = {
+      id: String(planData.id || generateId()),
       title: cleanedTitle,
-      description: (goalData.description || "").trim(),
-      category: goalData.category || "general",
-      timeframe: goalData.timeframe || "yearly",
-      priority: goalData.priority || "low",
-      targetValue,
-      currentValue,
-      unit: goalData.unit || "%",
-      status: isDone ? "done" : isInProgress ? "in_progress" : "todo",
-      startDate: goalData.startDate || todayISO(),
-      endDate: goalData.endDate || null,
+      description: (planData.description || "").trim(),
+      lifeAreaId: String(planData.lifeAreaId || "health"),
+      state: planData.state || "active", // "active" | "paused" | "completed"
+      period: {
+        startDate: planData.period?.startDate || todayISO(),
+        endDate: planData.period?.endDate || null,
+      },
+      objectives: Array.isArray(planData.objectives)
+        ? planData.objectives.map((obj) => ({
+            id: String(obj.id || generateId()),
+            title: (obj.title || "").trim(),
+            completed: Boolean(obj.completed),
+          }))
+        : [],
       createdAt: todayISO(),
       updatedAt: todayISO(),
-      completedAt: isDone ? todayISO() : null,
-      milestones: Array.isArray(goalData.milestones) ? goalData.milestones : [],
     };
 
-    return [newGoal, ...currentGoals];
+    return [newPlan, ...currentPlans];
   },
 
-  editGoal(currentGoals, goalId, updatedFields) {
-    const goal = currentGoals.find((g) => g.id === goalId);
-    if (!goal) throw new Error("Goal not found");
+  editPlan(currentPlans = [], planId, updatedFields = {}) {
+    const plan = currentPlans.find((p) => String(p.id) === String(planId));
+    if (!plan) throw new Error("Plan not found");
 
-    let cleanedTitle = goal.title;
-    if (updatedFields.title) {
+    let cleanedTitle = plan.title;
+    if (updatedFields.title !== undefined) {
       cleanedTitle = updatedFields.title.trim().replace(/\s+/g, " ");
       if (cleanedTitle.length < 2 || cleanedTitle.length > 120) {
-        throw new Error("Goal title must be between 2 and 120 characters");
+        throw new Error("Plan title must be between 2 and 120 characters");
       }
     }
 
-    return currentGoals.map((g) => {
-      if (g.id !== goalId) return g;
-
-      const targetValue =
-        updatedFields.targetValue !== undefined
-          ? Number(updatedFields.targetValue)
-          : g.targetValue;
-      const currentValue =
-        updatedFields.currentValue !== undefined
-          ? Number(updatedFields.currentValue)
-          : g.currentValue;
-
-      const isDone = currentValue >= targetValue && targetValue > 0;
-      const isInProgress = currentValue > 0 && !isDone;
+    return currentPlans.map((p) => {
+      if (String(p.id) !== String(planId)) return p;
 
       return {
-        ...g,
+        ...p,
         ...updatedFields,
         title: cleanedTitle,
-        targetValue,
-        currentValue,
-        status: isDone ? "done" : isInProgress ? "in_progress" : "todo",
-        completedAt: isDone ? g.completedAt || todayISO() : null,
+        period: {
+          ...p.period,
+          ...(updatedFields.period || {}),
+        },
+        objectives: Array.isArray(updatedFields.objectives)
+          ? updatedFields.objectives.map((obj) => ({
+              id: String(obj.id || generateId()),
+              title: (obj.title || "").trim(),
+              completed: Boolean(obj.completed),
+            }))
+          : p.objectives,
         updatedAt: todayISO(),
       };
     });
   },
 
-  updateGoalProgress(goals, goalId, newCurrent) {
-    return goals.map((goal) => {
-      if (goal.id !== goalId) return goal;
+  toggleObjective(currentPlans = [], planId, objectiveId) {
+    return currentPlans.map((p) => {
+      if (String(p.id) !== String(planId)) return p;
 
-      const target = Number(goal.targetValue) || 100;
-      const boundedCurrent = Math.min(target, Math.max(0, newCurrent));
-
-      const isPercentageUnit =
-        !goal.unit || goal.unit === "%" || goal.unit === "percentage";
-      let updatedMilestones = Array.isArray(goal.milestones)
-        ? [...goal.milestones]
-        : [];
-
-      if (isPercentageUnit && updatedMilestones.length > 0) {
-        const progressRatio = boundedCurrent / target;
-        const countToComplete = Math.round(
-          progressRatio * updatedMilestones.length,
-        );
-        updatedMilestones = updatedMilestones.map((m, idx) => ({
-          ...m,
-          completed: idx < countToComplete,
-        }));
-      }
-
-      const updatedGoalCandidate = {
-        ...goal,
-        currentValue: boundedCurrent,
-        milestones: updatedMilestones,
-      };
-
-      const { isCompleted, isInProgress } =
-        calculateGoalProgress(updatedGoalCandidate);
-
-      const newStatus = isCompleted
-        ? "done"
-        : isInProgress
-          ? "in_progress"
-          : "todo";
-
-      return {
-        ...updatedGoalCandidate,
-        status: newStatus,
-        completedAt:
-          newStatus === "done" ? goal.completedAt || todayISO() : null,
-        updatedAt: todayISO(),
-      };
-    });
-  },
-
-  toggleMilestone(currentGoals, goalId, milestoneId) {
-    return currentGoals.map((g) => {
-      if (g.id !== goalId) return g;
-
-      const updatedMilestones = g.milestones.map((m) =>
-        m.id === milestoneId ? { ...m, completed: !m.completed } : m,
+      const updatedObjectives = p.objectives.map((obj) =>
+        String(obj.id) === String(objectiveId)
+          ? { ...obj, completed: !obj.completed }
+          : obj,
       );
 
-      const totalMilestones = updatedMilestones.length;
-      const completedMilestones = updatedMilestones.filter(
-        (m) => m.completed,
-      ).length;
-
-      const isPercentageUnit =
-        !g.unit || g.unit === "%" || g.unit === "percentage";
-      const targetValue = Number(g.targetValue) || 100;
-
-      const newCurrentValue =
-        isPercentageUnit && totalMilestones > 0
-          ? Math.round((completedMilestones / totalMilestones) * targetValue)
-          : g.currentValue;
-
-      const updatedGoalCandidate = {
-        ...g,
-        currentValue: newCurrentValue,
-        milestones: updatedMilestones,
-      };
-
-      const { isCompleted, isInProgress } =
-        calculateGoalProgress(updatedGoalCandidate);
-
-      const newStatus = isCompleted
-        ? "done"
-        : isInProgress
-          ? "in_progress"
-          : "todo";
-
       return {
-        ...updatedGoalCandidate,
-        status: newStatus,
-        completedAt: newStatus === "done" ? g.completedAt || todayISO() : null,
+        ...p,
+        objectives: updatedObjectives,
         updatedAt: todayISO(),
       };
     });
   },
 
-  updateGoalStatus(currentGoals, goalId, newStatus) {
-    return currentGoals.map((g) => {
-      if (g.id !== goalId) return g;
-
-      let updatedMilestones = g.milestones || [];
-      const targetValue = Number(g.targetValue) || 100;
-      let newCurrentValue = g.currentValue;
-
-      if (newStatus === "done") {
-        openMilestonesState.milestonesMemory.set(goalId, g.milestones);
-        updatedMilestones = updatedMilestones.map((m) => ({
-          ...m,
-          completed: true,
-        }));
-        newCurrentValue = targetValue;
-      } else if (newStatus === "todo") {
-        updatedMilestones = updatedMilestones.map((m) => ({
-          ...m,
-          completed: false,
-        }));
-        newCurrentValue = 0;
-      } else {
-        if (openMilestonesState.milestonesMemory.has(goalId)) {
-          updatedMilestones = openMilestonesState.milestonesMemory.get(goalId);
-          openMilestonesState.milestonesMemory.delete(goalId);
-        }
-      }
-
-      return {
-        ...g,
-        currentValue: newCurrentValue,
-        status: newStatus,
-        milestones: updatedMilestones,
-        completedAt: newStatus === "done" ? todayISO() : null,
-        updatedAt: todayISO(),
-      };
-    });
+  deletePlan(currentPlans = [], planId) {
+    return currentPlans.filter((p) => String(p.id) !== String(planId));
   },
 
-  deleteGoal(currentGoals, goalId) {
-    return currentGoals.filter((g) => g.id !== goalId);
-  },
-
-  createDailyLog(currentLogs, logData) {
-    const rawTitle = typeof logData === "string" ? logData : logData.title;
-    const cleanedTitle = (rawTitle || "").trim();
-
-    if (!cleanedTitle) throw new Error("Daily log title cannot be empty");
-
+  // ==========================================
+  // 2. LOGS
+  // ==========================================
+  createLog(currentLogs = [], logData = {}) {
     const newLog = {
-      id: generateId(),
-      title: cleanedTitle,
-      description: (logData.description || logData.content || "").trim(),
+      id: String(logData.id || generateId()),
       date: logData.date || todayISO(),
-      mood: logData.mood || "good",
-      category: logData.category || "journal",
-      linkedGoal: logData.linkedGoal || null,
+      planId: logData.planId ? String(logData.planId) : null,
+      energy: Math.min(5, Math.max(1, Number(logData.energy) || 3)),
+      mood: logData.mood || "good", // "great" | "good" | "neutral" | "bad"
+      metrics:
+        logData.metrics && typeof logData.metrics === "object"
+          ? logData.metrics
+          : {},
+      notes: (logData.notes || logData.description || "").trim(),
       createdAt: todayISO(),
       updatedAt: todayISO(),
     };
@@ -240,27 +115,37 @@ export const PlanService = {
     return [newLog, ...currentLogs];
   },
 
-  editDailyLog(currentLogs, logId, updatedFields) {
+  editLog(currentLogs = [], logId, updatedFields = {}) {
+    const log = currentLogs.find((l) => String(l.id) === String(logId));
+    if (!log) throw new Error("Log not found");
+
     return currentLogs.map((l) => {
-      if (l.id !== logId) return l;
+      if (String(l.id) !== String(logId)) return l;
+
       return {
         ...l,
         ...updatedFields,
-        title: updatedFields.title ? updatedFields.title.trim() : l.title,
-        description:
-          updatedFields.description !== undefined
-            ? updatedFields.description.trim()
-            : l.description,
+        notes:
+          updatedFields.notes !== undefined
+            ? updatedFields.notes.trim()
+            : l.notes,
+        energy:
+          updatedFields.energy !== undefined
+            ? Math.min(5, Math.max(1, Number(updatedFields.energy)))
+            : l.energy,
         updatedAt: todayISO(),
       };
     });
   },
 
-  deleteDailyLog(currentLogs, logId) {
-    return currentLogs.filter((l) => l.id !== logId);
+  deleteLog(currentLogs = [], logId) {
+    return currentLogs.filter((l) => String(l.id) !== String(logId));
   },
 
-  createTemplate(currentTemplates, templateData) {
+  // ==========================================
+  // 3. TEMPLATES
+  // ==========================================
+  createTemplate(currentTemplates = [], templateData = {}) {
     const rawTitle =
       typeof templateData === "string" ? templateData : templateData.title;
     const cleanedTitle = (rawTitle || "").trim().replace(/\s+/g, " ");
@@ -270,12 +155,14 @@ export const PlanService = {
     }
 
     const newTemplate = {
-      id: generateId(),
+      id: String(templateData.id || generateId()),
       title: cleanedTitle,
       description: (templateData.description || "").trim(),
-      category: templateData.category || "workflow",
-      structure: templateData.structure || [],
+      lifeAreaId: String(templateData.lifeAreaId || "health"),
+      baseline: (templateData.baseline || "").trim(),
+      optimal: (templateData.optimal || "").trim(),
       isFavorite: Boolean(templateData.isFavorite),
+      usageCount: Number(templateData.usageCount) || 0,
       createdAt: todayISO(),
       updatedAt: todayISO(),
     };
@@ -283,19 +170,52 @@ export const PlanService = {
     return [newTemplate, ...currentTemplates];
   },
 
-  editTemplate(currentTemplates, templateId, updatedFields) {
+  editTemplate(currentTemplates = [], templateId, updatedFields = {}) {
+    const template = currentTemplates.find(
+      (t) => String(t.id) === String(templateId),
+    );
+    if (!template) throw new Error("Template not found");
+
+    let cleanedTitle = template.title;
+    if (updatedFields.title !== undefined) {
+      cleanedTitle = updatedFields.title.trim().replace(/\s+/g, " ");
+      if (cleanedTitle.length < 2 || cleanedTitle.length > 100) {
+        throw new Error("Template title must be between 2 and 100 characters");
+      }
+    }
+
     return currentTemplates.map((t) => {
-      if (t.id !== templateId) return t;
+      if (String(t.id) !== String(templateId)) return t;
+
       return {
         ...t,
         ...updatedFields,
-        title: updatedFields.title ? updatedFields.title.trim() : t.title,
+        title: cleanedTitle,
+        baseline:
+          updatedFields.baseline !== undefined
+            ? updatedFields.baseline.trim()
+            : t.baseline,
+        optimal:
+          updatedFields.optimal !== undefined
+            ? updatedFields.optimal.trim()
+            : t.optimal,
         updatedAt: todayISO(),
       };
     });
   },
 
-  deleteTemplate(currentTemplates, templateId) {
-    return currentTemplates.filter((t) => t.id !== templateId);
+  incrementTemplateUsage(currentTemplates = [], templateId) {
+    return currentTemplates.map((t) => {
+      if (String(t.id) !== String(templateId)) return t;
+      return {
+        ...t,
+        usageCount: (Number(t.usageCount) || 0) + 1,
+        updatedAt: todayISO(),
+      };
+    });
+  },
+
+  deleteTemplate(currentTemplates = [], templateId) {
+    return currentTemplates.filter((t) => String(t.id) !== String(templateId));
   },
 };

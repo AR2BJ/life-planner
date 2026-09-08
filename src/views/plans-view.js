@@ -5,6 +5,7 @@ export const PlansView = {
         id="plans-view"
         class="hidden w-full min-w-0 flex-col"
       >
+        <!-- Header Navigation Tabs & Search -->
         <div
           class="mb-6 flex flex-wrap sm:flex-nowrap gap-4 justify-center sm:justify-between items-center w-full"
         >
@@ -17,19 +18,19 @@ export const PlansView = {
             ></div>
 
             <button
-              id="tab-goals"
-              data-tab="goals"
+              id="tab-plans"
+              data-tab="plans"
               class="relative z-10 flex-1 w-full rounded-t-xl py-2 text-sm font-medium text-(--color-btn-primary-text) transition cursor-pointer text-center xs:w-27 xs:rounded-l-xl xs:rounded-tr-none"
             >
-              Goals
+              Plans
             </button>
 
             <button
-              id="tab-daily"
-              data-tab="daily"
+              id="tab-logs"
+              data-tab="logs"
               class="relative z-10 flex-1 w-full rounded-none py-2 text-sm font-medium text-secondary transition cursor-pointer text-center xs:w-27"
             >
-              Daily Logs
+              Logs
             </button>
 
             <button
@@ -68,13 +69,13 @@ export const PlansView = {
               <kbd class="flex items-center pointer-events-none">
                 <span
                   class="px-1.25 py-1 text-[9px] bg-surface-2 border border-border text-muted rounded-md shadow-2xs flex flex-row justify-center items-center"
-                  ><i class="fa-regular fa-slash-forward"></i
-                ></span>
+                ><i class="fa-regular fa-slash-forward"></i></span>
               </kbd>
             </div>
           </div>
         </div>
 
+        <!-- Form Section -->
         <div
           id="create-form-wrapper"
           class="w-full min-w-0 mb-6"
@@ -91,8 +92,7 @@ export const PlansView = {
                 <span
                   id="form-toggle-title"
                   class="text-sm font-medium"
-                  >Create New Goal</span
-                >
+                >Create New Plan</span>
               </div>
               <div
                 id="form-chevron"
@@ -108,13 +108,16 @@ export const PlansView = {
               id="plan-form-container"
               class="hidden p-5 bg-surface-2/20 animate-slide-down flex-col gap-4 rounded-b-2xl border-t border-border"
             >
-              <div class="w-full min-w-0 flex flex-col">
+              <!-- Common Title field for Plans & Templates -->
+              <div
+                id="create-title-wrapper"
+                class="w-full min-w-0 flex flex-col"
+              >
                 <label
                   for="create-plan-title"
                   class="mb-1.5 block ps-3 text-xs font-semibold text-secondary"
                 >
-                  Title
-                  <span class="text-red-700"> *</span>
+                  Title <span class="text-red-700">*</span>
                 </label>
                 <input
                   id="create-plan-title"
@@ -124,88 +127,35 @@ export const PlansView = {
                 />
               </div>
 
-              <div class="w-full min-w-0 flex flex-col">
-                <label
-                  for="create-plan-desc"
-                  class="mb-1.5 block ps-3 text-xs font-semibold text-secondary"
-                  >Description</label
-                >
-                <textarea
-                  id="create-plan-desc"
-                  rows="2"
-                  placeholder="Enter description or content..."
-                  class="w-full scrollbar-thin scrollbar-thumb-surface rounded-xl border border-border bg-surface-2 p-3 text-sm text-color placeholder:text-secondary/70 transition focus:border-brand/80 focus:outline-none resize-none"
-                ></textarea>
-              </div>
-
+              <!-- 1. PLANS TAB FIELDS -->
               <div
-                id="create-goals-fields"
+                id="create-plans-fields"
                 class="plan-tab-fields flex flex-col gap-4"
-                data-tab-fields="goals"
+                data-tab-fields="plans"
               >
-                <div
-                  class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
-                >
-                  <div class="flex flex-col gap-1.5">
-                    <div
-                      id="create-goal-category-autocomplete"
-                      class="w-full"
-                    ></div>
-                  </div>
-                  <div class="flex flex-col gap-1.5">
-                    <div
-                      id="create-goal-timeframe-autocomplete"
-                      class="w-full"
-                    ></div>
-                  </div>
-                  <div class="flex flex-col gap-1.5">
-                    <div
-                      id="create-goal-priority-autocomplete"
-                      class="w-full"
-                    ></div>
-                  </div>
+                <div class="w-full min-w-0 flex flex-col">
+                  <label
+                    for="create-plan-desc"
+                    class="mb-1.5 block ps-3 text-xs font-semibold text-secondary"
+                  >Description</label>
+                  <textarea
+                    id="create-plan-desc"
+                    rows="2"
+                    placeholder="Enter description..."
+                    class="w-full scrollbar-thin scrollbar-thumb-surface rounded-xl border border-border bg-surface-2 p-3 text-sm text-color placeholder:text-secondary/70 transition focus:border-brand/80 focus:outline-none resize-none"
+                  ></textarea>
                 </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div class="w-full min-w-0">
-                    <label
-                      for="create-goal-current"
-                      class="mb-1 block ps-3 text-xs font-semibold text-secondary"
-                      >Current Value</label
-                    >
-                    <input
-                      id="create-goal-current"
-                      type="text"
-                      inputmode="numeric"
-                      pattern="[0-9]*"
-                      value="0"
-                      maxlength="18"
-                      placeholder="e.g. 0"
-                      autocomplete="off"
-                      class="h-11 w-full rounded-xl border border-border bg-surface-2 px-4 text-sm text-color placeholder:text-secondary/70 focus:border-brand/80 focus:outline-none"
-                    />
-                  </div>
-                  <div class="w-full min-w-0">
-                    <label
-                      for="create-goal-target"
-                      class="mb-1 block ps-3 text-xs font-semibold text-secondary"
-                      >Target Value</label
-                    >
-                    <input
-                      id="create-goal-target"
-                      type="text"
-                      inputmode="numeric"
-                      pattern="[0-9]*"
-                      value="100"
-                      maxlength="18"
-                      placeholder="e.g. 100"
-                      autocomplete="off"
-                      class="h-11 w-full rounded-xl border border-border bg-surface-2 px-4 text-sm text-color placeholder:text-secondary/70 focus:border-brand/80 focus:outline-none"
-                    />
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div class="flex flex-col gap-1.5">
+                    <div
+                      id="create-plan-lifearea-autocomplete"
+                      class="w-full"
+                    ></div>
                   </div>
                   <div class="flex flex-col gap-1.5">
                     <div
-                      id="create-goal-unit-autocomplete"
+                      id="create-plan-state-autocomplete"
                       class="w-full"
                     ></div>
                   </div>
@@ -214,40 +164,41 @@ export const PlansView = {
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div class="flex flex-col gap-1.5">
                     <div
-                      id="create-goal-startdate-container"
+                      id="create-plan-startdate-container"
                       class="w-full"
                     ></div>
                   </div>
                   <div class="flex flex-col gap-1.5">
                     <div
-                      id="create-goal-enddate-container"
+                      id="create-plan-enddate-container"
                       class="w-full"
                     ></div>
                   </div>
                 </div>
               </div>
 
+              <!-- 2. LOGS TAB FIELDS -->
               <div
-                id="create-daily-fields"
+                id="create-logs-fields"
                 class="plan-tab-fields hidden flex-col gap-4"
-                data-tab-fields="daily"
+                data-tab-fields="logs"
               >
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div class="flex flex-col gap-1.5">
                     <div
-                      id="create-daily-category-autocomplete"
+                      id="create-log-datepicker-container"
                       class="w-full"
                     ></div>
                   </div>
                   <div class="flex flex-col gap-1.5">
                     <div
-                      id="create-daily-mood-autocomplete"
+                      id="create-log-energy-autocomplete"
                       class="w-full"
                     ></div>
                   </div>
                   <div class="flex flex-col gap-1.5">
                     <div
-                      id="create-daily-datepicker-container"
+                      id="create-log-mood-autocomplete"
                       class="w-full"
                     ></div>
                   </div>
@@ -255,27 +206,81 @@ export const PlansView = {
 
                 <div class="w-full min-w-0">
                   <div
-                    id="create-daily-goal-link-autocomplete"
+                    id="create-log-plan-link-autocomplete"
                     class="w-full"
                   ></div>
                 </div>
+
+                <div class="w-full min-w-0 flex flex-col">
+                  <label
+                    for="create-log-notes"
+                    class="mb-1.5 block ps-3 text-xs font-semibold text-secondary"
+                  >Notes</label>
+                  <textarea
+                    id="create-log-notes"
+                    rows="2"
+                    placeholder="Enter daily log notes..."
+                    class="w-full scrollbar-thin scrollbar-thumb-surface rounded-xl border border-border bg-surface-2 p-3 text-sm text-color placeholder:text-secondary/70 transition focus:border-brand/80 focus:outline-none resize-none"
+                  ></textarea>
+                </div>
               </div>
 
+              <!-- 3. TEMPLATES TAB FIELDS -->
               <div
-                id="create-template-fields"
+                id="create-templates-fields"
                 class="plan-tab-fields hidden flex-col gap-4"
                 data-tab-fields="templates"
               >
+                <div class="w-full min-w-0 flex flex-col">
+                  <label
+                    for="create-template-desc"
+                    class="mb-1.5 block ps-3 text-xs font-semibold text-secondary"
+                  >Description</label>
+                  <textarea
+                    id="create-template-desc"
+                    rows="2"
+                    placeholder="Enter template description..."
+                    class="w-full scrollbar-thin scrollbar-thumb-surface rounded-xl border border-border bg-surface-2 p-3 text-sm text-color placeholder:text-secondary/70 transition focus:border-brand/80 focus:outline-none resize-none"
+                  ></textarea>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div class="w-full min-w-0">
+                    <label
+                      for="create-template-baseline"
+                      class="mb-1.5 block ps-3 text-xs font-semibold text-secondary"
+                    >Baseline Strategy</label>
+                    <input
+                      id="create-template-baseline"
+                      type="text"
+                      placeholder="e.g. Minimum acceptable standard"
+                      class="h-11 w-full rounded-xl border border-border bg-surface-2 px-4 text-sm text-color placeholder:text-secondary/70 focus:border-brand/80 focus:outline-none"
+                    />
+                  </div>
+                  <div class="w-full min-w-0">
+                    <label
+                      for="create-template-optimal"
+                      class="mb-1.5 block ps-3 text-xs font-semibold text-secondary"
+                    >Optimal Strategy</label>
+                    <input
+                      id="create-template-optimal"
+                      type="text"
+                      placeholder="e.g. Best performance target"
+                      class="h-11 w-full rounded-xl border border-border bg-surface-2 px-4 text-sm text-color placeholder:text-secondary/70 focus:border-brand/80 focus:outline-none"
+                    />
+                  </div>
+                </div>
+
                 <div
                   class="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full"
                 >
                   <div class="flex-1 w-full min-w-0">
                     <div
-                      id="create-template-category-autocomplete"
+                      id="create-template-lifearea-autocomplete"
                       class="w-full"
                     ></div>
                   </div>
-                  <div class="shrink-0 w-auto pt-3 sm:pt-6">
+                  <div class="shrink-0 w-auto pt-2 sm:pt-4">
                     <label
                       class="relative inline-flex items-center cursor-pointer gap-2.5 select-none"
                     >
@@ -289,32 +294,33 @@ export const PlansView = {
                       ></div>
                       <span
                         class="text-xs font-semibold text-secondary whitespace-nowrap"
-                        >Mark as Favorite</span
-                      >
+                      >Mark as Favorite</span>
                     </label>
                   </div>
                 </div>
               </div>
 
+              <!-- Submit Footer -->
               <div
                 class="flex flex-col gap-3 border-t border-border pt-4 sm:flex-row sm:items-center sm:justify-between"
               >
                 <p class="flex items-center gap-1.5 text-xs text-secondary">
                   <i class="fa-regular fa-circle-info text-brand/80"></i>
-                  Plans can be categorized and filtered by target metrics.
+                  Manage your life areas and operational plans effectively.
                 </p>
                 <button
                   id="add-plan-btn"
                   class="flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-brand/80 px-5 text-sm font-semibold text-white shadow-lg shadow-brand/10 transition hover:bg-(--color-brand-hover) cursor-pointer sm:w-auto"
                 >
                   <i class="fa-regular fa-plus"></i>
-                  <span id="add-plan-btn-text">Add Goal</span>
+                  <span id="add-plan-btn-text">Add Plan</span>
                 </button>
               </div>
             </div>
           </div>
         </div>
 
+        <!-- Filter & Sort Bar -->
         <div
           id="plan-filters-bar"
           class="flex flex-wrap lg:flex-nowrap items-stretch lg:items-center justify-between gap-6 border-b border-border pb-4 w-full"
@@ -323,7 +329,7 @@ export const PlansView = {
             <p
               class="text-xs font-bold uppercase tracking-wider text-secondary shrink-0 me-1 hidden sm:flex"
             >
-              Categories:
+              Life Areas:
             </p>
 
             <div class="relative flex-1 min-w-0 flex items-center">
@@ -355,7 +361,7 @@ export const PlansView = {
           >
             <div class="w-full flex flex-col xs:flex-row items-center gap-3">
               <div class="w-full flex items-center gap-2">
-                <div id="date-filter-autocomplete-wrapper"></div>
+                <div id="state-filter-autocomplete-wrapper"></div>
               </div>
 
               <div class="w-full flex items-center gap-2">
@@ -372,6 +378,7 @@ export const PlansView = {
           </div>
         </div>
 
+        <!-- Render List Container -->
         <div
           id="plan-list"
           class="mt-6 w-full space-y-3"

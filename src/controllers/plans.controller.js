@@ -1,5 +1,7 @@
 import {
   FILTER_OPTIONS_BY_TAB,
+  MOOD_OPTIONS,
+  PLAN_STATES,
   SORT_OPTIONS_BY_TAB,
 } from "@/utils/constants/options-value.constants.js";
 import { StateManager, state } from "@/models/state.model.js";
@@ -20,7 +22,7 @@ import { PlansFormController } from "./plans/plans-form.controller.js";
 import { PlansView } from "@/views/plans-view.js";
 import { SettingsViewComponent } from "@/components/features/settings/settings-view.component.js";
 import { eventBus } from "@/services/event-bus.service.js";
-import { openMilestonesState } from "@/utils/helpers.js";
+import { openObjectivesState } from "@/utils/helpers.js";
 import { renderPlanList } from "@/views/plans/plan-list.renderer.js";
 
 export const PlansController = {
@@ -29,6 +31,7 @@ export const PlansController = {
     this.renderComponent();
 
     this.initFilterAutocompletes();
+    this.initFormAutocompletes();
     this.refreshUI();
 
     PlansFormController.init(this);
@@ -45,26 +48,35 @@ export const PlansController = {
     });
   },
 
+  // ---------------------------------------------------------------------------
+  // FILTER & SORT AUTOCOMPLETES (Toolbar)
+  // ---------------------------------------------------------------------------
   initFilterAutocompletes() {
-    const currentTab = state.activeTab || "goals";
+    const currentTab = state.activeTab || "plans";
     const dateWrapper = document.getElementById(
       "date-filter-autocomplete-wrapper",
     );
     const sortWrapper = document.getElementById("sort-autocomplete-wrapper");
 
+    // 1. Date / State / Type Filter Autocomplete
     if (dateWrapper) {
       if (this.dateFilterAutocomplete) {
         this.dateFilterAutocomplete.destroy();
       }
 
       const dateOptions =
-        FILTER_OPTIONS_BY_TAB[currentTab] || FILTER_OPTIONS_BY_TAB.goals;
+        FILTER_OPTIONS_BY_TAB[currentTab] || FILTER_OPTIONS_BY_TAB.plans;
+
+      let filterLabel = "Filter";
+      if (currentTab === "plans") filterLabel = "Status";
+      else if (currentTab === "logs") filterLabel = "Period";
+      else if (currentTab === "templates") filterLabel = "Type";
 
       this.dateFilterAutocomplete = new AutocompleteComponent(
         dateWrapper,
         dateOptions,
         {
-          label: currentTab === "templates" ? "Type" : "Filter",
+          label: filterLabel,
           isRow: true,
           placeholder: "Select Filter...",
           itemTitle: "title",
@@ -76,7 +88,19 @@ export const PlansController = {
             GlobalLoaderService.show("Applying filter...");
             setTimeout(() => {
               try {
-                StateManager.setDateFilter(selectedVal);
+                if (currentTab === "plans") {
+                  const ui = StateManager.getActiveUIState();
+                  ui.currentState = selectedVal;
+                  StateManager.notifyActiveTabChanged();
+                } else if (currentTab === "logs") {
+                  const ui = StateManager.getActiveUIState();
+                  ui.dateFilter = selectedVal;
+                  StateManager.notifyActiveTabChanged();
+                } else if (currentTab === "templates") {
+                  const ui = StateManager.getActiveUIState();
+                  ui.templateType = selectedVal;
+                  StateManager.notifyActiveTabChanged();
+                }
                 this.refreshUI();
               } finally {
                 GlobalLoaderService.hide();
@@ -90,13 +114,14 @@ export const PlansController = {
       this.dateFilterAutocomplete.setValue(activeFilter);
     }
 
+    // 2. Sort Autocomplete
     if (sortWrapper) {
       if (this.sortAutocomplete) {
         this.sortAutocomplete.destroy();
       }
 
       const sortOptions =
-        SORT_OPTIONS_BY_TAB[currentTab] || SORT_OPTIONS_BY_TAB.goals;
+        SORT_OPTIONS_BY_TAB[currentTab] || SORT_OPTIONS_BY_TAB.plans;
 
       this.sortAutocomplete = new AutocompleteComponent(
         sortWrapper,
@@ -129,18 +154,110 @@ export const PlansController = {
     }
   },
 
+  // ---------------------------------------------------------------------------
+  // FORM AUTOCOMPLETES (Create Form Dropdowns)
+  // ---------------------------------------------------------------------------
+  initFormAutocompletes() {
+    const lifeAreaWrapper = document.getElementById(
+      "plan-life-area-autocomplete-wrapper",
+    );
+    const statusWrapper = document.getElementById(
+      "plan-status-autocomplete-wrapper",
+    );
+    const moodWrapper = document.getElementById(
+      "log-mood-autocomplete-wrapper",
+    );
+
+    // 1. Life Area / Category Select
+    if (lifeAreaWrapper) {
+      if (this.formLifeAreaAutocomplete) {
+        this.formLifeAreaAutocomplete.destroy();
+      }
+
+      const lifeAreaOptions = StateManager.getLifeAreas();
+
+      this.formLifeAreaAutocomplete = new AutocompleteComponent(
+        lifeAreaWrapper,
+        lifeAreaOptions,
+        {
+          label: "Category",
+          placeholder: "Select Area...",
+          itemTitle: "name",
+          itemValue: "id",
+          itemIcon: "icon",
+          containerClass: "min-h-9! bg-surface-2!",
+          inputClass: "h-6! pb-0! w-full text-xs sm:text-sm",
+          onChange: (selectedVal) => {
+            const hiddenInput = document.getElementById(
+              "create-plan-life-area",
+            );
+            if (hiddenInput) hiddenInput.value = selectedVal;
+          },
+        },
+      );
+    }
+
+    if (statusWrapper) {
+      if (this.formStatusAutocomplete) {
+        this.formStatusAutocomplete.destroy();
+      }
+
+      this.formStatusAutocomplete = new AutocompleteComponent(
+        statusWrapper,
+        PLAN_STATES || [],
+        {
+          label: "Status",
+          placeholder: "Select Status...",
+          itemTitle: "name",
+          itemValue: "id",
+          itemIcon: "icon",
+          containerClass: "min-h-9! bg-surface-2!",
+          inputClass: "h-6! pb-0! w-full text-xs sm:text-sm",
+          onChange: (selectedVal) => {
+            const hiddenInput = document.getElementById("create-plan-status");
+            if (hiddenInput) hiddenInput.value = selectedVal;
+          },
+        },
+      );
+    }
+
+    if (moodWrapper) {
+      if (this.formMoodAutocomplete) {
+        this.formMoodAutocomplete.destroy();
+      }
+
+      this.formMoodAutocomplete = new AutocompleteComponent(
+        moodWrapper,
+        MOOD_OPTIONS || [],
+        {
+          label: "Mood",
+          placeholder: "Select Mood...",
+          itemTitle: "name",
+          itemValue: "id",
+          itemIcon: "icon",
+          containerClass: "min-h-9! bg-surface-2!",
+          inputClass: "h-6! pb-0! w-full text-xs sm:text-sm",
+          onChange: (selectedVal) => {
+            const hiddenInput = document.getElementById("create-log-mood");
+            if (hiddenInput) hiddenInput.value = selectedVal;
+          },
+        },
+      );
+    }
+  },
+
   getSelectedDateFilterForTab(tab) {
-    if (tab === "goals") return state.goalsUI?.dateFilter || "all";
-    if (tab === "daily") return state.dailyLogsUI?.dateFilter || "all";
-    if (tab === "templates") return state.templatesUI?.dateFilter || "all";
+    if (tab === "plans") return state.plansUI?.currentState || "all";
+    if (tab === "logs") return state.logsUI?.dateFilter || "all";
+    if (tab === "templates") return state.templatesUI?.templateType || "all";
     return "all";
   },
 
   getSelectedSortForTab(tab) {
-    if (tab === "goals") return state.goalsUI?.sortBy || "priority";
-    if (tab === "daily") return state.dailyLogsUI?.sortBy || "date_desc";
+    if (tab === "plans") return state.plansUI?.sortBy || "date_desc";
+    if (tab === "logs") return state.logsUI?.sortBy || "date_desc";
     if (tab === "templates") return state.templatesUI?.sortBy || "favorites";
-    return "title";
+    return "date_desc";
   },
 
   renderComponent() {
@@ -168,10 +285,10 @@ export const PlansController = {
     eventBus.subscribe("store:changed", () => {
       this.refreshUI();
     });
-    eventBus.subscribe("store:goals:changed", () => {
+    eventBus.subscribe("store:plans:changed", () => {
       this.refreshUI();
     });
-    eventBus.subscribe("store:daily:changed", () => {
+    eventBus.subscribe("store:logs:changed", () => {
       this.refreshUI();
     });
     eventBus.subscribe("store:templates:changed", () => {
@@ -179,21 +296,21 @@ export const PlansController = {
     });
   },
 
-  getCategoriesForTab(tab) {
-    return StateManager.getCategoriesForTab(tab);
+  getCategoriesForTab() {
+    return StateManager.getLifeAreas();
   },
 
   getSelectedCategoryForTab(tab) {
-    if (tab === "goals") return state.goalsUI?.selectedCategory || "all";
-    if (tab === "daily") return state.dailyLogsUI?.selectedCategory || "all";
+    if (tab === "plans") return state.plansUI?.selectedLifeArea || "all";
+    if (tab === "logs") return state.logsUI?.selectedLifeArea || "all";
     if (tab === "templates")
-      return state.templatesUI?.selectedCategory || "all";
+      return state.templatesUI?.selectedLifeArea || "all";
     return "all";
   },
 
   getSearchQueryForTab(tab) {
-    if (tab === "goals") return state.goalsUI?.searchQuery || "";
-    if (tab === "daily") return state.dailyLogsUI?.searchQuery || "";
+    if (tab === "plans") return state.plansUI?.searchQuery || "";
+    if (tab === "logs") return state.logsUI?.searchQuery || "";
     if (tab === "templates") return state.templatesUI?.searchQuery || "";
     return "";
   },
@@ -202,8 +319,8 @@ export const PlansController = {
     const container = document.getElementById("category-filter-scroll");
     if (!container) return;
 
-    const currentTab = state.activeTab || "goals";
-    const categories = this.getCategoriesForTab(currentTab);
+    const currentTab = state.activeTab || "plans";
+    const categories = this.getCategoriesForTab();
     const activeCategory = this.getSelectedCategoryForTab(currentTab);
 
     const allButtonHtml = `
@@ -221,7 +338,7 @@ export const PlansController = {
 
     const categoriesHtml = categories
       .map((cat) => {
-        const isActive = activeCategory === cat.id;
+        const isActive = String(activeCategory) === String(cat.id);
         const activeClasses = isActive
           ? "bg-brand/80 text-white shadow-brand/10"
           : "bg-surface-2 hover:bg-surface-3 text-secondary hover:text-color";
@@ -254,9 +371,9 @@ export const PlansController = {
     this.renderCategories();
 
     const allPlans = StateManager.getPlans();
-    const filteredPlans = StateManager.getFilteredPlans();
+    const filteredData = StateManager.getFilteredDataForActiveTab();
 
-    renderPlanList(filteredPlans, state.activeTab);
+    renderPlanList(filteredData, state.activeTab);
     AnalyticsController.dispatchRender(allPlans);
     NavigationController.updateNavigationDOM();
     PlansFormController.refreshUI();
@@ -321,7 +438,7 @@ export const PlansController = {
         if (!btn) return;
 
         const selectedTag = btn.dataset.tag;
-        StateManager.setSelectedCategory(selectedTag, state.activeTab);
+        StateManager.setLifeAreaFilter(selectedTag);
         this.refreshUI();
       });
     }
@@ -329,7 +446,7 @@ export const PlansController = {
     // 2. Select Elements fallback
     const sortSelect = document.getElementById("plan-sort-select");
     if (sortSelect) {
-      sortSelect.value = state.goalsUI?.sortBy || "priority";
+      sortSelect.value = state.plansUI?.sortBy || "date_desc";
       sortSelect.addEventListener("change", (e) => {
         GlobalLoaderService.show("Sorting plans...");
         setTimeout(() => {
@@ -345,34 +462,19 @@ export const PlansController = {
 
     const dateFilterSelect = document.getElementById("plan-date-filter-select");
     if (dateFilterSelect) {
-      dateFilterSelect.value = state.goalsUI?.dateFilter || "all";
+      dateFilterSelect.value = state.plansUI?.currentState || "all";
       dateFilterSelect.addEventListener("change", (e) => {
-        GlobalLoaderService.show("Filtering plans by date...");
+        GlobalLoaderService.show("Filtering plans...");
         setTimeout(() => {
           try {
-            StateManager.setDateFilter(e.target.value);
+            const ui = StateManager.getActiveUIState();
+            ui.currentState = e.target.value;
+            StateManager.notifyActiveTabChanged();
             this.refreshUI();
           } finally {
             GlobalLoaderService.hide();
           }
         }, 100);
-      });
-    }
-
-    // 3. Toggle Form Visibility
-    const toggleFormBtn = document.getElementById("btn-toggle-plan-form");
-    const formContainer = document.getElementById("plan-form-container");
-    const formChevron = document.getElementById("form-chevron");
-    if (toggleFormBtn && formContainer && formChevron) {
-      toggleFormBtn.addEventListener("click", () => {
-        const isHidden = formContainer.classList.contains("hidden");
-        if (isHidden) {
-          formContainer.classList.replace("hidden", "flex");
-          formChevron.classList.add("rotate-180");
-        } else {
-          formContainer.classList.replace("flex", "hidden");
-          formChevron.classList.remove("rotate-180");
-        }
       });
     }
 
@@ -447,8 +549,12 @@ export const PlansController = {
     }
 
     // 5. Internal Sub-Tabs Handling
-    const goalsBtn = document.getElementById("tab-goals");
-    const dailyBtn = document.getElementById("tab-daily");
+    const plansBtn =
+      document.getElementById("tab-goals") ||
+      document.getElementById("tab-plans");
+    const logsBtn =
+      document.getElementById("tab-daily") ||
+      document.getElementById("tab-logs");
     const templatesBtn = document.getElementById("tab-templates");
 
     const handleTabClick = (targetTab, loaderText) => {
@@ -465,11 +571,11 @@ export const PlansController = {
       }, 30);
     };
 
-    goalsBtn?.addEventListener("click", () =>
-      handleTabClick("goals", "Switching to Goals Planner..."),
+    plansBtn?.addEventListener("click", () =>
+      handleTabClick("plans", "Switching to Plans..."),
     );
-    dailyBtn?.addEventListener("click", () =>
-      handleTabClick("daily", "Loading Daily Tracker..."),
+    logsBtn?.addEventListener("click", () =>
+      handleTabClick("logs", "Loading Logs Tracker..."),
     );
     templatesBtn?.addEventListener("click", () =>
       handleTabClick("templates", "Loading Routine Templates..."),
@@ -490,7 +596,7 @@ export const PlansController = {
           try {
             StateManager.setView(v);
 
-            openMilestonesState.expandedGoalIds.clear();
+            openObjectivesState.clear();
 
             navButtons.forEach((nav) => {
               const dEl = document.getElementById(`nav-${nav}`);
@@ -637,7 +743,7 @@ export const PlansController = {
   handleTabSwitch(tab) {
     StateManager.setTab(tab);
 
-    openMilestonesState.expandedGoalIds.clear();
+    openObjectivesState.clear();
 
     const searchInput = document.getElementById("search-plans");
     if (searchInput) {
@@ -666,8 +772,8 @@ export const PlansController = {
     const formToggleTitle = document.getElementById("form-toggle-title");
     if (formToggleTitle) {
       const titles = {
-        goals: "Create New Goal",
-        daily: "Create New Daily Log",
+        plans: "Create New Plan",
+        logs: "Create New Log",
         templates: "Create New Template",
       };
       formToggleTitle.textContent = titles[tab] || "Create New Item";
@@ -692,39 +798,47 @@ export const PlansController = {
   },
 
   setupTabIndicatorObserver() {
-    const goalsBtn = document.getElementById("tab-goals");
-    const dailyBtn = document.getElementById("tab-daily");
+    const plansBtn =
+      document.getElementById("tab-goals") ||
+      document.getElementById("tab-plans");
+    const logsBtn =
+      document.getElementById("tab-daily") ||
+      document.getElementById("tab-logs");
     const templatesBtn = document.getElementById("tab-templates");
 
-    if (!goalsBtn || !dailyBtn || !templatesBtn) return;
+    if (!plansBtn || !logsBtn || !templatesBtn) return;
 
     if (!window.planTabResizeObserver) {
       window.planTabResizeObserver = new ResizeObserver(() => {
         requestAnimationFrame(() => {
-          this.updateTabStyles(state.activeTab || "goals");
+          this.updateTabStyles(state.activeTab || "plans");
         });
       });
     }
 
     window.planTabResizeObserver.disconnect();
-    window.planTabResizeObserver.observe(goalsBtn);
-    window.planTabResizeObserver.observe(dailyBtn);
+    window.planTabResizeObserver.observe(plansBtn);
+    window.planTabResizeObserver.observe(logsBtn);
     window.planTabResizeObserver.observe(templatesBtn);
   },
 
   updateTabStyles(tab) {
     const indicator = document.getElementById("tab-indicator");
-    const goalsBtn = document.getElementById("tab-goals");
-    const dailyBtn = document.getElementById("tab-daily");
+    const plansBtn =
+      document.getElementById("tab-goals") ||
+      document.getElementById("tab-plans");
+    const logsBtn =
+      document.getElementById("tab-daily") ||
+      document.getElementById("tab-logs");
     const templatesBtn = document.getElementById("tab-templates");
 
-    if (!indicator || !goalsBtn || !dailyBtn || !templatesBtn) return;
+    if (!indicator || !plansBtn || !logsBtn || !templatesBtn) return;
 
-    const buttons = [goalsBtn, dailyBtn, templatesBtn];
+    const buttons = [plansBtn, logsBtn, templatesBtn];
     const activeIndex =
       {
-        goals: 0,
-        daily: 1,
+        plans: 0,
+        logs: 1,
         templates: 2,
       }[tab] ?? 0;
     const targetBtn = buttons[activeIndex];

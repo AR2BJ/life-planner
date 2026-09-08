@@ -1,10 +1,4 @@
-export const GOAL_CATEGORIES = [
-  {
-    id: "general",
-    name: "General",
-    icon: "fa-solid fa-folder text-yellow-500/80",
-    class: "bg-yellow-500/10 text-yellow-500/80 border-yellow-500/20",
-  },
+export const LIFE_AREAS = [
   {
     id: "health",
     name: "Health & Fitness",
@@ -19,7 +13,7 @@ export const GOAL_CATEGORIES = [
   },
   {
     id: "personal",
-    name: "Personal Development",
+    name: "Personal Growth",
     icon: "fa-solid fa-user text-lime-500/80",
     class: "bg-lime-500/10 text-lime-500/80 border-lime-500/20",
   },
@@ -30,335 +24,151 @@ export const GOAL_CATEGORIES = [
     class: "bg-violet-500/10 text-violet-500/80 border-violet-500/20",
   },
   {
-    id: "education",
-    name: "Education & Learning",
-    icon: "fa-solid fa-graduation-cap text-pink-500/80",
-    class: "bg-pink-500/10 text-pink-500/80 border-pink-500/20",
-  },
-  {
     id: "lifestyle",
     name: "Lifestyle & Social",
-    icon: "fa-solid fa-masks-theater text-red-500/80",
-    class: "bg-red-500/10 text-red-500/80 border-red-500/20",
+    icon: "fa-solid fa-masks-theater text-pink-500/80",
+    class: "bg-pink-500/10 text-pink-500/80 border-pink-500/20",
   },
 ];
 
-export const DAILY_LOG_CATEGORIES = [
+export const PLAN_STATES = [
   {
-    id: "journal",
-    name: "Journal Entry",
-    icon: "fa-solid fa-book-user text-yellow-500/80",
-    class: "bg-yellow-500/10 text-yellow-500/80 border-yellow-500/20",
-  },
-  {
-    id: "reflection",
-    name: "Daily Reflection",
-    icon: "fa-solid fa-brain text-emerald-500/80",
+    id: "active",
+    name: "Active",
+    icon: "fa-solid fa-play text-emerald-500/80",
     class: "bg-emerald-500/10 text-emerald-500/80 border-emerald-500/20",
   },
   {
-    id: "activity_log",
-    name: "Activity Log",
-    icon: "fa-solid fa-list-check text-cyan-500/80",
-    class: "bg-cyan-500/10 text-cyan-500/80 border-cyan-500/20",
+    id: "paused",
+    name: "Paused",
+    icon: "fa-solid fa-pause text-yellow-500/80",
+    class: "bg-yellow-500/10 text-yellow-500/80 border-yellow-500/20",
   },
   {
-    id: "mood",
-    name: "Mood & Energy",
-    icon: "fa-solid fa-face-smile text-lime-500/80",
+    id: "completed",
+    name: "Completed",
+    icon: "fa-solid fa-check-double text-cyan-500/80",
+    class: "bg-cyan-500/10 text-cyan-500/80 border-cyan-500/20",
+  },
+];
+
+export const ENERGY_LEVEL_OPTIONS = [
+  {
+    value: 1,
+    label: "1 - Low Energy",
+    icon: "fa-solid fa-battery-empty text-red-500/80",
+    class: "bg-red-500/10 text-red-500/80 border-red-500/20",
+  },
+  {
+    value: 2,
+    label: "2 - Moderate",
+    icon: "fa-solid fa-battery-half text-orange-500/80",
+    class: "bg-orange-500/10 text-orange-500/80 border-orange-500/20",
+  },
+  {
+    value: 3,
+    label: "3 - Normal",
+    icon: "fa-solid fa-battery-half text-yellow-500/80",
+    class: "bg-yellow-500/10 text-yellow-500/80 border-yellow-500/20",
+  },
+  {
+    value: 4,
+    label: "4 - High Energy",
+    icon: "fa-solid fa-battery-three-quarters text-lime-500/80",
     class: "bg-lime-500/10 text-lime-500/80 border-lime-500/20",
   },
   {
-    id: "gratitude",
-    name: "Gratitude & Wins",
-    icon: "fa-solid fa-sun text-violet-500/80",
-    class: "bg-violet-500/10 text-violet-500/80 border-violet-500/20",
-  },
-  {
-    id: "notes",
-    name: "Quick Notes",
-    icon: "fa-solid fa-note-sticky text-pink-500/80",
-    class: "bg-pink-500/10 text-pink-500/80 border-pink-500/20",
-  },
-  {
-    id: "review",
-    name: "Nightly Review",
-    icon: "fa-solid fa-moon text-red-500/80",
-    class: "bg-red-500/10 text-red-500/80 border-red-500/20",
-  },
-];
-
-export const TEMPLATE_CATEGORIES = [
-  {
-    id: "workflow",
-    name: "Workflows",
-    icon: "fa-solid fa-diagram-project text-yellow-500/80",
-    class: "bg-yellow-500/10 text-yellow-500/80 border-yellow-500/20",
-  },
-  {
-    id: "routine",
-    name: "Daily Routines",
-    icon: "fa-solid fa-repeat text-emerald-500/80",
+    value: 5,
+    label: "5 - Peak Performance",
+    icon: "fa-solid fa-battery-full text-emerald-500/80",
     class: "bg-emerald-500/10 text-emerald-500/80 border-emerald-500/20",
   },
-  {
-    id: "planning",
-    name: "Planning Frameworks",
-    icon: "fa-solid fa-sliders text-cyan-500/80",
-    class: "bg-cyan-500/10 text-cyan-500/80 border-cyan-500/20",
-  },
-  {
-    id: "project_structure",
-    name: "Project Structure",
-    icon: "fa-solid fa-sitemap text-lime-500/80",
-    class: "bg-lime-500/10 text-lime-500/80 border-lime-500/20",
-  },
-  {
-    id: "review_checklist",
-    name: "Review Checklists",
-    icon: "fa-solid fa-clipboard-check text-violet-500/80",
-    class: "bg-violet-500/10 text-violet-500/80 border-violet-500/20",
-  },
-  {
-    id: "event_blueprint",
-    name: "Event Blueprints",
-    icon: "fa-solid fa-calendar-plus text-pink-500/80",
-    class: "bg-pink-500/10 text-pink-500/80 border-pink-500/20",
-  },
-  {
-    id: "meeting_agenda",
-    name: "Meeting Agendas",
-    icon: "fa-solid fa-comments text-red-500/80",
-    class: "bg-red-500/10 text-red-500/80 border-red-500/20",
-  },
 ];
 
-export const TIMEFRAME_OPTIONS = [
+export const MOOD_OPTIONS = [
   {
-    id: "yearly",
-    name: "Yearly",
-    icon: "fa-solid fa-calendar-days text-violet-500/80",
-    class: "bg-violet-500/10 text-violet-500/80 border-violet-500/20",
-  },
-  {
-    id: "monthly",
-    name: "Monthly",
-    icon: "fa-solid fa-calendar-range text-pink-500/80",
-    class: "bg-pink-500/10 text-pink-500/80 border-pink-500/20",
-  },
-  {
-    id: "weekly",
-    name: "Weekly",
-    icon: "fa-solid fa-calendar-week text-blue-500/80",
-    class: "bg-blue-500/10 text-blue-500/80 border-blue-500/20",
-  },
-  {
-    id: "short_term",
-    name: "Short Term",
-    icon: "fa-solid fa-bolt text-yellow-500/80",
-    class: "bg-yellow-500/10 text-yellow-500/80 border-yellow-500/20",
-  },
-  {
-    id: "medium_term",
-    name: "Medium Term",
-    icon: "fa-solid fa-clock text-emerald-500/80",
-    class: "bg-emerald-500/10 text-emerald-500/80 border-emerald-500/20",
-  },
-  {
-    id: "long_term",
-    name: "Long Term",
-    icon: "fa-solid fa-hourglass-end text-red-500/80",
+    value: "terrible",
+    label: "Terrible",
+    icon: "fa-solid fa-face-frown-open text-red-500/80",
     class: "bg-red-500/10 text-red-500/80 border-red-500/20",
   },
   {
-    id: "lifetime",
-    name: "Lifetime / Milestone",
-    icon: "fa-solid fa-infinity text-cyan-500/80",
-    class: "bg-cyan-500/10 text-cyan-500/80 border-cyan-500/20",
-  },
-];
-
-export const GOAL_PRIORITY_OPTIONS = [
-  {
-    id: "low",
-    name: "Low Priority",
-    icon: "fa-solid fa-flag text-lime-400",
+    value: "bad",
+    label: "Bad",
+    icon: "fa-solid fa-face-frown text-orange-500/80",
+    class: "bg-orange-500/10 text-orange-500/80 border-orange-500/20",
   },
   {
-    id: "medium",
-    name: "Medium Priority",
-    icon: "fa-solid fa-flag text-yellow-400",
-  },
-  {
-    id: "high",
-    name: "High Priority",
-    icon: "fa-solid fa-flag text-red-400",
-  },
-];
-
-export const DAILY_MOOD_OPTIONS = [
-  {
-    id: "great",
-    name: "Great",
-    icon: "fa-solid fa-face-smile-beam text-emerald-500/80",
-  },
-  {
-    id: "good",
-    name: "Good",
-    icon: "fa-solid fa-face-smile text-cyan-500/80",
-  },
-  {
-    id: "neutral",
-    name: "Neutral",
+    value: "neutral",
+    label: "Neutral",
     icon: "fa-solid fa-face-meh text-yellow-500/80",
+    class: "bg-yellow-500/10 text-yellow-500/80 border-yellow-500/20",
   },
   {
-    id: "bad",
-    name: "Bad",
-    icon: "fa-solid fa-face-frown text-red-500/80",
-  },
-];
-
-export const GOAL_UNIT_OPTIONS = [
-  {
-    id: "%",
-    name: "Percentage (%)",
-    icon: "fa-solid fa-percent text-blue-500/80",
-    max: 100,
-    defaultValue: 100,
+    value: "good",
+    label: "Good",
+    icon: "fa-solid fa-face-smile text-cyan-500/80",
+    class: "bg-cyan-500/10 text-cyan-500/80 border-cyan-500/20",
   },
   {
-    id: "hrs",
-    name: "Hours (hrs)",
-    icon: "fa-solid fa-clock text-yellow-500/80",
-    max: 10000,
-    defaultValue: 50,
-  },
-  {
-    id: "km",
-    name: "Kilometers (km)",
-    icon: "fa-solid fa-route text-emerald-500/80",
-    max: 50000,
-    defaultValue: 10,
-  },
-  {
-    id: "books",
-    name: "Books",
-    icon: "fa-solid fa-book text-fuchsia-500/80",
-    max: 1000,
-    defaultValue: 12,
-  },
-  {
-    id: "sessions",
-    name: "Sessions / Milestones",
-    icon: "fa-solid fa-flag-checkered text-red-500/80",
-    max: 50000,
-    defaultValue: 100,
-  },
-  {
-    id: "money",
-    name: "USD / RIAL ($ / ﷼)",
-    icon: "fa-solid fa-money-bill text-cyan-500/80",
-    max: 1000000000000,
-    defaultValue: 1000,
-  },
-  {
-    id: "count",
-    name: "Count / Units",
-    icon: "fa-solid fa-hashtag text-pink-500/80",
-    max: 1000000,
-    defaultValue: 10,
+    value: "excellent",
+    label: "Excellent",
+    icon: "fa-solid fa-face-laugh-beam text-emerald-500/80",
+    class: "bg-emerald-500/10 text-emerald-500/80 border-emerald-500/20",
   },
 ];
 
 export const FILTER_OPTIONS_BY_TAB = {
-  goals: [
+  plans: [
     {
       value: "all",
-      title: "All Timeframes & Dates",
-      icon: "fa-regular fa-calendar text-cyan-400",
+      title: "All Plans",
+      icon: "fa-regular fa-layer-group text-cyan-400",
+      class: "bg-cyan-500/10 text-cyan-400 border-cyan-500/20",
     },
     {
-      value: "today",
-      title: "Due Today",
-      icon: "fa-regular fa-calendar-day text-orange-400",
+      value: "active",
+      title: "Active Plans",
+      icon: "fa-regular fa-circle-play text-emerald-400",
+      class: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+    },
+    {
+      value: "paused",
+      title: "Paused Plans",
+      icon: "fa-regular fa-circle-pause text-yellow-400",
+      class: "bg-yellow-500/10 text-yellow-400 border-yellow-500/20",
     },
     {
       value: "completed",
-      title: "Completed / Done Goals",
-      icon: "fa-regular fa-circle-check text-emerald-400",
-    },
-    {
-      value: "overdue",
-      title: "Overdue Goals",
-      icon: "fa-regular fa-clock text-red-400",
-    },
-    {
-      value: "yearly",
-      title: "Yearly Goals",
-      icon: "fa-regular fa-calendar-days text-violet-400",
-    },
-    {
-      value: "monthly",
-      title: "Monthly Goals",
-      icon: "fa-regular fa-calendar-range text-pink-400",
-    },
-    {
-      value: "weekly",
-      title: "Weekly Goals",
-      icon: "fa-regular fa-calendar-week text-blue-400",
-    },
-    {
-      value: "short_term",
-      title: "Short Term",
-      icon: "fa-regular fa-bolt text-yellow-400",
-    },
-    {
-      value: "medium_term",
-      title: "Medium Term",
-      icon: "fa-regular fa-clock text-emerald-400",
-    },
-    {
-      value: "long_term",
-      title: "Long Term",
-      icon: "fa-regular fa-hourglass-end text-fuchsia-400",
-    },
-    {
-      value: "lifetime",
-      title: "Lifetime / Milestone",
-      icon: "fa-regular fa-infinity text-teal-400",
+      title: "Completed Plans",
+      icon: "fa-regular fa-circle-check text-blue-400",
+      class: "bg-blue-500/10 text-blue-400 border-blue-500/20",
     },
   ],
-  daily: [
+  logs: [
     {
       value: "all",
-      title: "All Logs",
+      title: "All Time Logs",
       icon: "fa-regular fa-calendar text-emerald-400",
+      class: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
     },
     {
       value: "today",
       title: "Today",
       icon: "fa-regular fa-calendar-day text-yellow-400",
-    },
-    {
-      value: "yesterday",
-      title: "Yesterday",
-      icon: "fa-regular fa-calendar-minus text-cyan-400",
+      class: "bg-yellow-500/10 text-yellow-400 border-yellow-500/20",
     },
     {
       value: "this_week",
       title: "This Week",
       icon: "fa-regular fa-calendar-week text-pink-400",
+      class: "bg-pink-500/10 text-pink-400 border-pink-500/20",
     },
     {
       value: "this_month",
       title: "This Month",
       icon: "fa-regular fa-calendar-range text-violet-400",
-    },
-    {
-      value: "this_year",
-      title: "This Year",
-      icon: "fa-regular fa-calendar-days text-fuchsia-400",
+      class: "bg-violet-500/10 text-violet-400 border-violet-500/20",
     },
   ],
   templates: [
@@ -366,73 +176,50 @@ export const FILTER_OPTIONS_BY_TAB = {
       value: "all",
       title: "All Templates",
       icon: "fa-regular fa-layer-group text-emerald-400",
+      class: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
     },
     {
       value: "favorites",
       title: "Favorites Only",
       icon: "fa-regular fa-star text-yellow-400",
+      class: "bg-yellow-500/10 text-yellow-400 border-yellow-500/20",
     },
   ],
 };
 
 export const SORT_OPTIONS_BY_TAB = {
-  goals: [
-    {
-      value: "priority",
-      title: "Priority (High to Low)",
-      icon: "fa-regular fa-arrow-down-short-wide text-yellow-400",
-    },
-    {
-      value: "progress_desc",
-      title: "Progress (High to Low)",
-      icon: "fa-regular fa-chart-line text-emerald-400",
-    },
-    {
-      value: "progress_asc",
-      title: "Progress (Low to High)",
-      icon: "fa-regular fa-chart-line-down text-cyan-400",
-    },
-    {
-      value: "dueDate",
-      title: "Due Date",
-      icon: "fa-regular fa-calendar text-blue-400",
-    },
-    {
-      value: "completedAt",
-      title: "Completion Date",
-      icon: "fa-regular fa-calendar-check text-emerald-400",
-    },
-    {
-      value: "createdAt",
-      title: "Date Created",
-      icon: "fa-regular fa-clock text-red-400",
-    },
-    {
-      value: "title",
-      title: "Title (A-Z)",
-      icon: "fa-regular fa-arrow-down-a-z text-violet-400",
-    },
-  ],
-  daily: [
+  plans: [
     {
       value: "date_desc",
-      title: "Date (Newest First)",
+      title: "Newest First",
       icon: "fa-regular fa-calendar-arrow-down text-yellow-400",
+      class: "bg-yellow-500/10 text-yellow-400 border-yellow-500/20",
     },
     {
       value: "date_asc",
-      title: "Date (Oldest First)",
+      title: "Oldest First",
       icon: "fa-regular fa-calendar-arrow-up text-violet-400",
-    },
-    {
-      value: "createdAt",
-      title: "Date Created",
-      icon: "fa-regular fa-clock text-red-400",
+      class: "bg-violet-500/10 text-violet-400 border-violet-500/20",
     },
     {
       value: "title",
       title: "Title (A-Z)",
       icon: "fa-regular fa-arrow-down-a-z text-emerald-400",
+      class: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+    },
+  ],
+  logs: [
+    {
+      value: "date_desc",
+      title: "Date (Newest First)",
+      icon: "fa-regular fa-calendar-arrow-down text-yellow-400",
+      class: "bg-yellow-500/10 text-yellow-400 border-yellow-500/20",
+    },
+    {
+      value: "date_asc",
+      title: "Date (Oldest First)",
+      icon: "fa-regular fa-calendar-arrow-up text-violet-400",
+      class: "bg-violet-500/10 text-violet-400 border-violet-500/20",
     },
   ],
   templates: [
@@ -440,16 +227,19 @@ export const SORT_OPTIONS_BY_TAB = {
       value: "favorites",
       title: "Favorites First",
       icon: "fa-regular fa-star text-yellow-400",
+      class: "bg-yellow-500/10 text-yellow-400 border-yellow-500/20",
     },
     {
       value: "title",
       title: "Title (A-Z)",
       icon: "fa-regular fa-arrow-down-a-z text-emerald-400",
+      class: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
     },
     {
-      value: "createdAt",
+      value: "date_desc",
       title: "Date Created",
       icon: "fa-regular fa-clock text-red-400",
+      class: "bg-red-500/10 text-red-400 border-red-500/20",
     },
   ],
 };

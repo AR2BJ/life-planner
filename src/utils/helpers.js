@@ -1,13 +1,10 @@
-import { GOAL_UNIT_OPTIONS } from "./constants/options-value.constants";
-
-export const openMilestonesState = {
-  milestonesMemory: new Map(),
-
-  expandedGoalIds: new Set(),
+export const openObjectivesState = {
+  objectivesMemory: new Map(),
+  expandedPlanIds: new Set(),
 
   clear() {
-    this.expandedTaskIds.clear();
-    this.subtasksMemory.clear();
+    this.objectivesMemory.clear();
+    this.expandedPlanIds.clear();
   },
 };
 
@@ -62,42 +59,4 @@ export function formatNumberWithCommas(val) {
   const cleanNum = val.toString().replace(/\D/g, "");
   if (!cleanNum) return "";
   return parseInt(cleanNum, 10).toLocaleString("en-US");
-}
-
-export function getUnitConfig(unitId) {
-  const found = GOAL_UNIT_OPTIONS.find((u) => u.id === unitId);
-  return found || { max: 100000, defaultValue: 100 };
-}
-
-export function calculateGoalProgress(goal = {}) {
-  const target = Math.max(1, Number(goal.targetValue) || 100);
-  const current = Math.max(0, Number(goal.currentValue) || 0);
-
-  const milestones = Array.isArray(goal.milestones) ? goal.milestones : [];
-  const hasMilestones = milestones.length > 0;
-
-  const isNumericUnit = goal.unit && goal.unit !== "%";
-
-  let progressPercent = 0;
-
-  if (hasMilestones && !isNumericUnit) {
-    const completedCount = milestones.filter((m) =>
-      Boolean(m.completed),
-    ).length;
-    progressPercent = Math.round((completedCount / milestones.length) * 100);
-  } else {
-    progressPercent = Math.round((current / target) * 100);
-  }
-
-  progressPercent = Math.min(100, Math.max(0, progressPercent));
-
-  return {
-    current,
-    target,
-    progressPercent,
-    isNumericUnit,
-    isCompleted: progressPercent === 100,
-    isInProgress: progressPercent > 0 && progressPercent < 100,
-    hasMilestones,
-  };
 }
