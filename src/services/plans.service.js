@@ -26,6 +26,10 @@ export const PlanService = {
         ? planData.objectives.map((obj) => ({
             id: String(obj.id || generateId()),
             title: (obj.title || "").trim(),
+            type: String(obj.type || "boolean"), // "boolean" | "numeric" | "milestone"
+            targetValue: Number(obj.targetValue) || 1,
+            currentValue: Number(obj.currentValue) || 0,
+            unit: String(obj.unit || "step"),
             completed: Boolean(obj.completed),
           }))
         : [],
@@ -63,6 +67,10 @@ export const PlanService = {
           ? updatedFields.objectives.map((obj) => ({
               id: String(obj.id || generateId()),
               title: (obj.title || "").trim(),
+              type: String(obj.type || "boolean"),
+              targetValue: Number(obj.targetValue) || 1,
+              currentValue: Number(obj.currentValue) || 0,
+              unit: String(obj.unit || "step"),
               completed: Boolean(obj.completed),
             }))
           : p.objectives,
@@ -75,39 +83,47 @@ export const PlanService = {
     return currentPlans.map((p) => {
       if (String(p.id) !== String(planId)) return p;
 
-      let previousState = p._previousState || p.state || "active";
-
       const updatedObjectives = (p.objectives || []).map((obj) => {
         if (String(obj.id) === String(objectiveId)) {
-          return { ...obj, completed: !obj.completed };
+          const isCompleted = !obj.completed;
+          const target = Number(obj.targetValue) || 1;
+          return {
+            ...obj,
+            completed: isCompleted,
+            currentValue: isCompleted ? target : 0,
+          };
         }
         return obj;
       });
 
-      const allCompleted =
-        updatedObjectives.length > 0 &&
-        updatedObjectives.every((obj) => obj.completed);
-      let newUIControlState = p.state;
+      return {
+        ...p,
+        objectives: updatedObjectives,
+        updatedAt: todayISO(),
+      };
+    });
+  },
 
-      if (allCompleted) {
-        if (p.state !== "completed") {
-          previousState = p.state;
+  updateObjectiveProgress(currentPlans = [], planId, objectiveId, newValue) {
+    return currentPlans.map((p) => {
+      if (String(p.id) !== String(planId)) return p;
+
+      const updatedObjectives = (p.objectives || []).map((obj) => {
+        if (String(obj.id) === String(objectiveId)) {
+          const val = Math.max(0, Number(newValue) || 0);
+          const target = Number(obj.targetValue) || 1;
+          return {
+            ...obj,
+            currentValue: val,
+            completed: val >= target,
+          };
         }
-        newUIControlState = "completed";
-      } else {
-        if (p.state === "completed") {
-          newUIControlState =
-            previousState && previousState !== "completed"
-              ? previousState
-              : "active";
-        }
-      }
+        return obj;
+      });
 
       return {
         ...p,
         objectives: updatedObjectives,
-        state: newUIControlState,
-        _previousState: previousState,
         updatedAt: todayISO(),
       };
     });

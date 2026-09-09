@@ -36,6 +36,22 @@ export const PlansActionController = {
     });
   },
 
+  handleObjectiveProgressChange(planId, objectiveId, newValue) {
+    const plans = StateManager.getPlans() || [];
+    const targetPlan = plans.find((p) => String(p.id) === String(planId));
+    if (!targetPlan) return;
+
+    const updatedPlans = PlanService.updateObjectiveProgress(
+      plans,
+      planId,
+      objectiveId,
+      newValue,
+    );
+
+    StateManager.save({ plans: updatedPlans });
+    this.mainController.refreshUI();
+  },
+
   handleToggleTemplateFavorite(templateId) {
     const templates = StateManager.getTemplates() || [];
     const targetTemplate = templates.find(
@@ -63,6 +79,18 @@ export const PlansActionController = {
   bindDynamicEvents() {
     const listContainer = document.getElementById("plan-list");
     if (!listContainer) return;
+
+    listContainer.addEventListener("change", (e) => {
+      const target = e.target;
+      if (target.classList.contains("objective-progress-input")) {
+        const planId = target.dataset.planId;
+        const objectiveId = target.dataset.objectiveId;
+        if (planId && objectiveId) {
+          openObjectivesState.expandedPlanIds.add(planId);
+          this.handleObjectiveProgressChange(planId, objectiveId, target.value);
+        }
+      }
+    });
 
     listContainer.addEventListener("click", (e) => {
       const target = e.target;
@@ -106,7 +134,7 @@ export const PlansActionController = {
         return;
       }
 
-      // 3. TOGGLE TEMPLATE FAVORITE
+      // C. TOGGLE TEMPLATE FAVORITE
       const favoriteBtn = target.closest(".favorite-btn");
       if (favoriteBtn) {
         e.stopPropagation();
@@ -117,30 +145,45 @@ export const PlansActionController = {
         return;
       }
 
-      // 4. EDIT MODAL TRIGGER
+      // D. EDIT MODAL TRIGGER
       const editBtn = target.closest(".edit-btn");
       if (editBtn) {
+        if (
+          editBtn.dataset.action === "edit-objective" ||
+          editBtn.dataset.action === "edit-metric"
+        ) {
+          return;
+        }
+
         e.stopPropagation();
         const id = editBtn.dataset.id;
-
-        this.resetEditModalAccordion();
+        if (!id) return;
 
         setPendingEditId(id);
         this.mainController.toggleModal("edit-modal", true);
         return;
       }
 
-      // 5. DELETE MODAL TRIGGER
+      // E. DELETE MODAL TRIGGER
       const deleteBtn = target.closest(".delete-btn");
       if (deleteBtn) {
+        if (
+          deleteBtn.dataset.action === "delete-objective" ||
+          deleteBtn.dataset.action === "delete-metric"
+        ) {
+          return;
+        }
+
         e.stopPropagation();
         const id = deleteBtn.dataset.id;
+        if (!id) return;
+
         setPendingDeleteId(id);
         this.mainController.toggleModal("delete-modal", true);
         return;
       }
 
-      // 6. DIRECT DELETE ITEM HANDLER
+      // F. DIRECT DELETE ITEM HANDLER
       const directDeleteBtn = target.closest(".direct-delete-btn");
       if (directDeleteBtn) {
         e.stopPropagation();
@@ -171,30 +214,6 @@ export const PlansActionController = {
           icon: "fa-trash-can",
           duration: 4000,
         });
-      }
-    });
-  },
-
-  resetEditModalAccordion() {
-    const accordionGroup = document.getElementById("edit-accordion-group");
-    if (!accordionGroup) return;
-
-    const visibleItems = Array.from(
-      accordionGroup.querySelectorAll(".accordion-item"),
-    ).filter((item) => !item.classList.contains("hidden"));
-
-    visibleItems.forEach((item, index) => {
-      const content = item.querySelector(".accordion-content");
-      const icon = item.querySelector(".accordion-icon");
-
-      if (index === 0) {
-        content?.classList.remove("hidden");
-        content?.classList.add("flex");
-        icon?.classList.add("rotate-180");
-      } else {
-        content?.classList.add("hidden");
-        content?.classList.remove("flex");
-        icon?.classList.remove("rotate-180");
       }
     });
   },

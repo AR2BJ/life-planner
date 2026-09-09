@@ -15,46 +15,59 @@ export const EditModalsComponent = {
   },
 
   renderObjectiveItem(obj) {
+    const type = obj.type || "boolean";
+    const target = obj.targetValue || 1;
+    const unit = obj.unit || "";
+
     return `
       <div
         data-objective-id="${obj.id}"
-        class="subtask-item flex items-center justify-between gap-3 rounded-xl border border-border/70 bg-surface-2 p-1 shadow-sm transition"
+        class="subtask-item flex items-center justify-between gap-3 rounded-xl border border-border/70 bg-surface-2 p-2.5 shadow-xs transition hover:border-border"
       >
-        <div class="flex items-center gap-3 flex-1 min-w-0">
-          <input
-            type="text"
-            data-action="edit-objective-text"
-            value="${(obj.title ?? "").replace(/"/g, "&quot;")}"
-            class="subtask-title-input text-sm text-color mx-3 bg-transparent outline-none w-full border-b min-h-7 py-1 ${
-              obj.isEditing ? "border-brand/50" : "border-transparent"
-            } ${obj.completed ? "line-through text-muted" : ""}"
-            ${obj.isEditing ? "" : "readonly"}
-          />
+        <div class="flex items-center flex-1 min-w-0">
+          <span class="ps-2 text-xs lg:text-sm font-medium text-color truncate">
+            ${(obj.title ?? "").replace(/"/g, "&quot;")}
+          </span>
         </div>
 
         <div class="flex items-center gap-1 shrink-0">
+          <span
+            class="h-7 sm:h-9 text-xs font-bold uppercase tracking-wider px-4 rounded-xl bg-brand/10 border border-brand/20 text-brand flex justify-center items-center gap-1.5"
+          >
+            ${type}
+          </span>
+
+          ${
+            type === "numeric"
+              ? `
+            <div class="h-7 sm:h-9 flex items-center gap-1.5 px-4 rounded-xl bg-surface border border-border/80 text-sm font-semibold text-color">
+              <span class="text-brand font-bold">${target}</span>
+              ${unit ? `<span class="text-secondary">${unit}</span>` : ""}
+            </div>
+          `
+              : ""
+          }
+
           <button
             type="button"
             data-action="edit-objective"
-            class="edit-btn flex h-8 w-8 sm:w-10 sm:h-10 items-center justify-center rounded-lg sm:rounded-xl border border-border bg-surface hover:bg-blue-600/10 hover:cursor-pointer transition"
-            title="${obj.isEditing ? "Save changes" : "Edit item"}"
+            data-objective-id="${obj.id}"
+            class="edit-btn h-7 w-7 sm:w-9 sm:h-9 items-center justify-center rounded-lg sm:rounded-xl border border-border bg-surface hover:bg-blue-600/10 hover:cursor-pointer transition"
+            title="Edit Objective"
           >
             <i
-              class="fa-regular ${
-                obj.isEditing ? "fa-floppy-disk" : "fa-pen-to-square"
-              } text-blue-500/80 text-base"
+              class="fa-regular fa-pen-to-square text-blue-500/80 text-sm"
             ></i>
           </button>
 
           <button
             type="button"
             data-action="delete-objective"
-            class="delete-btn flex h-8 w-8 sm:w-10 sm:h-10 items-center justify-center rounded-lg sm:rounded-xl border border-border bg-surface hover:bg-red-600/10 hover:cursor-pointer transition"
-            title="Delete item"
+            data-objective-id="${obj.id}"
+            class="delete-btn flex h-7 w-7 sm:w-9 sm:h-9 items-center justify-center rounded-lg sm:rounded-xl border border-border bg-surface hover:bg-red-600/10 hover:cursor-pointer transition"
+            title="Delete Objective"
           >
-            <i
-              class="fa-regular fa-trash-can text-red-500/80 text-base"
-            ></i>
+            <i class="fa-regular fa-trash-can text-red-500/80 text-sm"></i>
           </button>
         </div>
       </div>
@@ -171,11 +184,11 @@ export const EditModalsComponent = {
                   </div>
                 </div>
                 <i
-                  class="accordion-icon fa-regular fa-chevron-down text-secondary text-xs lg:text-sm transition-transform duration-200 rotate-180"
+                  class="accordion-icon fa-regular fa-chevron-up text-secondary text-xs lg:text-sm transition-transform duration-200"
                 ></i>
               </button>
 
-              <div class="accordion-content p-3.5 lg:p-4 flex flex-col gap-3.5">
+              <div class="accordion-content p-3.5 lg:p-4">
                 <div
                   id="edit-title-container"
                   class="edit-tab-field flex flex-col flex-1 min-w-0"
@@ -197,7 +210,7 @@ export const EditModalsComponent = {
 
                 <div
                   id="edit-plan-lifearea-container"
-                  class="edit-tab-field flex flex-col w-full"
+                  class="edit-tab-field flex flex-col w-full mt-3.5"
                   data-tab="plans"
                 >
                   <div
@@ -208,7 +221,7 @@ export const EditModalsComponent = {
 
                 <div
                   id="edit-template-lifearea-wrapper"
-                  class="edit-tab-field hidden flex-col sm:flex-row items-stretch sm:items-end gap-3.5 w-full"
+                  class="edit-tab-field hidden flex-col sm:flex-row items-stretch sm:items-end gap-3.5 w-full mt-3.5"
                   data-tab="templates"
                 >
                   <div
@@ -246,7 +259,7 @@ export const EditModalsComponent = {
 
                 <div
                   id="edit-desc-container"
-                  class="edit-tab-field flex flex-col w-full"
+                  class="edit-tab-field flex flex-col w-full mt-3.5"
                   data-tab="plans,templates,logs"
                 >
                   <label
@@ -294,9 +307,7 @@ export const EditModalsComponent = {
                 ></i>
               </button>
 
-              <div
-                class="accordion-content hidden p-3.5 lg:p-4 flex-col gap-3.5"
-              >
+              <div class="accordion-content hidden p-3.5 lg:p-4">
                 <div class="w-full">
                   <div
                     id="edit-plan-state-autocomplete"
@@ -304,7 +315,7 @@ export const EditModalsComponent = {
                   ></div>
                 </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 w-full">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 w-full mt-3.5">
                   <div
                     id="edit-plan-startdate-container"
                     class="w-full"
@@ -357,30 +368,61 @@ export const EditModalsComponent = {
                 </div>
               </button>
 
-              <div
-                class="accordion-content hidden p-3.5 lg:p-4 flex-col gap-3.5"
-              >
-                <div
-                  class="w-full flex relative items-center gap-2 rounded-xl border border-border bg-surface"
-                >
+              <div class="accordion-content hidden p-3.5 lg:p-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full">
                   <input
                     id="new-objective-input"
                     type="text"
-                    placeholder="Add a new objective..."
-                    class="h-10 lg:h-11 w-full rounded-xl bg-surface px-4 text-sm text-color placeholder:text-secondary/70 transition focus:border-brand/80 focus:outline-none"
+                    placeholder="Objective title..."
+                    class="w-full h-10 lg:h-11 rounded-xl border border-border bg-surface px-3 text-xs lg:text-sm text-color placeholder:text-secondary/70 focus:border-brand/80 focus:outline-none"
                   />
+
+                  <div
+                    id="new-objective-type-autocomplete"
+                    class="w-full min-w-0"
+                  ></div>
+                </div>
+
+                <div
+                  id="objective-numeric-field"
+                  class="flex items-center gap-2 w-full mt-3.5"
+                >
+                  <div class="flex-1 min-w-0">
+                    <div
+                      id="new-objective-unit-autocomplete"
+                      class="w-full min-w-0"
+                    ></div>
+                  </div>
+
+                  <input
+                    id="new-objective-target"
+                    type="text"
+                    inputmode="decimal"
+                    value="1"
+                    placeholder="Target"
+                    maxlength="7"
+                    min="1"
+                    pattern="^[0-9]*.?[0-9]*$"
+                    class="w-20 shrink-0 h-10 lg:h-11 rounded-xl border border-border bg-surface px-3 text-xs lg:text-sm text-center text-color placeholder:text-secondary/70 focus:border-brand/80 focus:outline-none"
+                  />
+                </div>
+
+                <div
+                  id="objective-form-actions"
+                  class="w-full mt-3.5"
+                >
                   <button
                     id="btn-add-objective"
                     type="button"
-                    class="w-20 h-10 lg:h-11 absolute right-0 px-3.5 rounded-e-xl bg-brand/10 text-brand/80 transition hover:bg-brand/20 font-semibold text-xs lg:text-sm flex items-center justify-center gap-1.5 shrink-0 cursor-pointer"
+                    class="w-full h-10 rounded-xl bg-brand/10 text-brand/80 hover:bg-brand/20 font-semibold text-xs lg:text-sm flex items-center justify-center gap-1.5 transition cursor-pointer"
                   >
-                    <i class="fa-regular fa-plus"></i> Add
+                    <i class="fa-regular fa-plus"></i> Add Objective
                   </button>
                 </div>
 
                 <div
                   id="plan-objectives-list"
-                  class="w-full flex flex-col gap-2"
+                  class="w-full flex flex-col gap-2 mt-3.5"
                 ></div>
               </div>
             </div>
@@ -417,9 +459,7 @@ export const EditModalsComponent = {
                 ></i>
               </button>
 
-              <div
-                class="accordion-content hidden p-3.5 lg:p-4 flex-col gap-3.5"
-              >
+              <div class="accordion-content hidden p-3.5 lg:p-4">
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5 w-full">
                   <div
                     id="edit-log-datepicker-container"
@@ -473,9 +513,7 @@ export const EditModalsComponent = {
                 ></i>
               </button>
 
-              <div
-                class="accordion-content hidden p-3.5 lg:p-4 flex-col gap-3.5"
-              >
+              <div class="accordion-content hidden p-3.5 lg:p-4">
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
                   <input
                     id="new-metric-key"
@@ -544,9 +582,7 @@ export const EditModalsComponent = {
                 ></i>
               </button>
 
-              <div
-                class="accordion-content hidden p-3.5 lg:p-4 flex-col gap-3.5"
-              >
+              <div class="accordion-content hidden p-3.5 lg:p-4">
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 w-full">
                   <div class="w-full flex flex-col">
                     <label
@@ -605,46 +641,3 @@ export const EditModalsComponent = {
     `;
   },
 };
-
-export function setupAccordionController(accordionGroupElement) {
-  if (!accordionGroupElement || accordionGroupElement.dataset.accordionBound)
-    return;
-
-  accordionGroupElement.dataset.accordionBound = "true";
-
-  accordionGroupElement.addEventListener("click", (event) => {
-    const headerBtn = event.target.closest(".accordion-header");
-    if (!headerBtn) return;
-
-    event.preventDefault();
-
-    const clickedItem = headerBtn.closest(".accordion-item");
-    if (!clickedItem) return;
-
-    const allItems = Array.from(
-      accordionGroupElement.querySelectorAll(".accordion-item"),
-    ).filter((item) => !item.classList.contains("hidden"));
-
-    allItems.forEach((item) => {
-      const content = item.querySelector(".accordion-content");
-      const icon = item.querySelector(".accordion-icon");
-
-      if (item === clickedItem) {
-        const isHidden = content?.classList.contains("hidden");
-        if (isHidden) {
-          content?.classList.remove("hidden");
-          content?.classList.add("flex");
-          icon?.classList.add("rotate-180");
-        } else {
-          content?.classList.add("hidden");
-          content?.classList.remove("flex");
-          icon?.classList.remove("rotate-180");
-        }
-      } else {
-        content?.classList.add("hidden");
-        content?.classList.remove("flex");
-        icon?.classList.remove("rotate-180");
-      }
-    });
-  });
-}

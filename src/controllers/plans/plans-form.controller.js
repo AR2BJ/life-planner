@@ -2,16 +2,15 @@ import {
   ENERGY_LEVEL_OPTIONS,
   LIFE_AREAS,
   MOOD_OPTIONS,
+  OBJECTIVE_TYPES,
+  OBJECTIVE_UNITS,
   PLAN_STATES,
 } from "@/utils/constants/options-value.constants.js";
-import {
-  EditModalsComponent,
-  setupAccordionController,
-} from "@/components/modals/edit-modals.component.js";
 import { generateId, todayISO } from "@/utils/helpers.js";
 
 import { AutocompleteComponent } from "@/components/ui/autocomplete.component.js";
 import { DatePickerComponent } from "@/components/ui/date-picker.component.js";
+import { EditModalsComponent } from "@/components/modals/edit-modals.component.js";
 import { GlobalLoaderService } from "@/services/loader.service.js";
 import { NotificationService } from "@/services/notification.service.js";
 import { PlanService } from "@/services/plans.service.js";
@@ -19,6 +18,7 @@ import { StateManager } from "@/models/state.model.js";
 
 let pendingDeleteId = null;
 let pendingEditId = null;
+let editingObjectiveId = null;
 let editingMetricKey = null;
 
 let activeModalObjectives = [];
@@ -48,6 +48,9 @@ let editLogPlanLinkAutocomplete = null;
 
 let editTemplateLifeAreaAutocomplete = null;
 
+let editObjectiveTypeAutocomplete = null;
+let editObjectiveUnitAutocomplete = null;
+
 export function setPendingDeleteId(id) {
   pendingDeleteId = id;
 }
@@ -62,11 +65,6 @@ export function setPendingEditId(id) {
 export const PlansFormController = {
   init(mainController) {
     this.mainController = mainController;
-
-    const accordionGroup = document.getElementById("edit-accordion-group");
-    if (accordionGroup) {
-      setupAccordionController(accordionGroup);
-    }
 
     this.setupCreateAutocompletes();
     this.bindFormEvents();
@@ -109,32 +107,83 @@ export const PlansFormController = {
       const allowedTabs = fieldTabsAttr.split(",").map((t) => t.trim());
 
       if (allowedTabs.includes(activeTab)) {
-        fieldGroup.classList.remove("hidden");
-        fieldGroup.classList.add("flex");
+        fieldGroup.classList.replace("hidden", "flex");
       } else {
-        fieldGroup.classList.add("hidden");
-        fieldGroup.classList.remove("flex");
+        fieldGroup.classList.replace("flex", "hidden");
       }
     });
 
     this.updateAddButtonText();
   },
 
+  toggleObjectiveNumericInputs(selectedType) {
+    const container = document.getElementById("objective-numeric-field");
+
+    const isNumeric = selectedType === "numeric";
+
+    if (container) {
+      container.classList.toggle("hidden", !isNumeric);
+    }
+  },
+
   bindAccordionEvents() {
-    const btnToggleForm = document.getElementById("btn-toggle-plan-form");
-    const formContainer = document.getElementById("plan-form-container");
-    const chevronContainer = document.getElementById("form-chevron");
+    const accordionGroup = document.getElementById("edit-accordion-group");
+    if (!accordionGroup) return;
 
-    if (!btnToggleForm || !formContainer) return;
+    accordionGroup.addEventListener("click", (e) => {
+      const header = e.target.closest(".accordion-header");
+      if (!header) return;
 
-    btnToggleForm.addEventListener("click", () => {
-      const isHidden = formContainer.classList.contains("hidden");
+      const currentItem = header.closest(".accordion-item");
+      const currentContent = currentItem.querySelector(".accordion-content");
 
-      formContainer.classList.toggle("hidden", !isHidden);
-      formContainer.classList.toggle("flex", isHidden);
+      if (!currentContent.classList.contains("hidden")) return;
 
-      if (chevronContainer) {
-        chevronContainer.classList.toggle("rotate-180", isHidden);
+      const allItems = accordionGroup.querySelectorAll(".accordion-item");
+      const currentIndex = Array.from(allItems).indexOf(currentItem);
+
+      allItems.forEach((item, index) => {
+        const content = item.querySelector(".accordion-content");
+        const icon = item.querySelector(".accordion-icon");
+        const itemHeader = item.querySelector(".accordion-header");
+
+        if (index === currentIndex) {
+          content.classList.remove("hidden");
+        } else {
+          content.classList.add("hidden");
+        }
+
+        itemHeader?.classList.toggle("border-b", index === currentIndex);
+        icon?.classList.toggle("fa-chevron-up", index === currentIndex);
+        icon?.classList.toggle("fa-chevron-down", index !== currentIndex);
+      });
+    });
+  },
+
+  resetAccordionToFirstItem() {
+    const accordionGroup = document.getElementById("edit-accordion-group");
+    if (!accordionGroup) return;
+
+    const items = accordionGroup.querySelectorAll(".accordion-item");
+    items.forEach((item, index) => {
+      const header = item.querySelector(".accordion-header");
+      const content = item.querySelector(".accordion-content");
+      const icon = item.querySelector(".accordion-icon");
+
+      if (index === 0) {
+        content.classList.remove("hidden");
+        header.classList.add("border-b");
+        if (icon) {
+          icon.classList.remove("fa-chevron-down");
+          icon.classList.add("fa-chevron-up");
+        }
+      } else {
+        content.classList.add("hidden");
+        header.classList.remove("border-b");
+        if (icon) {
+          icon.classList.remove("fa-chevron-up");
+          icon.classList.add("fa-chevron-down");
+        }
       }
     });
   },
@@ -163,7 +212,7 @@ export const PlansFormController = {
 
     container.innerHTML = `
     <div
-      class="w-full h-full max-h-55 sm:max-h-50 lg:max-h-48 overflow-y-auto scrollbar-thumb-surface-2 scrollbar-thin bg-surface rounded-2xl border border-border/60 p-2.5 flex flex-col justify-start gap-2.5"
+      class="w-full h-full max-h-40 sm:max-h-35 lg:max-h-33 overflow-y-auto scrollbar-thumb-surface-2 scrollbar-thin bg-surface rounded-2xl border border-border/60 p-2.5 flex flex-col justify-start gap-2.5"
     >
       ${activeModalObjectives
         .map((obj) => EditModalsComponent.renderObjectiveItem(obj))
@@ -187,7 +236,7 @@ export const PlansFormController = {
     }
 
     container.innerHTML = `
-    <div class="w-full h-full max-h-55 sm:max-h-50 lg:max-h-48 overflow-y-auto scrollbar-thumb-surface-2 scrollbar-thin bg-surface rounded-2xl border border-border/60 p-2.5 flex flex-col justify-start gap-2.5">
+    <div class="w-full h-full max-h-40 sm:max-h-35 lg:max-h-33 overflow-y-auto scrollbar-thumb-surface-2 scrollbar-thin bg-surface rounded-2xl border border-border/60 p-2.5 flex flex-col justify-start gap-2.5">
       ${keys
         .map((key) =>
           EditModalsComponent.renderMetricItem(key, activeModalMetrics[key]),
@@ -219,32 +268,111 @@ export const PlansFormController = {
     }
   },
 
-  bindObjectiveEvents() {
-    const container = document.getElementById("plan-objectives-list");
-    const addBtn = document.getElementById("btn-add-objective");
+  handleSaveObjective() {
     const input = document.getElementById("new-objective-input");
+    const targetInput = document.getElementById("new-objective-target");
 
-    const handleAdd = () => {
-      if (!input) return;
-      const title = input.value.trim();
-      if (!title) return;
+    const MIN_TARGET_VALUE = 1;
+    const MAX_TARGET_VALUE = 9999999;
 
+    if (!input) return;
+    const title = input.value.trim();
+    if (!title) {
+      NotificationService.show({
+        type: "warning",
+        message: "Objective title is required",
+        icon: "fa-triangle-exclamation",
+      });
+      return;
+    }
+
+    const type = editObjectiveTypeAutocomplete
+      ? editObjectiveTypeAutocomplete.getValue()
+      : "boolean";
+    const parsedValue = Number(targetInput?.value);
+    const targetValue =
+      isNaN(parsedValue) || parsedValue < MIN_TARGET_VALUE
+        ? MIN_TARGET_VALUE
+        : Math.min(parsedValue, MAX_TARGET_VALUE);
+    const unit = editObjectiveUnitAutocomplete
+      ? editObjectiveUnitAutocomplete.getValue()
+      : "count";
+
+    if (editingObjectiveId) {
+      const targetObj = activeModalObjectives.find(
+        (o) => o.id === editingObjectiveId,
+      );
+      if (targetObj) {
+        targetObj.title = title;
+        targetObj.type = type;
+        targetObj.targetValue = targetValue;
+        targetObj.unit = unit;
+      }
+    } else {
       activeModalObjectives.push({
         id: generateId(),
         title,
+        type,
+        targetValue,
+        currentValue: 0,
+        unit,
         completed: false,
-        isEditing: false,
       });
+    }
 
-      input.value = "";
-      this.renderModalObjectives();
+    this.resetObjectiveFormState();
+    this.renderModalObjectives();
+  },
+
+  bindObjectiveEvents() {
+    const container = document.getElementById("plan-objectives-list");
+    const input = document.getElementById("new-objective-input");
+    const targetInput = document.getElementById("new-objective-target");
+    const actionsContainer = document.getElementById("objective-form-actions");
+
+    const MIN_TARGET_VALUE = 1;
+    const MAX_TARGET_VALUE = 9999999;
+    const MAX_TARGET_LENGTH = 7;
+
+    const sanitizeTargetInput = (inputEl, enforceMinimum = false) => {
+      let val = inputEl.value.replace(/[^0-9.]/g, "");
+      const parts = val.split(".");
+      if (parts.length > 2) val = `${parts[0]}.${parts.slice(1).join("")}`;
+      if (val.length > MAX_TARGET_LENGTH) val = val.slice(0, MAX_TARGET_LENGTH);
+      if (Number(val) > MAX_TARGET_VALUE) val = String(MAX_TARGET_VALUE);
+      if (enforceMinimum) {
+        const numVal = Number(val);
+        if (isNaN(numVal) || numVal < MIN_TARGET_VALUE)
+          val = String(MIN_TARGET_VALUE);
+      }
+      inputEl.value = val;
     };
 
-    addBtn?.addEventListener("click", handleAdd);
+    targetInput?.addEventListener("input", (e) =>
+      sanitizeTargetInput(e.target, false),
+    );
+    targetInput?.addEventListener("blur", (e) =>
+      sanitizeTargetInput(e.target, true),
+    );
+
     input?.addEventListener("keydown", (e) => {
       if (e.key === "Enter") {
         e.preventDefault();
-        handleAdd();
+        this.handleSaveObjective();
+      }
+    });
+
+    actionsContainer?.addEventListener("click", (e) => {
+      const addBtn = e.target.closest("#btn-add-objective");
+      const saveBtn = e.target.closest("#btn-save-objective");
+      const cancelBtn = e.target.closest("#btn-cancel-objective");
+
+      if (addBtn || saveBtn) {
+        e.preventDefault();
+        this.handleSaveObjective();
+      } else if (cancelBtn) {
+        e.preventDefault();
+        this.resetObjectiveFormState();
       }
     });
 
@@ -252,10 +380,9 @@ export const PlansFormController = {
       const target = e.target.closest("[data-action]");
       if (!target) return;
 
-      const card = target.closest("[data-objective-id]");
-      if (!card) return;
+      const objId = target.dataset.objectiveId;
+      if (!objId) return;
 
-      const objId = card.dataset.objectiveId;
       const action = target.dataset.action;
 
       if (action === "delete-objective") {
@@ -265,16 +392,16 @@ export const PlansFormController = {
         if (targetIndex === -1) return;
 
         const deletedItem = activeModalObjectives[targetIndex];
-        const title = deletedItem?.title || "Objective";
-
         activeModalObjectives.splice(targetIndex, 1);
+
+        if (editingObjectiveId === objId) this.resetObjectiveFormState();
         this.renderModalObjectives();
 
         NotificationService.show({
           type: "error",
-          message: `Objective "${title}" deleted`,
+          message: `Objective deleted`,
           icon: "fa-trash-can",
-          duration: 5000,
+          duration: 4000,
           undoAction: () => {
             activeModalObjectives.splice(targetIndex, 0, deletedItem);
             this.renderModalObjectives();
@@ -282,35 +409,71 @@ export const PlansFormController = {
         });
       } else if (action === "edit-objective") {
         const obj = activeModalObjectives.find((o) => o.id === objId);
-        if (obj) {
-          obj.isEditing = !obj.isEditing;
-          this.renderModalObjectives();
+        if (!obj) return;
 
-          if (obj.isEditing) {
-            requestAnimationFrame(() => {
-              const el = container.querySelector(
-                `[data-objective-id="${objId}"] input[data-action="edit-objective-text"]`,
-              );
-              el?.focus();
-              el?.select();
-            });
-          }
+        editingObjectiveId = obj.id;
+
+        if (input) input.value = obj.title;
+        if (targetInput) targetInput.value = String(obj.targetValue || 1);
+        if (editObjectiveTypeAutocomplete)
+          editObjectiveTypeAutocomplete.setValue(obj.type || "boolean");
+        if (editObjectiveUnitAutocomplete)
+          editObjectiveUnitAutocomplete.setValue(obj.unit || "count");
+
+        this.toggleObjectiveNumericInputs(obj.type || "boolean");
+
+        if (actionsContainer) {
+          actionsContainer.innerHTML = `
+          <div class="grid grid-cols-2 gap-2 w-full">
+            <button
+              id="btn-cancel-objective"
+              type="button"
+              class="h-10 rounded-xl bg-surface-2 border border-border text-secondary hover:text-color font-semibold text-xs lg:text-sm flex items-center justify-center transition cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              id="btn-save-objective"
+              type="button"
+              class="h-10 rounded-xl bg-blue-600/20 border border-blue-500/30 text-blue-400 hover:bg-blue-600/30 font-semibold text-xs lg:text-sm flex items-center justify-center gap-1.5 transition cursor-pointer"
+            >
+              <i class="fa-regular fa-floppy-disk"></i> Save Objective
+            </button>
+          </div>
+        `;
         }
+
+        input?.focus();
       }
     });
+  },
 
-    container?.addEventListener("input", (e) => {
-      if (e.target.dataset.action === "edit-objective-text") {
-        const card = e.target.closest("[data-objective-id]");
-        if (!card) return;
+  resetObjectiveFormState() {
+    editingObjectiveId = null;
+    const input = document.getElementById("new-objective-input");
+    const targetInput = document.getElementById("new-objective-target");
+    const actionsContainer = document.getElementById("objective-form-actions");
 
-        const objId = card.dataset.objectiveId;
-        const obj = activeModalObjectives.find((o) => o.id === objId);
-        if (obj) {
-          obj.title = e.target.value;
-        }
-      }
-    });
+    if (input) input.value = "";
+    if (targetInput) targetInput.value = "1";
+    if (editObjectiveTypeAutocomplete)
+      editObjectiveTypeAutocomplete.setValue("boolean");
+    if (editObjectiveUnitAutocomplete)
+      editObjectiveUnitAutocomplete.setValue("count");
+
+    this.toggleObjectiveNumericInputs("boolean");
+
+    if (actionsContainer) {
+      actionsContainer.innerHTML = `
+      <button
+        id="btn-add-objective"
+        type="button"
+        class="w-full h-10 rounded-xl bg-brand/10 text-brand/80 hover:bg-brand/20 font-semibold text-xs lg:text-sm flex items-center justify-center gap-1.5 transition cursor-pointer"
+      >
+        <i class="fa-regular fa-plus"></i> Add Objective
+      </button>
+    `;
+    }
   },
 
   bindMetricEvents() {
@@ -573,8 +736,12 @@ export const PlansFormController = {
     if (editLogPlanLinkAutocomplete) editLogPlanLinkAutocomplete.destroy();
     if (editTemplateLifeAreaAutocomplete)
       editTemplateLifeAreaAutocomplete.destroy();
+    if (editObjectiveTypeAutocomplete) editObjectiveTypeAutocomplete.destroy();
+    if (editObjectiveUnitAutocomplete) editObjectiveUnitAutocomplete.destroy();
 
     this.resetMetricFormState();
+    this.resetObjectiveFormState();
+    this.resetAccordionToFirstItem();
 
     const activeTab = StateManager.getActiveTab() || "plans";
     const stateData = StateManager.getState();
@@ -658,6 +825,52 @@ export const PlansFormController = {
           },
         );
         editPlanStateAutocomplete.setValue(currentItem.state || "active");
+      }
+
+      const editObjectiveTypeContainer = document.getElementById(
+        "new-objective-type-autocomplete",
+      );
+      if (editObjectiveTypeContainer) {
+        editObjectiveTypeAutocomplete = new AutocompleteComponent(
+          editObjectiveTypeContainer,
+          OBJECTIVE_TYPES,
+          {
+            label: "",
+            itemTitle: "name",
+            itemValue: "id",
+            itemIcon: "icon",
+            defaultValue: "boolean",
+            placeholder: "Type...",
+            containerClass: "bg-surface!",
+            onChange: (value) => {
+              const selectedType = Array.isArray(value) ? value[0] : value;
+              this.toggleObjectiveNumericInputs(selectedType);
+            },
+          },
+        );
+        editObjectiveTypeAutocomplete.setValue("boolean");
+
+        this.toggleObjectiveNumericInputs("boolean");
+      }
+
+      const editObjectiveUnitContainer = document.getElementById(
+        "new-objective-unit-autocomplete",
+      );
+      if (editObjectiveUnitContainer) {
+        editObjectiveUnitAutocomplete = new AutocompleteComponent(
+          editObjectiveUnitContainer,
+          OBJECTIVE_UNITS,
+          {
+            label: "",
+            itemTitle: "name",
+            itemValue: "id",
+            itemIcon: "icon",
+            defaultValue: "count",
+            placeholder: "Unit...",
+            containerClass: "bg-surface!",
+          },
+        );
+        editObjectiveUnitAutocomplete.setValue("count");
       }
 
       const editStartDateContainer = document.getElementById(
@@ -1105,7 +1318,7 @@ export const PlansFormController = {
                   ? editPlanEndDatePicker.value
                   : undefined,
               },
-              objectives: activeModalObjectives,
+              objectives: [...activeModalObjectives],
             },
           );
           StateManager.save({ plans: updatedPlans });
@@ -1133,7 +1346,7 @@ export const PlansFormController = {
               mood: editLogMoodAutocomplete
                 ? editLogMoodAutocomplete.getValue()
                 : undefined,
-              metrics: activeModalMetrics,
+              metrics: { ...activeModalMetrics },
             },
           );
           StateManager.save({ logs: updatedLogs });

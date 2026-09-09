@@ -82,6 +82,62 @@ export const PLAN_STATES = [
   },
 ];
 
+export const OBJECTIVE_TYPES = [
+  {
+    id: "boolean",
+    name: "Boolean (Done/Not Done)",
+    icon: "fa-solid fa-square-check text-cyan-500/80",
+  },
+  {
+    id: "numeric",
+    name: "Numeric Target",
+    icon: "fa-solid fa-arrow-down-1-9 text-emerald-500/80",
+  },
+  {
+    id: "milestone",
+    name: "Milestone",
+    icon: "fa-solid fa-flag text-yellow-500/80",
+  },
+];
+
+export const OBJECTIVE_UNITS = [
+  {
+    id: "count",
+    name: "Count / Times",
+    icon: "fa-solid fa-calculator text-blue-500/80",
+  },
+  {
+    id: "hrs",
+    name: "Hours (hrs)",
+    icon: "fa-solid fa-clock text-violet-500/80",
+  },
+  {
+    id: "mins",
+    name: "Minutes (mins)",
+    icon: "fa-solid fa-stopwatch text-pink-500/80",
+  },
+  {
+    id: "kg",
+    name: "Kilograms (kg)",
+    icon: "fa-solid fa-weight-scale text-emerald-500/80",
+  },
+  {
+    id: "percent",
+    name: "Percentage (%)",
+    icon: "fa-solid fa-percent text-yellow-500/80",
+  },
+  {
+    id: "pages",
+    name: "Pages",
+    icon: "fa-solid fa-book-open text-cyan-500/80",
+  },
+  {
+    id: "step",
+    name: "Steps",
+    icon: "fa-solid fa-shoe-prints text-lime-500/80",
+  },
+];
+
 export const ENERGY_LEVEL_OPTIONS = [
   {
     value: 1,
@@ -318,8 +374,8 @@ export const SORT_OPTIONS_BY_TAB = {
     {
       value: "updated_desc",
       title: "Recently Updated",
-      icon: "fa-regular fa-clock text-amber-400",
-      class: "bg-amber-500/10 text-amber-400 border-amber-500/20",
+      icon: "fa-regular fa-clock text-yellow-400",
+      class: "bg-yellow-500/10 text-yellow-400 border-yellow-500/20",
     },
     // --- Based on 'period.startDate' ---
     {
@@ -380,8 +436,8 @@ export const SORT_OPTIONS_BY_TAB = {
     {
       value: "updated_desc",
       title: "Recently Updated",
-      icon: "fa-regular fa-clock text-amber-400",
-      class: "bg-amber-500/10 text-amber-400 border-amber-500/20",
+      icon: "fa-regular fa-clock text-yellow-400",
+      class: "bg-yellow-500/10 text-yellow-400 border-yellow-500/20",
     },
     // --- Based on 'title' ---
     {
@@ -422,8 +478,8 @@ export const SORT_OPTIONS_BY_TAB = {
     {
       value: "updated_desc",
       title: "Recently Updated",
-      icon: "fa-regular fa-clock text-amber-400",
-      class: "bg-amber-500/10 text-amber-400 border-amber-500/20",
+      icon: "fa-regular fa-clock text-yellow-400",
+      class: "bg-yellow-500/10 text-yellow-400 border-yellow-500/20",
     },
     // --- Based on 'title' ---
     {

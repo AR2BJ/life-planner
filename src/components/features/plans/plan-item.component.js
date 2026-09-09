@@ -143,6 +143,76 @@ export const PlansItemComponent = {
     `;
   },
 
+  _calculateObjectiveProgress(obj) {
+    if (obj.completed) return 100;
+    const type = obj.type || "boolean";
+    if (type === "numeric") {
+      const target = Number(obj.targetValue) || 1;
+      const current = Number(obj.currentValue) || 0;
+      return Math.min(100, Math.max(0, Math.round((current / target) * 100)));
+    }
+    return obj.completed ? 100 : 0;
+  },
+
+  _renderSingleObjectiveControl(planId, obj) {
+    const type = obj.type || "boolean";
+
+    if (type === "numeric") {
+      return `
+        <button
+          type="button"
+          data-plan-id="${planId}"
+          data-objective-id="${obj.id}"
+          class="objective-toggle w-6 h-6 shrink-0 rounded-md border-2 flex items-center justify-center transition cursor-pointer ${
+            obj.completed
+              ? "bg-emerald-500 border-emerald-500 text-(--color-btn-primary-text) shadow-md shadow-emerald-500/20"
+              : "border-border text-secondary hover:border-emerald-500/80 hover:text-emerald-500/80"
+          }"
+        >
+          <i
+            class="fa-regular ${
+              obj.completed
+                ? "fa-check text-xs font-bold"
+                : "fa-dialpad text-[10px]"
+            }"
+          ></i>
+        </button>
+      `;
+    }
+
+    if (type === "milestone") {
+      return `
+      <button
+        type="button"
+        data-plan-id="${planId}"
+        data-objective-id="${obj.id}"
+        class="objective-toggle w-6 h-6 shrink-0 rounded-md border-2 flex items-center justify-center transition cursor-pointer ${
+          obj.completed
+            ? "bg-yellow-500 border-yellow-500 text-(--color-btn-primary-text) shadow-md shadow-yellow-500/20"
+            : "border-border text-secondary hover:border-yellow-500/80 hover:text-yellow-500/80"
+        }"
+      >
+        <i class="fa-regular ${obj.completed ? "fa-check text-xs font-bold" : "fa-flag text-[10px]"}"></i>
+      </button>
+    `;
+    }
+
+    return `
+    <button
+      type="button"
+      data-plan-id="${planId}"
+      data-objective-id="${obj.id}"
+      class="objective-toggle w-6 h-6 shrink-0 rounded-md border-2 flex items-center justify-center transition cursor-pointer ${
+        obj.completed
+          ? "bg-cyan-500 border-cyan-500 text-(--color-btn-primary-text) shadow-md shadow-cyan-500/20"
+          : "border-border text-secondary hover:border-cyan-500/80 hover:text-cyan-500/80"
+      }"
+    >
+      <i class="fa-regular ${obj.completed ? "fa-check text-xs font-bold" : "fa-square text-[10px]"}"></i>
+    </button>
+  `;
+  },
+
   // --- MAIN RENDER ROUTER ---
   render(item) {
     if (item.energy !== undefined || item.mood !== undefined) {
@@ -159,16 +229,18 @@ export const PlansItemComponent = {
     const stateBadge = this._getStateBadgeHtml(plan.state);
 
     const objectives = Array.isArray(plan.objectives) ? plan.objectives : [];
-    const completedObjectives = objectives.filter(
-      (obj) => obj.completed,
-    ).length;
     const totalObjectives = objectives.length;
     const hasObjectives = totalObjectives > 0;
 
+    const totalProgressAcc = objectives.reduce((sum, obj) => {
+      return sum + this._calculateObjectiveProgress(obj);
+    }, 0);
+
     const progressPercentage =
-      totalObjectives > 0
-        ? Math.round((completedObjectives / totalObjectives) * 100)
-        : 0;
+      totalObjectives > 0 ? Math.round(totalProgressAcc / totalObjectives) : 0;
+    const completedObjectives = objectives.filter(
+      (obj) => obj.completed || this._calculateObjectiveProgress(obj) === 100,
+    ).length;
 
     const objectiveProgressColor =
       progressPercentage === 100
@@ -253,7 +325,7 @@ export const PlansItemComponent = {
                     <div
                       class="w-full sm:w-fit flex justify-center xs:justify-start items-center gap-2"
                     >
-                      <i class="fa-regular fa-list-check text-brand/80"></i>
+                      <i class="fa-regular fa-bullseye-arrow text-brand/80"></i>
                       <span
                         class="text-[11px] sm:text-xs font-bold text-secondary group-hover/sub-hdr:text-color transition"
                       >
@@ -293,46 +365,91 @@ export const PlansItemComponent = {
                     } animate-slide-down space-y-1.5 pt-2 ps-1 pe-1"
                   >
                     ${objectives
-                      .map(
-                        (obj) => `
+                      .map((obj) => {
+                        const objProgress =
+                          this._calculateObjectiveProgress(obj);
+                        const isDone =
+                          obj.completed ||
+                          (obj.type === "numeric" && objProgress === 100);
+                        const type = obj.type || "boolean";
+
+                        const target = Number(obj.targetValue) || 1;
+                        const current = Number(obj.currentValue) || 0;
+                        const unit = obj.unit || "";
+
+                        return `
                           <div
-                            class="flex items-center justify-between gap-1 group/st rounded-lg p-2 hover:bg-surface-2/60 border border-transparent hover:border-border/50 transition cursor-pointer"
+                            class="flex items-center justify-between gap-3 group/st rounded-lg p-2 hover:bg-surface-2/60 border border-transparent hover:border-border/40 transition"
                           >
                             <div
-                              class="relative flex flex-row justify-start items-center gap-2 shrink-0 min-w-0 flex-1"
+                              class="relative flex flex-row items-center gap-2.5 shrink-0 min-w-0 flex-1"
                             >
-                              <button
-                                type="button"
-                                data-plan-id="${plan.id}"
-                                data-objective-id="${obj.id}"
-                                class="objective-toggle w-6 h-6 shrink-0 rounded-md border-2 flex items-center justify-center transition peer hover:cursor-pointer ${
-                                  obj.completed
-                                    ? "bg-brand/80 border-brand/80 text-(--color-btn-primary-text) shadow-lg shadow-brand/20"
-                                    : "border-border text-secondary hover:border-brand/80 hover:text-brand/80"
-                                }"
-                              >
-                                <i
-                                  class="fa-regular ${
-                                    obj.completed
-                                      ? "fa-check text-xs md:text-sm font-bold"
-                                      : "fa-square text-[10px]"
-                                  }"
-                                ></i>
-                              </button>
+                              ${this._renderSingleObjectiveControl(
+                                plan.id,
+                                obj,
+                              )}
 
                               <span
                                 data-plan-id="${plan.id}"
                                 data-objective-id="${obj.id}"
-                                class="objective-toggle text-sm text-color truncate ${
-                                  obj.completed ? "line-through opacity-50" : ""
+                                class="objective-toggle text-xs md:text-sm text-color truncate cursor-pointer select-none ${
+                                  isDone
+                                    ? "line-through opacity-45"
+                                    : "font-medium"
                                 }"
                               >
                                 ${obj.title}
                               </span>
                             </div>
+
+                            ${
+                              type === "milestone"
+                                ? `<span
+                                    class="text-[9px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/30 shrink-0"
+                                    >Milestone</span
+                                  >`
+                                : type === "boolean"
+                                  ? `<span
+                                      class="text-[9px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 shrink-0"
+                                      >Boolean</span
+                                    >`
+                                  : type === "numeric"
+                                    ? ` <div
+                                          class="flex items-center gap-1.5 shrink-0"
+                                        >
+                                          <input
+                                            type="number"
+                                            data-plan-id="${plan.id}"
+                                            data-objective-id="${obj.id}"
+                                            value="${current}"
+                                            min="0"
+                                            max="${target}"
+                                            class="objective-progress-input w-12 h-6 rounded-md border border-border/80 bg-surface/80 text-[11px] font-bold text-center text-color focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/30 focus:outline-none transition-all"
+                                          />
+
+                                          <span
+                                            class="text-[11px] text-muted font-semibold tracking-tight whitespace-nowrap flex items-center gap-2"
+                                          >
+                                            / &nbsp;${target}
+                                            ${
+                                              unit
+                                                ? `<span
+                                                    class="text-[10px] text-emerald-500/90 font-medium"
+                                                    >${unit}</span
+                                                  >`
+                                                : ""
+                                            }
+                                          </span>
+                                        </div>
+                                        <span
+                                          class="text-[9px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shrink-0"
+                                          >Numeric</span
+                                        >`
+                                    : ""
+                            }
                           </div>
-                        `,
-                      )
+                        `;
+                      })
                       .join("")}
                   </div>
                 </div>

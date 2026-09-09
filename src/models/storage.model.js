@@ -18,6 +18,10 @@ export function normalizePlan(data = {}) {
       ? data.objectives.map((obj) => ({
           id: String(obj.id || generateId()),
           title: obj.title || "",
+          type: obj.type ? String(obj.type) : "boolean", // "boolean" | "numeric" | "milestone"
+          targetValue: Number(obj.targetValue) || 1,
+          currentValue: Number(obj.currentValue) || 0,
+          unit: obj.unit ? String(obj.unit) : "step",
           completed: Boolean(obj.completed),
         }))
       : [],
