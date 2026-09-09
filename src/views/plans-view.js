@@ -331,12 +331,12 @@ export const PlansView = {
             class="flex flex-wrap sm:flex-nowrap items-center justify-between sm:justify-end gap-3"
           >
             <div class="w-full flex flex-col xs:flex-row items-center gap-3">
-              <div class="w-full flex items-center gap-2">
-                <div id="state-filter-autocomplete-wrapper"></div>
+              <div class="w-full flex items-center gap-2 min-w-35">
+                <div id="filter-autocomplete-wrapper" class="w-full"></div>
               </div>
 
-              <div class="w-full flex items-center gap-2">
-                <div id="sort-autocomplete-wrapper"></div>
+              <div class="w-full flex items-center gap-2 min-w-35">
+                <div id="sort-autocomplete-wrapper" class="w-full"></div>
               </div>
             </div>
 

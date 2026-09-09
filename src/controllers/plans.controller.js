@@ -48,35 +48,36 @@ export const PlansController = {
     });
   },
 
-  // ---------------------------------------------------------------------------
+  // --------------------------------------
   // FILTER & SORT AUTOCOMPLETES (Toolbar)
-  // ---------------------------------------------------------------------------
+  // --------------------------------------
   initFilterAutocompletes() {
     const currentTab = state.activeTab || "plans";
-    const dateWrapper = document.getElementById(
-      "date-filter-autocomplete-wrapper",
+    const filterWrapper = document.getElementById(
+      "filter-autocomplete-wrapper",
     );
     const sortWrapper = document.getElementById("sort-autocomplete-wrapper");
 
-    // 1. Date / State / Type Filter Autocomplete
-    if (dateWrapper) {
-      if (this.dateFilterAutocomplete) {
-        this.dateFilterAutocomplete.destroy();
+    // 1. Comprehensive Filter Autocomplete
+    if (filterWrapper) {
+      if (this.filterAutocomplete) {
+        this.filterAutocomplete.destroy();
       }
 
-      const dateOptions =
+      const rawOptions =
         FILTER_OPTIONS_BY_TAB[currentTab] || FILTER_OPTIONS_BY_TAB.plans;
 
-      let filterLabel = "Filter";
-      if (currentTab === "plans") filterLabel = "Status";
-      else if (currentTab === "logs") filterLabel = "Period";
-      else if (currentTab === "templates") filterLabel = "Type";
+      const filterOptions = rawOptions.map((opt) => ({
+        title: opt.title || opt.name,
+        value: opt.value || opt.id,
+        icon: opt.icon,
+      }));
 
-      this.dateFilterAutocomplete = new AutocompleteComponent(
-        dateWrapper,
-        dateOptions,
+      this.filterAutocomplete = new AutocompleteComponent(
+        filterWrapper,
+        filterOptions,
         {
-          label: filterLabel,
+          label: "Filter",
           isRow: true,
           placeholder: "Select Filter...",
           itemTitle: "title",
@@ -88,19 +89,15 @@ export const PlansController = {
             GlobalLoaderService.show("Applying filter...");
             setTimeout(() => {
               try {
+                const ui = StateManager.getActiveUIState();
                 if (currentTab === "plans") {
-                  const ui = StateManager.getActiveUIState();
                   ui.currentState = selectedVal;
-                  StateManager.notifyActiveTabChanged();
                 } else if (currentTab === "logs") {
-                  const ui = StateManager.getActiveUIState();
                   ui.dateFilter = selectedVal;
-                  StateManager.notifyActiveTabChanged();
                 } else if (currentTab === "templates") {
-                  const ui = StateManager.getActiveUIState();
                   ui.templateType = selectedVal;
-                  StateManager.notifyActiveTabChanged();
                 }
+                StateManager.notifyActiveTabChanged();
                 this.refreshUI();
               } finally {
                 GlobalLoaderService.hide();
@@ -110,11 +107,11 @@ export const PlansController = {
         },
       );
 
-      const activeFilter = this.getSelectedDateFilterForTab(currentTab);
-      this.dateFilterAutocomplete.setValue(activeFilter);
+      const activeFilter = this.getSelectedFilterForTab(currentTab);
+      this.filterAutocomplete.setValue(activeFilter);
     }
 
-    // 2. Sort Autocomplete
+    // 2. Comprehensive Sort Autocomplete
     if (sortWrapper) {
       if (this.sortAutocomplete) {
         this.sortAutocomplete.destroy();
@@ -154,9 +151,9 @@ export const PlansController = {
     }
   },
 
-  // ---------------------------------------------------------------------------
+  // -------------------------------------------
   // FORM AUTOCOMPLETES (Create Form Dropdowns)
-  // ---------------------------------------------------------------------------
+  // -------------------------------------------
   initFormAutocompletes() {
     const lifeAreaWrapper = document.getElementById(
       "plan-life-area-autocomplete-wrapper",
@@ -197,6 +194,7 @@ export const PlansController = {
       );
     }
 
+    // 2. Status Select
     if (statusWrapper) {
       if (this.formStatusAutocomplete) {
         this.formStatusAutocomplete.destroy();
@@ -221,6 +219,7 @@ export const PlansController = {
       );
     }
 
+    // 3. Mood Select
     if (moodWrapper) {
       if (this.formMoodAutocomplete) {
         this.formMoodAutocomplete.destroy();
@@ -246,7 +245,7 @@ export const PlansController = {
     }
   },
 
-  getSelectedDateFilterForTab(tab) {
+  getSelectedFilterForTab(tab) {
     if (tab === "plans") return state.plansUI?.currentState || "all";
     if (tab === "logs") return state.logsUI?.dateFilter || "all";
     if (tab === "templates") return state.templatesUI?.templateType || "all";
@@ -443,42 +442,7 @@ export const PlansController = {
       });
     }
 
-    // 2. Select Elements fallback
-    const sortSelect = document.getElementById("plan-sort-select");
-    if (sortSelect) {
-      sortSelect.value = state.plansUI?.sortBy || "date_desc";
-      sortSelect.addEventListener("change", (e) => {
-        GlobalLoaderService.show("Sorting plans...");
-        setTimeout(() => {
-          try {
-            StateManager.setSortBy(e.target.value);
-            this.refreshUI();
-          } finally {
-            GlobalLoaderService.hide();
-          }
-        }, 100);
-      });
-    }
-
-    const dateFilterSelect = document.getElementById("plan-date-filter-select");
-    if (dateFilterSelect) {
-      dateFilterSelect.value = state.plansUI?.currentState || "all";
-      dateFilterSelect.addEventListener("change", (e) => {
-        GlobalLoaderService.show("Filtering plans...");
-        setTimeout(() => {
-          try {
-            const ui = StateManager.getActiveUIState();
-            ui.currentState = e.target.value;
-            StateManager.notifyActiveTabChanged();
-            this.refreshUI();
-          } finally {
-            GlobalLoaderService.hide();
-          }
-        }, 100);
-      });
-    }
-
-    // 4. Search Handler
+    // 2. Search Handler
     const searchInput = document.getElementById("search-plans");
     const clearBtn = document.getElementById("clear-search-btn");
     const searchContainer = searchInput?.closest(".group\\/search");
@@ -548,7 +512,7 @@ export const PlansController = {
       });
     }
 
-    // 5. Internal Sub-Tabs Handling
+    // 3. Sub-Tabs Handling
     const plansBtn = document.getElementById("tab-plans");
     const logsBtn = document.getElementById("tab-logs");
     const templatesBtn = document.getElementById("tab-templates");
@@ -577,7 +541,7 @@ export const PlansController = {
       handleTabClick("templates", "Loading Routine Templates..."),
     );
 
-    // 6. Navigation Views (Plans / Analytics / Settings)
+    // 4. Navigation Views
     const navButtons = ["plans", "analytics", "settings"];
     navButtons.forEach((v) => {
       const desktopBtn = document.getElementById(`nav-${v}`);
@@ -615,7 +579,7 @@ export const PlansController = {
       mobileBtn?.addEventListener("click", handleNav);
     });
 
-    // 7. Modal Help Handlers
+    // 5. Help Modal Handlers
     const helpToggle = document.getElementById("help-toggle");
     const helpModal = document.getElementById("help-modal");
     const closeHelpModal = document.getElementById("close-help-modal");
@@ -686,7 +650,7 @@ export const PlansController = {
     btnCloseHelp?.addEventListener("click", closeHelp);
     helpBackdrop?.addEventListener("click", closeHelp);
 
-    // 8. Scroll To Top Button
+    // 6. Scroll To Top
     const scrollTopBtn = document.getElementById("scroll-to-top-btn");
     if (scrollTopBtn) {
       let isVisible = false;
@@ -725,7 +689,7 @@ export const PlansController = {
       });
     }
 
-    // 9. Theme Listener
+    // 7. Theme Listener
     if (window.currentThemeListener) {
       document.removeEventListener("themeChanged", window.currentThemeListener);
     }
@@ -756,7 +720,7 @@ export const PlansController = {
   switchFormTabVisibility(tab) {
     const fields = document.querySelectorAll(".plan-tab-fields");
     fields.forEach((field) => {
-      if (field.dataset.tabFields === tab) {
+      if (field.dataset.tabFields?.includes(tab)) {
         field.classList.remove("hidden");
         field.classList.add("flex");
       } else {
@@ -775,8 +739,8 @@ export const PlansController = {
       formToggleTitle.textContent = titles[tab] || "Create New Item";
     }
 
-    const titleInput = document.getElementById("create-plan-title");
-    const descInput = document.getElementById("create-plan-desc");
+    const titleInput = document.getElementById("create-item-title");
+    const descInput = document.getElementById("create-item-desc");
     if (titleInput) titleInput.value = "";
     if (descInput) descInput.value = "";
   },
