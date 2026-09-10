@@ -17,7 +17,7 @@ export function normalizePlan(data = {}) {
     objectives: Array.isArray(data.objectives)
       ? data.objectives.map((obj) => ({
           id: String(obj.id || generateId()),
-          title: obj.title || "",
+          title: obj.title || "Untitled Objective",
           type: obj.type ? String(obj.type) : "boolean", // "boolean" | "numeric" | "milestone"
           targetValue: Number(obj.targetValue) || 1,
           currentValue: Number(obj.currentValue) || 0,

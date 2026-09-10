@@ -4,7 +4,9 @@ import {
 } from "./plans-form.controller.js";
 
 import { NotificationService } from "@/services/notification.service.js";
+import { PlanAutoLogService } from "@/services/plan-auto-log.service.js";
 import { PlanService } from "@/services/plans.service.js";
+import { PlansItemComponent } from "@/components/features/plans/plan-item.component.js";
 import { StateManager } from "@/models/state.model.js";
 import { openObjectivesState } from "@/utils/helpers.js";
 
@@ -25,14 +27,18 @@ export const PlansActionController = {
       objectiveId,
     );
 
-    StateManager.save({ plans: updatedPlans });
+    const updatedTargetPlan = updatedPlans.find(
+      (p) => String(p.id) === String(planId),
+    );
+    this.checkAndAutoUpdatePlanState(updatedTargetPlan, updatedPlans);
+
     this.mainController.refreshUI();
 
     NotificationService.show({
       type: "info",
       message: `Objective updated for "${targetPlan.title}"`,
       icon: "fa-list-check",
-      duration: 3000,
+      duration: 5000,
     });
   },
 
@@ -48,7 +54,11 @@ export const PlansActionController = {
       newValue,
     );
 
-    StateManager.save({ plans: updatedPlans });
+    const updatedTargetPlan = updatedPlans.find(
+      (p) => String(p.id) === String(planId),
+    );
+    this.checkAndAutoUpdatePlanState(updatedTargetPlan, updatedPlans);
+
     this.mainController.refreshUI();
   },
 
@@ -72,7 +82,120 @@ export const PlansActionController = {
         ? `Marked "${targetTemplate.title}" as favorite`
         : `Removed "${targetTemplate.title}" from favorites`,
       icon: "fa-star",
-      duration: 3000,
+      duration: 5000,
+    });
+  },
+
+  checkAndAutoUpdatePlanState(targetPlan, updatedPlans) {
+    const objectives = targetPlan.objectives || [];
+    if (objectives.length === 0) return;
+
+    const totalObj = objectives.length;
+    const completedObj = objectives.filter(
+      (obj) =>
+        obj.completed ||
+        PlansItemComponent._calculateObjectiveProgress?.(obj) === 100,
+    ).length;
+
+    const isAllCompleted = completedObj === totalObj;
+
+    if (isAllCompleted && targetPlan.state !== "completed") {
+      targetPlan.pendingCompletionPrompt = true;
+    } else if (!isAllCompleted) {
+      targetPlan.pendingCompletionPrompt = false;
+      if (targetPlan.state === "completed") {
+        targetPlan.state = "active";
+        NotificationService.show({
+          type: "info",
+          message: `Plan status reverted to Active`,
+          icon: "fa-arrow-rotate-left",
+          duration: 5000,
+        });
+      }
+    }
+
+    StateManager.save({ plans: updatedPlans });
+
+    PlanAutoLogService.createAutoLogForPlan(updatedPlans);
+  },
+
+  handleConfirmCompletion(planId) {
+    const plans = StateManager.getPlans() || [];
+    const targetPlan = plans.find((p) => String(p.id) === String(planId));
+    if (!targetPlan) return;
+
+    targetPlan.state = "completed";
+    targetPlan.pendingCompletionPrompt = false;
+
+    StateManager.save({ plans });
+
+    const createdLog = PlanAutoLogService.createAutoLogForPlan(targetPlan);
+
+    this.mainController.refreshUI();
+
+    NotificationService.show({
+      type: "success",
+      message: createdLog
+        ? `Plan "${targetPlan.title}" completed & auto-logged!`
+        : `Plan "${targetPlan.title}" marked as COMPLETED!`,
+      icon: "fa-circle-check",
+      duration: 5000,
+    });
+  },
+
+  handleDeclineCompletion(planId) {
+    const plans = StateManager.getPlans() || [];
+    const targetPlan = plans.find((p) => String(p.id) === String(planId));
+    if (!targetPlan) return;
+
+    targetPlan.pendingCompletionPrompt = false;
+
+    StateManager.save({ plans });
+    this.mainController.refreshUI();
+
+    NotificationService.show({
+      type: "info",
+      message: `Plan status left unchanged.`,
+      icon: "fa-info-circle",
+      duration: 5000,
+    });
+  },
+
+  cyclePlanState(planId) {
+    const plans = StateManager.getPlans() || [];
+    const targetPlan = plans.find((p) => String(p.id) === String(planId));
+    if (!targetPlan) return;
+
+    const stateOrder = ["active", "paused", "completed"];
+    const currentIndex = stateOrder.indexOf(targetPlan.state || "active");
+    const nextState = stateOrder[(currentIndex + 1) % stateOrder.length];
+
+    targetPlan.state = nextState;
+    targetPlan.pendingCompletionPrompt = false;
+
+    if (nextState === "completed" && Array.isArray(targetPlan.objectives)) {
+      targetPlan.objectives.forEach((obj) => {
+        obj.completed = true;
+        if (obj.type === "numeric" && obj.targetValue !== undefined) {
+          obj.currentValue = obj.targetValue;
+        }
+      });
+
+      PlanAutoLogService.createAutoLogForPlan(targetPlan);
+    }
+
+    StateManager.save({ plans });
+    this.mainController.refreshUI();
+
+    NotificationService.show({
+      type: "info",
+      message: `Plan status changed to "${nextState.toUpperCase()}"${
+        nextState === "completed"
+          ? " and all objectives marked as completed!"
+          : ""
+      }`,
+      icon: "fa-arrows-rotate",
+      duration: 5000,
     });
   },
 
@@ -96,7 +219,28 @@ export const PlansActionController = {
       const target = e.target;
       const activeTab = StateManager.getActiveTab() || "plans";
 
-      // A. TOGGLE OBJECTIVES ACCORDION
+      // 1. IN-CARD MODAL ACTIONS (YES / NO)
+      const confirmBtn = target.closest(
+        '[data-action="confirm-plan-completion"]',
+      );
+      if (confirmBtn) {
+        e.stopPropagation();
+        const planId = confirmBtn.dataset.planId;
+        if (planId) this.handleConfirmCompletion(planId);
+        return;
+      }
+
+      const declineBtn = target.closest(
+        '[data-action="decline-plan-completion"]',
+      );
+      if (declineBtn) {
+        e.stopPropagation();
+        const planId = declineBtn.dataset.planId;
+        if (planId) this.handleDeclineCompletion(planId);
+        return;
+      }
+
+      // 2. TOGGLE OBJECTIVES ACCORDION
       const toggleObjectivesBtn = target.closest(".toggle-objectives-btn");
       if (toggleObjectivesBtn) {
         e.stopPropagation();
@@ -120,7 +264,7 @@ export const PlansActionController = {
         return;
       }
 
-      // B. TOGGLE LOG METRICS DROPDOWN
+      // 3. TOGGLE LOG METRICS DROPDOWN
       const toggleMetricsBtn = target.closest(".toggle-metrics-btn");
       if (toggleMetricsBtn) {
         e.stopPropagation();
@@ -154,7 +298,7 @@ export const PlansActionController = {
         return;
       }
 
-      // C. TOGGLE INDIVIDUAL OBJECTIVE
+      // 4. TOGGLE INDIVIDUAL OBJECTIVE
       const objectiveToggle = target.closest(".objective-toggle");
       if (objectiveToggle) {
         e.stopPropagation();
@@ -168,7 +312,18 @@ export const PlansActionController = {
         return;
       }
 
-      // D. TOGGLE TEMPLATE FAVORITE
+      // 5. CYCLE PLAN STATE BUTTON
+      const stateCycleBtn = target.closest(".state-cycle-btn");
+      if (stateCycleBtn) {
+        e.stopPropagation();
+        const planId = stateCycleBtn.dataset.planId;
+        if (planId) {
+          this.cyclePlanState(planId);
+        }
+        return;
+      }
+
+      // 6. TOGGLE TEMPLATE FAVORITE
       const favoriteBtn = target.closest(".favorite-btn");
       if (favoriteBtn) {
         e.stopPropagation();
@@ -179,7 +334,7 @@ export const PlansActionController = {
         return;
       }
 
-      // E. EDIT MODAL TRIGGER
+      // 7. EDIT MODAL TRIGGER
       const editBtn = target.closest(".edit-btn");
       if (editBtn) {
         if (
@@ -198,7 +353,7 @@ export const PlansActionController = {
         return;
       }
 
-      // F. DELETE MODAL TRIGGER
+      // 8. DELETE MODAL TRIGGER
       const deleteBtn = target.closest(".delete-btn");
       if (deleteBtn) {
         if (
@@ -217,7 +372,7 @@ export const PlansActionController = {
         return;
       }
 
-      // G. DIRECT DELETE ITEM HANDLER
+      // 9. DIRECT DELETE ITEM HANDLER
       const directDeleteBtn = target.closest(".direct-delete-btn");
       if (directDeleteBtn) {
         e.stopPropagation();
@@ -246,7 +401,7 @@ export const PlansActionController = {
           type: "info",
           message: "Item deleted successfully",
           icon: "fa-trash-can",
-          duration: 4000,
+          duration: 5000,
         });
       }
     });

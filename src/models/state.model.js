@@ -156,7 +156,7 @@ export const StateManager = {
       list = this.filterItemsByTab(list, tab, ui.filterBy);
     }
 
-    // (Search Query)
+    // Search Query
     if (ui.searchQuery && ui.searchQuery.trim() !== "") {
       const query = ui.searchQuery.toLowerCase().trim();
       list = list.filter(
@@ -329,12 +329,14 @@ export const StateManager = {
   // --- SETTERS & UI CONTROL ---
   setView(view) {
     state.currentView = view;
+    eventBus.emit("ui:view:changed", view);
     eventBus.emit("store:changed", state);
   },
 
   setTab(tab) {
     if (["plans", "logs", "templates"].includes(tab)) {
       state.activeTab = tab;
+      eventBus.emit("ui:tab:changed", tab);
       eventBus.emit("store:changed", state);
     }
   },
@@ -342,24 +344,28 @@ export const StateManager = {
   setLifeAreaFilter(lifeAreaId) {
     const ui = this.getActiveUIState();
     ui.selectedLifeArea = lifeAreaId;
+    eventBus.emit("ui:filter:lifeArea", lifeAreaId);
     this.notifyActiveTabChanged();
   },
 
   setFilterBy(filterValue) {
     const ui = this.getActiveUIState();
     ui.filterBy = filterValue;
+    eventBus.emit("ui:filter:changed", filterValue);
     this.notifyActiveTabChanged();
   },
 
   setSortBy(sortBy) {
     const ui = this.getActiveUIState();
     ui.sortBy = sortBy;
+    eventBus.emit("ui:sort:changed", sortBy);
     this.notifyActiveTabChanged();
   },
 
   setSearchQuery(query) {
     const ui = this.getActiveUIState();
     ui.searchQuery = query;
+    eventBus.emit("ui:search:changed", query);
     this.notifyActiveTabChanged();
   },
 

@@ -25,7 +25,7 @@ export const PlanService = {
       objectives: Array.isArray(planData.objectives)
         ? planData.objectives.map((obj) => ({
             id: String(obj.id || generateId()),
-            title: (obj.title || "").trim(),
+            title: (obj.title || "Untitled Objective").trim(),
             type: String(obj.type || "boolean"), // "boolean" | "numeric" | "milestone"
             targetValue: Number(obj.targetValue) || 1,
             currentValue: Number(obj.currentValue) || 0,
@@ -66,7 +66,7 @@ export const PlanService = {
         objectives: Array.isArray(updatedFields.objectives)
           ? updatedFields.objectives.map((obj) => ({
               id: String(obj.id || generateId()),
-              title: (obj.title || "").trim(),
+              title: (obj.title || "Untitled Objective").trim(),
               type: String(obj.type || "boolean"),
               targetValue: Number(obj.targetValue) || 1,
               currentValue: Number(obj.currentValue) || 0,

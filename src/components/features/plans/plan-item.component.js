@@ -39,7 +39,7 @@ export const PlansItemComponent = {
     `;
   },
 
-  _getStateBadgeHtml(stateKey) {
+  _getStateBadgeHtml(stateKey, planId) {
     const matched = PLAN_STATES.find((s) => s.id === stateKey);
     const stateData = matched || {
       name: stateKey || "active",
@@ -50,12 +50,18 @@ export const PlansItemComponent = {
     const iconClass = this._normalizeIconClass(stateData.icon);
 
     return `
-      <span
-        class="inline-flex items-center gap-1 rounded-md border ${stateData.class} px-2 py-0.5 text-[10px] uppercase font-semibold"
+      <button
+        type="button"
+        data-plan-id="${planId}"
+        data-current-state="${stateData.id}"
+        class="state-cycle-btn inline-flex items-center gap-1.5 rounded-md border ${stateData.class} px-2 py-0.5 text-[10px] uppercase font-bold tracking-wider cursor-pointer hover:opacity-80 active:scale-95 transition-all select-none"
+        title="Click to cycle status"
       >
-        <i class="${iconClass} text-[9px]"></i>
+        <i
+          class="${iconClass} text-[10px] transition-transform duration-300"
+        ></i>
         <span>${stateData.name}</span>
-      </span>
+      </button>
     `;
   },
 
@@ -302,6 +308,53 @@ export const PlansItemComponent = {
     `;
   },
 
+  _getCompletionPromptOverlayHtml(planId) {
+    return `
+      <div
+        class="absolute inset-0 z-30 flex items-center justify-center bg-background/60 backdrop-blur-md p-4 transition-all duration-300 animate-fade-in"
+      >
+        <div
+          class="w-full max-w-xs rounded-xl border border-border/80 bg-surface/95 p-4 shadow-2xl text-center space-y-3"
+        >
+          <div
+            class="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-500"
+          >
+            <i class="fa-solid fa-flag-checkered text-base"></i>
+          </div>
+
+          <div class="space-y-1">
+            <h4 class="text-sm font-bold text-color">Complete Plan Status?</h4>
+            <p class="text-xs text-secondary leading-relaxed">
+              All objectives are 100% completed. Would you like to set the plan
+              status to
+              <span class="text-emerald-500 font-bold">COMPLETED</span>?
+            </p>
+          </div>
+
+          <div class="flex items-center justify-center gap-2 pt-1">
+            <button
+              type="button"
+              data-action="confirm-plan-completion"
+              data-plan-id="${planId}"
+              class="flex-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 px-3 py-1.5 text-xs font-bold text-white shadow-md active:scale-95 transition-all cursor-pointer"
+            >
+              Yes
+            </button>
+
+            <button
+              type="button"
+              data-action="decline-plan-completion"
+              data-plan-id="${planId}"
+              class="flex-1 rounded-lg border border-border/80 bg-surface-2 hover:bg-surface-3 px-3 py-1.5 text-xs font-bold text-secondary hover:text-color active:scale-95 transition-all cursor-pointer"
+            >
+              No
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+  },
+
   // --- MAIN RENDER ROUTER ---
   render(item) {
     if (item.energy !== undefined || item.mood !== undefined) {
@@ -315,7 +368,7 @@ export const PlansItemComponent = {
 
   renderPlan(plan) {
     const lifeAreaBadge = this._getLifeAreaBadgeHtml(plan.lifeAreaId);
-    const stateBadge = this._getStateBadgeHtml(plan.state);
+    const stateBadge = this._getStateBadgeHtml(plan.state, plan.id);
 
     const objectives = Array.isArray(plan.objectives) ? plan.objectives : [];
     const totalObjectives = objectives.length;
@@ -335,25 +388,26 @@ export const PlansItemComponent = {
       progressPercentage === 100
         ? "bg-emerald-500/80"
         : progressPercentage <= 65 && progressPercentage >= 35
-          ? "bg-amber-500/80"
+          ? "bg-yellow-500/80"
           : progressPercentage <= 35 && progressPercentage > 0
             ? "bg-red-500/80"
             : progressPercentage === 0
               ? "bg-slate-500/80"
-              : "bg-brand/80";
+              : "bg-sky-500/80";
 
     const objectivePercentColor =
       progressPercentage === 100
         ? "text-emerald-500/80"
         : progressPercentage <= 65 && progressPercentage >= 35
-          ? "text-amber-500/80"
+          ? "text-yellow-500/80"
           : progressPercentage <= 35 && progressPercentage > 0
             ? "text-red-500/80"
             : progressPercentage === 0
               ? "text-slate-500/80"
-              : "text-brand/80";
+              : "text-sky-500/80";
 
     const isExpanded = openObjectivesState.expandedPlanIds.has(plan.id);
+    const isPromptActive = plan.pendingCompletionPrompt === true;
 
     const startDate = plan.period?.startDate || "";
     const endDate = plan.period?.endDate || "";
@@ -361,204 +415,232 @@ export const PlansItemComponent = {
     return `
       <div
         data-id="${plan.id}"
-        class="plan-item group relative flex flex-col gap-4 p-3 md:p-4 rounded-xl bg-surface-2/40 hover:bg-surface-2/60 transition-all border border-border/40"
+        class="plan-item group relative flex flex-col gap-4 p-3 md:p-4 rounded-xl bg-surface-2/40 hover:bg-surface-2/60 transition-all border border-border/40 overflow-hidden"
       >
-        <div class="flex items-start justify-between gap-3">
-          <div class="flex flex-col min-w-0 w-full gap-1.5 pe-12">
-            <div class="flex items-center gap-2 flex-wrap">
-              ${stateBadge} ${lifeAreaBadge}
-            </div>
+        ${isPromptActive ? this._getCompletionPromptOverlayHtml(plan.id) : ""}
 
-            <h2
-              class="text-sm lg:text-base font-bold mt-2 text-color tracking-tight leading-snug wrap-break-word"
-            >
-              ${plan.title || "Untitled Plan"}
-            </h2>
+        <div
+          class="flex flex-col gap-4 ${
+            isPromptActive
+              ? "pointer-events-none filter blur-[2px] select-none"
+              : ""
+          }"
+        >
+          <div class="flex items-start justify-between gap-3">
+            <div class="flex flex-col min-w-0 w-full gap-1.5 pe-12">
+              <div class="flex items-center gap-2 flex-wrap">
+                ${stateBadge} ${lifeAreaBadge}
+              </div>
 
-            ${
-              plan.description
-                ? `<p class="text-xs lg:text-sm text-secondary/90 leading-relaxed wrap-break-word">${plan.description}</p>`
-                : ""
-            }
-
-            <div
-              class="flex flex-col gap-1.5 mt-2 text-[11px] lg:text-xs text-muted"
-            >
-              <div
-                class="flex flex-col sm:flex-row sm:items-center gap-2 text-secondary/80 mt-0.5"
+              <h2
+                class="text-sm lg:text-base font-bold mt-2 text-color tracking-tight leading-snug wrap-break-word"
               >
-                ${
-                  startDate
-                    ? `<span class="flex items-center gap-1.5"><i class="fa-regular fa-calendar-check text-emerald-500/80"></i> Start: <strong class="text-color">${startDate}</strong></span>`
-                    : ""
-                }
-                ${
-                  endDate
-                    ? `<span class="flex items-center gap-1.5 sm:ms-2"><i class="fa-regular fa-calendar-xmark text-red-500/80"></i> End: <strong class="text-color">${endDate}</strong></span>`
-                    : ""
-                }
+                ${plan.title || "Untitled Plan"}
+              </h2>
+
+              ${
+                plan.description
+                  ? `<p class="text-xs lg:text-sm text-secondary/90 leading-relaxed wrap-break-word">${plan.description}</p>`
+                  : ""
+              }
+
+              <div
+                class="flex flex-col gap-1.5 mt-2 text-[11px] lg:text-xs text-muted"
+              >
+                <div
+                  class="flex flex-col sm:flex-row sm:items-center gap-2 text-secondary/80 mt-0.5"
+                >
+                  ${
+                    startDate
+                      ? `<span class="flex items-center gap-1.5"
+                          ><i
+                            class="fa-regular fa-calendar-check text-emerald-500/80"
+                          ></i>
+                          Start:
+                          <strong class="text-color">${startDate}</strong></span
+                        >`
+                      : ""
+                  }
+                  ${
+                    endDate
+                      ? `<span class="flex items-center gap-1.5 sm:ms-2"
+                          ><i
+                            class="fa-regular fa-calendar-xmark text-red-500/80"
+                          ></i>
+                          End:
+                          <strong class="text-color">${endDate}</strong></span
+                        >`
+                      : ""
+                  }
+                </div>
               </div>
             </div>
+
+            <div
+              class="absolute top-3 right-3 md:static flex self-start md:top-auto md:right-auto z-20 shrink-0"
+            >
+              ${this._renderActionButtons(plan.id)}
+            </div>
           </div>
 
-          <div
-            class="absolute top-3 right-3 md:static flex self-start md:top-auto md:right-auto z-20 shrink-0"
-          >
-            ${this._renderActionButtons(plan.id)}
-          </div>
-        </div>
-
-        ${
-          hasObjectives
-            ? `
-                <div class="mt-2 border-t border-border/60 pt-2">
-                  <button
-                    type="button"
-                    data-plan-id="${plan.id}"
-                    class="toggle-objectives-btn w-full flex flex-wrap sm:flex-nowrap items-center justify-between gap-5 p-2 rounded-md hover:bg-surface-3/40 transition cursor-pointer group/sub-hdr text-left"
-                  >
-                    <div
-                      class="w-full sm:w-fit flex justify-center xs:justify-start items-center gap-2"
+          ${
+            hasObjectives
+              ? `
+                  <div class="mt-2 border-t border-border/60 pt-2">
+                    <button
+                      type="button"
+                      data-plan-id="${plan.id}"
+                      class="toggle-objectives-btn w-full flex flex-wrap sm:flex-nowrap items-center justify-between gap-5 p-2 rounded-md hover:bg-surface-3/40 transition cursor-pointer group/sub-hdr text-left"
                     >
-                      <i class="fa-regular fa-bullseye-arrow text-brand/80"></i>
-                      <span
-                        class="text-[11px] sm:text-xs font-bold text-secondary group-hover/sub-hdr:text-color transition"
-                      >
-                        Objectives (${completedObjectives}/${totalObjectives})
-                      </span>
-                    </div>
-
-                    <div class="w-full sm:w-fit flex items-center gap-3">
                       <div
-                        class="w-full sm:w-32 h-1.5 rounded-full bg-surface-2 overflow-hidden"
+                        class="w-full sm:w-fit flex justify-center xs:justify-start items-center gap-2"
                       >
+                        <i
+                          class="fa-regular fa-bullseye-arrow text-brand/80"
+                        ></i>
+                        <span
+                          class="text-[11px] sm:text-xs font-bold text-secondary group-hover/sub-hdr:text-color transition"
+                        >
+                          Objectives (${completedObjectives}/${totalObjectives})
+                        </span>
+                      </div>
+
+                      <div class="w-full sm:w-fit flex items-center gap-3">
                         <div
-                          class="h-full ${objectiveProgressColor} transition-all duration-300"
-                          style="width: ${progressPercentage}%"
-                        ></div>
-                      </div>
-
-                      <span
-                        class="text-[11px] font-bold ${objectivePercentColor}"
-                        >${progressPercentage}%</span
-                      >
-
-                      <div
-                        class="objective-chevron w-5 h-5 rounded-md flex items-center justify-center text-secondary group-hover/sub-hdr:text-color transition-transform duration-300 ${
-                          isExpanded ? "rotate-180" : ""
-                        }"
-                      >
-                        <i class="fa-regular fa-chevron-down text-xs"></i>
-                      </div>
-                    </div>
-                  </button>
-
-                  <div
-                    id="objectives-container-${plan.id}"
-                    class="objectives-dropdown-body ${
-                      isExpanded ? "" : "hidden"
-                    } animate-slide-down space-y-1.5 pt-2 ps-1 pe-1"
-                  >
-                    ${objectives
-                      .map((obj) => {
-                        const objProgress =
-                          this._calculateObjectiveProgress(obj);
-                        const isDone =
-                          obj.completed ||
-                          (obj.type === "numeric" && objProgress === 100);
-                        const type = obj.type || "boolean";
-
-                        const target = Number(obj.targetValue) || 1;
-                        const current = Number(obj.currentValue) || 0;
-                        const unit = obj.unit || "";
-
-                        return `
+                          class="w-full sm:w-32 h-1.5 rounded-full bg-surface-2 overflow-hidden"
+                        >
                           <div
-                            class="flex items-center justify-between gap-3 group/st rounded-lg p-2 hover:bg-surface-2/60 border border-transparent hover:border-border/40 transition"
-                          >
+                            class="h-full ${objectiveProgressColor} transition-all duration-300"
+                            style="width: ${progressPercentage}%"
+                          ></div>
+                        </div>
+
+                        <span
+                          class="text-[11px] font-bold ${objectivePercentColor}"
+                          >${progressPercentage}%</span
+                        >
+
+                        <div
+                          class="objective-chevron w-5 h-5 rounded-md flex items-center justify-center text-secondary group-hover/sub-hdr:text-color transition-transform duration-300 ${
+                            isExpanded ? "rotate-180" : ""
+                          }"
+                        >
+                          <i class="fa-regular fa-chevron-down text-xs"></i>
+                        </div>
+                      </div>
+                    </button>
+
+                    <div
+                      id="objectives-container-${plan.id}"
+                      class="objectives-dropdown-body ${
+                        isExpanded ? "" : "hidden"
+                      } animate-slide-down space-y-1.5 pt-2 ps-1 pe-1"
+                    >
+                      ${objectives
+                        .map((obj) => {
+                          const objProgress =
+                            this._calculateObjectiveProgress(obj);
+                          const isDone =
+                            obj.completed ||
+                            (obj.type === "numeric" && objProgress === 100);
+                          const type = obj.type || "boolean";
+
+                          const target = Number(obj.targetValue) || 1;
+                          const current = Number(obj.currentValue) || 0;
+                          const unit = obj.unit || "";
+
+                          return `
                             <div
-                              class="relative flex flex-row items-center gap-2.5 shrink-0 min-w-0 flex-1"
+                              class="flex items-center justify-between gap-3 group/st rounded-lg p-2 hover:bg-surface-2/60 border border-transparent hover:border-border/40 transition"
                             >
-                              ${this._renderSingleObjectiveControl(
-                                plan.id,
-                                obj,
-                              )}
-
-                              <span
-                                data-plan-id="${plan.id}"
-                                data-objective-id="${obj.id}"
-                                class="objective-toggle text-xs md:text-sm text-color truncate cursor-pointer select-none ${
-                                  isDone
-                                    ? "line-through opacity-45"
-                                    : "font-medium"
-                                }"
+                              <div
+                                class="relative flex flex-row items-center gap-2.5 shrink-0 min-w-0 flex-1"
                               >
-                                ${obj.title}
-                              </span>
-                            </div>
+                                ${this._renderSingleObjectiveControl(
+                                  plan.id,
+                                  obj,
+                                )}
 
-                            <div class="flex items-center gap-2 shrink-0">
-                              ${
-                                type === "numeric"
-                                  ? `
-                                      <div
-                                        class="inline-flex items-center rounded-lg border border-emerald-500/20 bg-emerald-500/10 p-0.75 overflow-hidden shadow-xs"
-                                      >
-                                        <input
-                                          type="text"
-                                          inputmode="decimal"
-                                          id="${plan.id}"
-                                          data-plan-id="${plan.id}"
-                                          data-objective-id="${obj.id}"
-                                          data-target="${target}"
-                                          value="${current}"
-                                          class="objective-progress-input w-11 h-6 rounded-md bg-surface text-[11px] font-bold text-center text-emerald-400/80 focus:outline-none focus:ring-1 focus:ring-emerald-500/50 transition"
-                                        />
+                                <span
+                                  data-plan-id="${plan.id}"
+                                  data-objective-id="${obj.id}"
+                                  class="objective-toggle text-xs md:text-sm text-color truncate cursor-pointer select-none ${
+                                    isDone
+                                      ? "line-through opacity-45"
+                                      : "font-medium"
+                                  }"
+                                >
+                                  ${obj.title || "Untitled Objective"}
+                                </span>
+                              </div>
+
+                              <div class="flex items-center gap-2 shrink-0">
+                                ${
+                                  type === "numeric"
+                                    ? `
                                         <div
-                                          class="flex items-center gap-2 px-2 text-[10px] font-semibold text-emerald-400/80"
+                                          class="inline-flex items-center rounded-lg border border-emerald-500/20 bg-emerald-500/10 p-0.75 overflow-hidden shadow-xs"
                                         >
-                                          <span class="opacity-40">of</span>
-                                          <div>
-                                            <span>${target}</span>
-                                            ${
-                                              unit
-                                                ? `<span class="text-emerald-500/80 font-bold ml-0.5">${unit}</span>`
-                                                : ""
-                                            }
+                                          <input
+                                            class="objective-progress-input w-15 h-6 rounded-md bg-surface text-[11px] font-bold text-center text-emerald-400/80 focus:outline-none focus:ring-1 focus:ring-emerald-500/50 transition"
+                                            type="text"
+                                            inputmode="decimal"
+                                            id="${plan.id}"
+                                            data-plan-id="${plan.id}"
+                                            data-objective-id="${obj.id}"
+                                            data-target="${target}"
+                                            value="${current}"
+                                            placeholder="Value"
+                                            maxlength="7"
+                                            min="1"
+                                            pattern="^[0-9]*.?[0-9]*$"
+                                          />
+                                          <div
+                                            class="flex items-center gap-2 px-2 text-[10px] font-semibold text-emerald-400/80"
+                                          >
+                                            <span class="opacity-40">of</span>
+                                            <div>
+                                              <span>${target}</span>
+                                              ${
+                                                unit
+                                                  ? `<span class="text-emerald-500/80 font-bold ml-0.5">${unit}</span>`
+                                                  : ""
+                                              }
+                                            </div>
                                           </div>
                                         </div>
-                                      </div>
-                                    `
-                                  : ""
-                              }
-                              ${
-                                type === "milestone"
-                                  ? `<span
-                                      class="h-8 text-[11px] uppercase font-bold tracking-wider inline-flex items-center rounded-lg px-2.5 overflow-hidden shadow-xs bg-yellow-500/10 text-yellow-400/80 border border-yellow-500/20"
-                                      >Milestone</span
-                                    >`
-                                  : type === "boolean"
+                                      `
+                                    : ""
+                                }
+                                ${
+                                  type === "milestone"
                                     ? `<span
-                                        class="h-8 text-[11px] uppercase font-bold tracking-wider inline-flex items-center rounded-lg px-2.5 overflow-hidden shadow-xs bg-cyan-500/10 text-cyan-400/80 border border-cyan-500/20"
-                                        >Boolean</span
+                                        class="h-8 text-[11px] uppercase font-bold tracking-wider inline-flex items-center rounded-lg px-2.5 overflow-hidden shadow-xs bg-yellow-500/10 text-yellow-400/80 border border-yellow-500/20"
+                                        >Milestone</span
                                       >`
-                                    : type === "numeric"
+                                    : type === "boolean"
                                       ? `<span
-                                          class="h-8 text-[11px] uppercase font-bold tracking-wider inline-flex items-center rounded-lg px-2.5 overflow-hidden shadow-xs bg-emerald-500/10 text-emerald-400/80 border border-emerald-500/20"
-                                          >Numeric</span
+                                          class="h-8 text-[11px] uppercase font-bold tracking-wider inline-flex items-center rounded-lg px-2.5 overflow-hidden shadow-xs bg-cyan-500/10 text-cyan-400/80 border border-cyan-500/20"
+                                          >Boolean</span
                                         >`
-                                      : ""
-                              }
+                                      : type === "numeric"
+                                        ? `<span
+                                            class="h-8 text-[11px] uppercase font-bold tracking-wider inline-flex items-center rounded-lg px-2.5 overflow-hidden shadow-xs bg-emerald-500/10 text-emerald-400/80 border border-emerald-500/20"
+                                            >Numeric</span
+                                          >`
+                                        : ""
+                                }
+                              </div>
                             </div>
-                          </div>
-                        `;
-                      })
-                      .join("")}
+                          `;
+                        })
+                        .join("")}
+                    </div>
                   </div>
-                </div>
-              `
-            : ""
-        }
+                `
+              : ""
+          }
+        </div>
       </div>
     `;
   },

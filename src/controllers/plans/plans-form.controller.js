@@ -560,7 +560,7 @@ export const PlansFormController = {
           type: "error",
           message: `Objective deleted`,
           icon: "fa-trash-can",
-          duration: 4000,
+          duration: 5000,
           undoAction: () => {
             activeModalObjectives.splice(targetIndex, 0, deletedItem);
             this.renderModalObjectives();
@@ -1401,6 +1401,21 @@ export const PlansFormController = {
         const stateData = StateManager.getState();
 
         if (activeTab === "plans") {
+          let targetState = editPlanStateAutocomplete
+            ? editPlanStateAutocomplete.getValue()
+            : undefined;
+
+          const hasObjectives = activeModalObjectives.length > 0;
+          const allCompleted =
+            hasObjectives &&
+            activeModalObjectives.every((obj) => obj.completed);
+
+          if (hasObjectives && allCompleted) {
+            targetState = "completed";
+          } else if (!allCompleted && targetState === "completed") {
+            targetState = "active";
+          }
+
           const updatedPlans = PlanService.editPlan(
             stateData.plans || [],
             pendingEditId,
@@ -1410,9 +1425,7 @@ export const PlansFormController = {
               lifeAreaId: editPlanLifeAreaAutocomplete
                 ? editPlanLifeAreaAutocomplete.getValue()
                 : undefined,
-              state: editPlanStateAutocomplete
-                ? editPlanStateAutocomplete.getValue()
-                : undefined,
+              state: targetState,
               period: {
                 startDate: editPlanStartDatePicker
                   ? editPlanStartDatePicker.value

@@ -24,6 +24,7 @@ import { SettingsViewComponent } from "@/components/features/settings/settings-v
 import { eventBus } from "@/services/event-bus.service.js";
 import { openObjectivesState } from "@/utils/helpers.js";
 import { renderPlanList } from "@/views/plans/plan-list.renderer.js";
+import { store } from "@/services/store.service.js";
 
 export const PlansController = {
   init() {
@@ -136,8 +137,7 @@ export const PlansController = {
             GlobalLoaderService.show("Sorting items...");
             setTimeout(() => {
               try {
-                StateManager.setSortBy(selectedVal);
-                this.refreshUI();
+                store.setSortBy(selectedVal);
               } finally {
                 GlobalLoaderService.hide();
               }
@@ -293,6 +293,10 @@ export const PlansController = {
     eventBus.subscribe("store:templates:changed", () => {
       this.refreshUI();
     });
+    eventBus.subscribe("ui:tab:changed", (tab) => {
+      this.updateTabStyles(tab);
+      this.switchFormTabVisibility(tab);
+    });
   },
 
   getLifeAreasForTab() {
@@ -439,8 +443,7 @@ export const PlansController = {
         if (!btn) return;
 
         const selectedTag = btn.dataset.lifeArea;
-        StateManager.setLifeAreaFilter(selectedTag);
-        this.refreshUI();
+        store.setLifeAreaFilter(selectedTag);
       });
     }
 
@@ -499,8 +502,7 @@ export const PlansController = {
         GlobalLoaderService.show("Searching plans...");
         setTimeout(() => {
           try {
-            StateManager.setSearchQuery(e.target.value);
-            this.refreshUI();
+            store.setSearchQuery(e.target.value);
             evaluateSearchState();
           } finally {
             GlobalLoaderService.hide();
@@ -519,9 +521,8 @@ export const PlansController = {
         setTimeout(() => {
           try {
             searchInput.value = "";
-            StateManager.setSearchQuery("");
+            store.setSearchQuery("");
             setTimeout(() => searchInput.focus(), 100);
-            this.refreshUI();
             evaluateSearchState();
           } finally {
             GlobalLoaderService.hide();
@@ -719,7 +720,7 @@ export const PlansController = {
   },
 
   handleTabSwitch(tab) {
-    StateManager.setTab(tab);
+    store.setTab(tab);
 
     openObjectivesState.clear();
 
@@ -729,10 +730,6 @@ export const PlansController = {
     }
 
     this.initFilterAutocompletes();
-
-    this.updateTabStyles(tab);
-    this.switchFormTabVisibility(tab);
-    this.refreshUI();
   },
 
   switchFormTabVisibility(tab) {
