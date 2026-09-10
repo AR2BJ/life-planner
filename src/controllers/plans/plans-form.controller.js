@@ -50,6 +50,7 @@ let editTemplateLifeAreaAutocomplete = null;
 
 let editObjectiveTypeAutocomplete = null;
 let editObjectiveUnitAutocomplete = null;
+let editMetricUnitAutocomplete = null;
 
 export function setPendingDeleteId(id) {
   pendingDeleteId = id;
@@ -118,7 +119,6 @@ export const PlansFormController = {
 
   toggleObjectiveNumericInputs(selectedType) {
     const container = document.getElementById("objective-numeric-field");
-
     const isNumeric = selectedType === "numeric";
 
     if (container) {
@@ -250,22 +250,174 @@ export const PlansFormController = {
     editingMetricKey = null;
     const keyInput = document.getElementById("new-metric-key");
     const valInput = document.getElementById("new-metric-val");
-    const unitInput = document.getElementById("new-metric-unit");
+    const actionsContainer = document.getElementById("metric-form-actions");
 
     if (keyInput) keyInput.value = "";
-    if (valInput) valInput.value = "";
-    if (unitInput) unitInput.value = "";
+    if (valInput) valInput.value = "1";
+    if (editMetricUnitAutocomplete)
+      editMetricUnitAutocomplete.setValue("count");
 
-    const addMetricBtn = document.getElementById("btn-add-metric");
-    if (addMetricBtn) {
-      addMetricBtn.innerHTML = `<i class="fa-regular fa-plus"></i>`;
-      addMetricBtn.classList.replace("bg-blue-600/10", "bg-brand/10");
-      addMetricBtn.classList.replace(
-        "hover:bg-blue-600/20",
-        "hover:bg-brand/20",
-      );
-      addMetricBtn.classList.replace("text-blue-500/80", "text-brand/80");
+    if (actionsContainer) {
+      actionsContainer.innerHTML = `
+      <button
+        id="btn-add-metric"
+        type="button"
+        class="w-full h-10 rounded-xl bg-brand/10 text-brand/80 hover:bg-brand/20 font-semibold text-xs lg:text-sm flex items-center justify-center gap-1.5 transition cursor-pointer"
+      >
+        <i class="fa-regular fa-plus"></i> Add Metric
+      </button>
+    `;
     }
+  },
+
+  handleSaveMetric() {
+    const keyInput = document.getElementById("new-metric-key");
+    const valInput = document.getElementById("new-metric-val");
+
+    const key = keyInput?.value.trim();
+    if (!key) {
+      NotificationService.show({
+        type: "warning",
+        message: "Metric key is required",
+        icon: "fa-triangle-exclamation",
+      });
+      return;
+    }
+
+    const sanitizedValue = this.sanitizeTargetValue(
+      valInput?.value || "1",
+      true,
+    );
+    const value = Number(sanitizedValue);
+
+    const unit = editMetricUnitAutocomplete
+      ? editMetricUnitAutocomplete.getValue()
+      : "count";
+
+    if (editingMetricKey && editingMetricKey !== key) {
+      delete activeModalMetrics[editingMetricKey];
+    }
+
+    activeModalMetrics[key] = { value, unit };
+    this.resetMetricFormState();
+    this.renderModalMetrics();
+  },
+
+  bindMetricEvents() {
+    const container = document.getElementById("log-metrics-list");
+    const keyInput = document.getElementById("new-metric-key");
+    const valInput = document.getElementById("new-metric-val");
+    const actionsContainer = document.getElementById("metric-form-actions");
+
+    if (valInput) {
+      valInput.type = "text";
+      valInput.setAttribute("inputmode", "decimal");
+
+      valInput.addEventListener("input", (e) => {
+        e.target.value = this.sanitizeTargetValue(e.target.value, false);
+      });
+
+      valInput.addEventListener("blur", (e) => {
+        e.target.value = this.sanitizeTargetValue(e.target.value, true);
+      });
+    }
+
+    keyInput?.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        this.handleSaveMetric();
+      }
+    });
+
+    valInput?.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        this.handleSaveMetric();
+      }
+    });
+
+    actionsContainer?.addEventListener("click", (e) => {
+      const addBtn = e.target.closest("#btn-add-metric");
+      const saveBtn = e.target.closest("#btn-save-metric");
+      const cancelBtn = e.target.closest("#btn-cancel-metric");
+
+      if (addBtn || saveBtn) {
+        e.preventDefault();
+        this.handleSaveMetric();
+      } else if (cancelBtn) {
+        e.preventDefault();
+        this.resetMetricFormState();
+      }
+    });
+
+    container?.addEventListener("click", (e) => {
+      const target = e.target.closest("[data-action]");
+      if (!target) return;
+
+      const key = target.dataset.metricKey;
+      const action = target.dataset.action;
+
+      if (action === "delete-metric") {
+        const deletedMetricData = activeModalMetrics[key];
+        delete activeModalMetrics[key];
+
+        if (editingMetricKey === key) this.resetMetricFormState();
+        this.renderModalMetrics();
+
+        NotificationService.show({
+          type: "error",
+          message: `Metric "${key}" deleted`,
+          icon: "fa-trash-can",
+          duration: 5000,
+          undoAction: () => {
+            activeModalMetrics[key] = deletedMetricData;
+            this.renderModalMetrics();
+          },
+        });
+      } else if (action === "edit-metric") {
+        const metricData = activeModalMetrics[key];
+        if (!metricData) return;
+
+        editingMetricKey = key;
+        if (keyInput) keyInput.value = key;
+        if (valInput) {
+          const rawVal =
+            typeof metricData === "object" ? metricData.value : metricData;
+          valInput.value = String(rawVal || 1);
+        }
+
+        if (editMetricUnitAutocomplete) {
+          const unitVal =
+            typeof metricData === "object"
+              ? metricData.unit || "count"
+              : "count";
+          editMetricUnitAutocomplete.setValue(unitVal);
+        }
+
+        if (actionsContainer) {
+          actionsContainer.innerHTML = `
+          <div class="grid grid-cols-2 gap-2 w-full">
+            <button
+              id="btn-cancel-metric"
+              type="button"
+              class="h-10 rounded-xl bg-surface-2 border border-border text-secondary hover:text-color font-semibold text-xs lg:text-sm flex items-center justify-center transition cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              id="btn-save-metric"
+              type="button"
+              class="h-10 rounded-xl bg-blue-600/20 border border-blue-500/30 text-blue-400 hover:bg-blue-600/30 font-semibold text-xs lg:text-sm flex items-center justify-center gap-1.5 transition cursor-pointer"
+            >
+              <i class="fa-regular fa-floppy-disk"></i> Save Metric
+            </button>
+          </div>
+        `;
+        }
+
+        keyInput?.focus();
+      }
+    });
   },
 
   sanitizeTargetValue(inputValue, enforceMinimum = false) {
@@ -483,83 +635,6 @@ export const PlansFormController = {
     }
   },
 
-  bindMetricEvents() {
-    const container = document.getElementById("log-metrics-list");
-    const addMetricBtn = document.getElementById("btn-add-metric");
-    const keyInput = document.getElementById("new-metric-key");
-    const valInput = document.getElementById("new-metric-val");
-    const unitInput = document.getElementById("new-metric-unit");
-
-    const handleSaveMetric = () => {
-      const key = keyInput?.value.trim();
-      const value = valInput?.value.trim();
-      const unit = unitInput?.value.trim() || "";
-
-      if (!key || !value) return;
-
-      if (editingMetricKey && editingMetricKey !== key) {
-        delete activeModalMetrics[editingMetricKey];
-      }
-
-      activeModalMetrics[key] = { value, unit };
-      this.resetMetricFormState();
-      this.renderModalMetrics();
-    };
-
-    addMetricBtn?.addEventListener("click", handleSaveMetric);
-
-    container?.addEventListener("click", (e) => {
-      const target = e.target.closest("[data-action]");
-      if (!target) return;
-
-      const key = target.dataset.metricKey;
-      const action = target.dataset.action;
-
-      if (action === "delete-metric") {
-        const deletedMetricData = activeModalMetrics[key];
-        delete activeModalMetrics[key];
-
-        if (editingMetricKey === key) this.resetMetricFormState();
-        this.renderModalMetrics();
-
-        NotificationService.show({
-          type: "error",
-          message: `Metric "${key}" deleted`,
-          icon: "fa-trash-can",
-          duration: 5000,
-          undoAction: () => {
-            activeModalMetrics[key] = deletedMetricData;
-            this.renderModalMetrics();
-          },
-        });
-      } else if (action === "edit-metric") {
-        const metricData = activeModalMetrics[key];
-        if (!metricData) return;
-
-        editingMetricKey = key;
-        if (keyInput) keyInput.value = key;
-        if (valInput)
-          valInput.value =
-            typeof metricData === "object" ? metricData.value : metricData;
-        if (unitInput)
-          unitInput.value =
-            typeof metricData === "object" ? metricData.unit || "" : "";
-
-        if (addMetricBtn) {
-          addMetricBtn.innerHTML = `<i class="fa-regular fa-floppy-disk"></i>`;
-          addMetricBtn.classList.replace("bg-brand/10", "bg-blue-600/10");
-          addMetricBtn.classList.replace(
-            "hover:bg-brand/20",
-            "hover:bg-blue-600/20",
-          );
-          addMetricBtn.classList.replace("text-brand/80", "text-blue-500/80");
-        }
-
-        keyInput?.focus();
-      }
-    });
-  },
-
   setupCreateAutocompletes() {
     const planLifeAreaContainer = document.getElementById(
       "create-plan-lifearea-autocomplete",
@@ -745,6 +820,7 @@ export const PlansFormController = {
       editTemplateLifeAreaAutocomplete.destroy();
     if (editObjectiveTypeAutocomplete) editObjectiveTypeAutocomplete.destroy();
     if (editObjectiveUnitAutocomplete) editObjectiveUnitAutocomplete.destroy();
+    if (editMetricUnitAutocomplete) editMetricUnitAutocomplete.destroy();
 
     this.resetMetricFormState();
     this.resetObjectiveFormState();
@@ -915,6 +991,26 @@ export const PlansFormController = {
         JSON.stringify(currentItem.metrics || {}),
       );
       this.renderModalMetrics();
+
+      const editMetricUnitContainer = document.getElementById(
+        "new-metric-unit-autocomplete",
+      );
+      if (editMetricUnitContainer) {
+        editMetricUnitAutocomplete = new AutocompleteComponent(
+          editMetricUnitContainer,
+          OBJECTIVE_UNITS,
+          {
+            label: "",
+            itemTitle: "name",
+            itemValue: "id",
+            itemIcon: "icon",
+            defaultValue: "count",
+            placeholder: "Unit...",
+            containerClass: "bg-surface!",
+          },
+        );
+        editMetricUnitAutocomplete.setValue("count");
+      }
 
       const editLogDatePickerContainer = document.getElementById(
         "edit-log-datepicker-container",

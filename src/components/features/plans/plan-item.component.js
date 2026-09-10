@@ -30,7 +30,9 @@ export const PlansItemComponent = {
     const iconClass = this._normalizeIconClass(areaData.icon);
 
     return `
-      <span class="inline-flex items-center gap-1 rounded-md border ${areaData.class} px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider">
+      <span
+        class="inline-flex items-center gap-1 rounded-md border ${areaData.class} px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider"
+      >
         <i class="${iconClass} text-[9px]"></i>
         <span>${areaData.name}</span>
       </span>
@@ -48,7 +50,9 @@ export const PlansItemComponent = {
     const iconClass = this._normalizeIconClass(stateData.icon);
 
     return `
-      <span class="inline-flex items-center gap-1 rounded-md border ${stateData.class} px-2 py-0.5 text-[10px] uppercase font-semibold">
+      <span
+        class="inline-flex items-center gap-1 rounded-md border ${stateData.class} px-2 py-0.5 text-[10px] uppercase font-semibold"
+      >
         <i class="${iconClass} text-[9px]"></i>
         <span>${stateData.name}</span>
       </span>
@@ -68,7 +72,9 @@ export const PlansItemComponent = {
     const iconClass = this._normalizeIconClass(moodData.icon);
 
     return `
-      <span class="inline-flex items-center gap-1 rounded-md border ${moodData.class} px-2 py-0.5 text-[10px] uppercase font-semibold">
+      <span
+        class="inline-flex items-center gap-1 rounded-md border ${moodData.class} px-2 py-0.5 text-[10px] uppercase font-semibold"
+      >
         <i class="${iconClass} text-[9px]"></i>
         <span>${moodData.label}</span>
       </span>
@@ -88,34 +94,101 @@ export const PlansItemComponent = {
     const iconClass = this._normalizeIconClass(energyData.icon);
 
     return `
-      <span class="inline-flex items-center gap-1 rounded-md border ${energyData.class} px-2 py-0.5 text-[10px] uppercase font-semibold">
+      <span
+        class="inline-flex items-center gap-1 rounded-md border ${energyData.class} px-2 py-0.5 text-[10px] uppercase font-semibold"
+      >
         <i class="${iconClass} text-[9px]"></i>
         <span>${energyData.label}</span>
       </span>
     `;
   },
 
-  _renderMetricsHtml(metrics) {
+  _renderMetricsHtml(logId, metrics) {
     if (!metrics || typeof metrics !== "object") return "";
     const keys = Object.keys(metrics);
     if (keys.length === 0) return "";
 
+    const INITIAL_VISIBLE_COUNT = 4;
+    const hasMore = keys.length > INITIAL_VISIBLE_COUNT;
+    const initialKeys = keys.slice(0, INITIAL_VISIBLE_COUNT);
+    const hiddenKeys = keys.slice(INITIAL_VISIBLE_COUNT);
+
+    const renderCard = (key) => {
+      const item = metrics[key];
+      const val = typeof item === "object" ? item.value : item;
+      const unit = typeof item === "object" ? item.unit || "" : "";
+
+      return `
+        <div
+          class="group/metric relative flex flex-col justify-between p-2.5 rounded-xl bg-surface/50 hover:bg-surface border border-border/40 hover:border-brand/40 transition-all duration-200 shadow-xs"
+        >
+          <div class="flex items-center justify-between gap-1 mb-1">
+            <span
+              class="text-[10px] font-bold uppercase tracking-wider text-secondary/70 truncate group-hover/metric:text-brand/90 transition-colors"
+            >
+              ${key}
+            </span>
+            <div
+              class="w-1.5 h-1.5 rounded-full bg-brand/30 group-hover/metric:bg-brand transition-colors shrink-0"
+            ></div>
+          </div>
+          <div class="flex items-baseline gap-1 min-w-0">
+            <span
+              class="text-sm font-extrabold text-color tracking-tight truncate"
+              >${val}</span
+            >
+            ${
+              unit
+                ? `<span class="text-[10px] font-semibold text-secondary/80 truncate">${unit}</span>`
+                : ""
+            }
+          </div>
+        </div>
+      `;
+    };
+
     return `
-      <div class="mt-2 flex flex-wrap gap-2">
-        ${keys
-          .map((key) => {
-            const item = metrics[key];
-            const val = typeof item === "object" ? item.value : item;
-            const unit = typeof item === "object" ? item.unit || "" : "";
-            return `
-              <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-surface/60 border border-border/50 text-xs">
-                <span class="font-medium text-muted uppercase text-[10px]">${key}:</span>
-                <span class="font-bold text-color">${val}</span>
-                ${unit ? `<span class="text-[10px] text-secondary">${unit}</span>` : ""}
-              </div>
-            `;
-          })
-          .join("")}
+      <div class="w-full mt-2 pt-3 border-t border-border/60">
+        <div class="flex items-center justify-between mb-2">
+          <span
+            class="text-[11px] font-bold text-secondary uppercase tracking-widest flex items-center gap-1.5"
+          >
+            <i class="fa-regular fa-chart-simple text-brand/80"></i> Metrics
+            (${keys.length})
+          </span>
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+          ${initialKeys.map((key) => renderCard(key)).join("")}
+        </div>
+
+        ${
+          hasMore
+            ? `
+                <div class="mt-2">
+                  <button
+                    type="button"
+                    data-log-id="${logId}"
+                    class="toggle-metrics-btn text-xs font-semibold text-brand/80 hover:text-brand flex items-center gap-1.5 cursor-pointer select-none py-1 transition group/m-btn"
+                  >
+                    <span class="btn-label"
+                      >Show ${hiddenKeys.length} more metrics...</span
+                    >
+                    <i
+                      class="fa-regular fa-chevron-down text-xs transition-transform duration-300"
+                    ></i>
+                  </button>
+
+                  <div
+                    id="metrics-dropdown-${logId}"
+                    class="hidden grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 mt-2 pt-2 border-t border-dashed border-border/40 animate-slide-down"
+                  >
+                    ${hiddenKeys.map((key) => renderCard(key)).join("")}
+                  </div>
+                </div>
+              `
+            : ""
+        }
       </div>
     `;
   },
@@ -129,7 +202,9 @@ export const PlansItemComponent = {
           class="edit-btn w-8 h-8 md:w-9 md:h-9 rounded-lg bg-surface-2 hover:bg-blue-600/10 border border-border flex items-center justify-center cursor-pointer transition"
           aria-label="Edit item"
         >
-          <i class="fa-regular fa-pen-to-square text-blue-500/80 text-sm md:text-base pointer-events-none"></i>
+          <i
+            class="fa-regular fa-pen-to-square text-blue-500/80 text-sm md:text-base pointer-events-none"
+          ></i>
         </button>
         <button
           type="button"
@@ -137,7 +212,9 @@ export const PlansItemComponent = {
           class="delete-btn w-8 h-8 md:w-9 md:h-9 rounded-lg bg-surface-2 hover:bg-red-600/10 border border-border flex items-center justify-center cursor-pointer transition"
           aria-label="Delete item"
         >
-          <i class="fa-regular fa-trash-can text-red-500/80 text-sm md:text-base pointer-events-none"></i>
+          <i
+            class="fa-regular fa-trash-can text-red-500/80 text-sm md:text-base pointer-events-none"
+          ></i>
         </button>
       </div>
     `;
@@ -182,35 +259,47 @@ export const PlansItemComponent = {
 
     if (type === "milestone") {
       return `
+        <button
+          type="button"
+          data-plan-id="${planId}"
+          data-objective-id="${obj.id}"
+          class="objective-toggle w-6 h-6 shrink-0 rounded-md border-2 flex items-center justify-center transition cursor-pointer ${
+            obj.completed
+              ? "bg-yellow-500 border-yellow-500 text-(--color-btn-primary-text) shadow-md shadow-yellow-500/20"
+              : "border-border text-secondary hover:border-yellow-500/80 hover:text-yellow-500/80"
+          }"
+        >
+          <i
+            class="fa-regular ${
+              obj.completed
+                ? "fa-check text-xs font-bold"
+                : "fa-flag text-[10px]"
+            }"
+          ></i>
+        </button>
+      `;
+    }
+
+    return `
       <button
         type="button"
         data-plan-id="${planId}"
         data-objective-id="${obj.id}"
         class="objective-toggle w-6 h-6 shrink-0 rounded-md border-2 flex items-center justify-center transition cursor-pointer ${
           obj.completed
-            ? "bg-yellow-500 border-yellow-500 text-(--color-btn-primary-text) shadow-md shadow-yellow-500/20"
-            : "border-border text-secondary hover:border-yellow-500/80 hover:text-yellow-500/80"
+            ? "bg-cyan-500 border-cyan-500 text-(--color-btn-primary-text) shadow-md shadow-cyan-500/20"
+            : "border-border text-secondary hover:border-cyan-500/80 hover:text-cyan-500/80"
         }"
       >
-        <i class="fa-regular ${obj.completed ? "fa-check text-xs font-bold" : "fa-flag text-[10px]"}"></i>
+        <i
+          class="fa-regular ${
+            obj.completed
+              ? "fa-check text-xs font-bold"
+              : "fa-square text-[10px]"
+          }"
+        ></i>
       </button>
     `;
-    }
-
-    return `
-    <button
-      type="button"
-      data-plan-id="${planId}"
-      data-objective-id="${obj.id}"
-      class="objective-toggle w-6 h-6 shrink-0 rounded-md border-2 flex items-center justify-center transition cursor-pointer ${
-        obj.completed
-          ? "bg-cyan-500 border-cyan-500 text-(--color-btn-primary-text) shadow-md shadow-cyan-500/20"
-          : "border-border text-secondary hover:border-cyan-500/80 hover:text-cyan-500/80"
-      }"
-    >
-      <i class="fa-regular ${obj.completed ? "fa-check text-xs font-bold" : "fa-square text-[10px]"}"></i>
-    </button>
-  `;
   },
 
   // --- MAIN RENDER ROUTER ---
@@ -280,7 +369,9 @@ export const PlansItemComponent = {
               ${stateBadge} ${lifeAreaBadge}
             </div>
 
-            <h2 class="text-sm lg:text-base font-bold mt-2 text-color tracking-tight leading-snug wrap-break-word">
+            <h2
+              class="text-sm lg:text-base font-bold mt-2 text-color tracking-tight leading-snug wrap-break-word"
+            >
               ${plan.title || "Untitled Plan"}
             </h2>
 
@@ -290,7 +381,9 @@ export const PlansItemComponent = {
                 : ""
             }
 
-            <div class="flex flex-col gap-1.5 mt-2 text-[11px] lg:text-xs text-muted">
+            <div
+              class="flex flex-col gap-1.5 mt-2 text-[11px] lg:text-xs text-muted"
+            >
               <div
                 class="flex flex-col sm:flex-row sm:items-center gap-2 text-secondary/80 mt-0.5"
               >
@@ -308,7 +401,9 @@ export const PlansItemComponent = {
             </div>
           </div>
 
-          <div class="absolute top-3 right-3 md:static flex self-start md:top-auto md:right-auto z-20 shrink-0">
+          <div
+            class="absolute top-3 right-3 md:static flex self-start md:top-auto md:right-auto z-20 shrink-0"
+          >
             ${this._renderActionButtons(plan.id)}
           </div>
         </div>
@@ -406,40 +501,52 @@ export const PlansItemComponent = {
                               ${
                                 type === "numeric"
                                   ? `
-                                    <div class="inline-flex items-center rounded-lg border border-emerald-500/20 bg-emerald-500/10 p-0.75 overflow-hidden shadow-xs">
-                                      <input
-                                        type="text"
-                                        inputmode="decimal"
-                                        id="${plan.id}"
-                                        data-plan-id="${plan.id}"
-                                        data-objective-id="${obj.id}"
-                                        data-target="${target}"
-                                        value="${current}"
-                                        class="objective-progress-input w-11 h-6 rounded-md bg-surface text-[11px] font-bold text-center text-emerald-400/80 focus:outline-none focus:ring-1 focus:ring-emerald-500/50 transition"
-                                      />
-                                      <div class="flex items-center gap-2 px-2 text-[10px] font-semibold text-emerald-400/80">
-                                        <span class="opacity-40">of</span>
-                                        <div> 
-                                          <span>${target}</span>
-                                          ${
-                                            unit
-                                              ? `<span class="text-emerald-500/80 font-bold ml-0.5">${unit}</span>`
-                                              : ""
-                                          }
+                                      <div
+                                        class="inline-flex items-center rounded-lg border border-emerald-500/20 bg-emerald-500/10 p-0.75 overflow-hidden shadow-xs"
+                                      >
+                                        <input
+                                          type="text"
+                                          inputmode="decimal"
+                                          id="${plan.id}"
+                                          data-plan-id="${plan.id}"
+                                          data-objective-id="${obj.id}"
+                                          data-target="${target}"
+                                          value="${current}"
+                                          class="objective-progress-input w-11 h-6 rounded-md bg-surface text-[11px] font-bold text-center text-emerald-400/80 focus:outline-none focus:ring-1 focus:ring-emerald-500/50 transition"
+                                        />
+                                        <div
+                                          class="flex items-center gap-2 px-2 text-[10px] font-semibold text-emerald-400/80"
+                                        >
+                                          <span class="opacity-40">of</span>
+                                          <div>
+                                            <span>${target}</span>
+                                            ${
+                                              unit
+                                                ? `<span class="text-emerald-500/80 font-bold ml-0.5">${unit}</span>`
+                                                : ""
+                                            }
+                                          </div>
                                         </div>
                                       </div>
-                                    </div>
-                                  `
+                                    `
                                   : ""
                               }
-
                               ${
                                 type === "milestone"
-                                  ? `<span class="h-8 text-[11px] uppercase font-bold tracking-wider inline-flex items-center rounded-lg px-2.5 overflow-hidden shadow-xs bg-yellow-500/10 text-yellow-400/80 border border-yellow-500/20">Milestone</span>`
+                                  ? `<span
+                                      class="h-8 text-[11px] uppercase font-bold tracking-wider inline-flex items-center rounded-lg px-2.5 overflow-hidden shadow-xs bg-yellow-500/10 text-yellow-400/80 border border-yellow-500/20"
+                                      >Milestone</span
+                                    >`
                                   : type === "boolean"
-                                    ? `<span class="h-8 text-[11px] uppercase font-bold tracking-wider inline-flex items-center rounded-lg px-2.5 overflow-hidden shadow-xs bg-cyan-500/10 text-cyan-400/80 border border-cyan-500/20">Boolean</span>`
+                                    ? `<span
+                                        class="h-8 text-[11px] uppercase font-bold tracking-wider inline-flex items-center rounded-lg px-2.5 overflow-hidden shadow-xs bg-cyan-500/10 text-cyan-400/80 border border-cyan-500/20"
+                                        >Boolean</span
+                                      >`
                                     : type === "numeric"
-                                      ? `<span class="h-8 text-[11px] uppercase font-bold tracking-wider inline-flex items-center rounded-lg px-2.5 overflow-hidden shadow-xs bg-emerald-500/10 text-emerald-400/80 border border-emerald-500/20">Numeric</span>`
+                                      ? `<span
+                                          class="h-8 text-[11px] uppercase font-bold tracking-wider inline-flex items-center rounded-lg px-2.5 overflow-hidden shadow-xs bg-emerald-500/10 text-emerald-400/80 border border-emerald-500/20"
+                                          >Numeric</span
+                                        >`
                                       : ""
                               }
                             </div>
@@ -459,7 +566,7 @@ export const PlansItemComponent = {
   renderLog(log) {
     const moodBadge = this._getMoodBadgeHtml(log.mood);
     const energyBadge = this._getEnergyBadgeHtml(log.energy);
-    const metricsHtml = this._renderMetricsHtml(log.metrics);
+    const metricsHtml = this._renderMetricsHtml(log.id, log.metrics);
 
     let linkedPlanBadgeHtml = "";
     let lifeAreaBadgeHtml = "";
@@ -470,7 +577,9 @@ export const PlansItemComponent = {
 
       if (linkedPlan) {
         linkedPlanBadgeHtml = `
-          <span class="inline-flex items-center gap-1 rounded-md border border-brand/30 bg-brand/10 px-2 py-0.5 text-[10px] font-semibold text-brand/90">
+          <span
+            class="inline-flex items-center gap-1 rounded-md border border-brand/30 bg-brand/10 px-2 py-0.5 text-[10px] font-semibold text-brand/90"
+          >
             <i class="fa-regular fa-bullseye text-[9px]"></i>
             <span>${linkedPlan.title}</span>
           </span>
@@ -487,33 +596,37 @@ export const PlansItemComponent = {
         data-id="${log.id}"
         class="log-item group relative flex flex-col gap-3 p-3 md:p-4 rounded-xl bg-surface-2/40 hover:bg-surface-2/60 transition-all border border-border/40"
       >
-        <div class="flex items-start justify-between gap-3">
+        <div class="flex items-start justify-between gap-3 w-full">
           <div class="flex flex-col min-w-0 w-full gap-1.5">
             <div class="flex items-center gap-2 flex-wrap">
-              ${moodBadge}
-              ${energyBadge}
+              ${moodBadge} ${energyBadge}
 
-              <span class="inline-flex items-center gap-1 rounded-md border border-secondary/30 bg-secondary/10 px-2 py-0.5 text-[10px] font-medium text-secondary/80">
-                <i class="fa-regular fa-calendar"></i> ${log.date || log.createdAt}
+              <span
+                class="inline-flex items-center gap-1 rounded-md border border-secondary/30 bg-secondary/10 px-2 py-0.5 text-[10px] font-medium text-secondary/80"
+              >
+                <i class="fa-regular fa-calendar"></i> ${
+                  log.date || log.createdAt
+                }
               </span>
 
-              ${linkedPlanBadgeHtml}
-              ${lifeAreaBadgeHtml}
+              ${linkedPlanBadgeHtml} ${lifeAreaBadgeHtml}
             </div>
 
-            <h2 class="text-base font-bold mt-1 text-color wrap-break-word">${log.title || "Untitled Log"}</h2>
+            <h2 class="text-base font-bold mt-1 text-color wrap-break-word">
+              ${log.title || "Untitled Log"}
+            </h2>
 
             ${
               log.description
                 ? `<p class="text-xs text-secondary/90 leading-relaxed wrap-break-word">${log.description}</p>`
                 : ""
             }
-
-            ${metricsHtml}
           </div>
 
           ${this._renderActionButtons(log.id)}
         </div>
+
+        ${metricsHtml}
       </div>
     `;
   },
@@ -529,15 +642,18 @@ export const PlansItemComponent = {
         <div class="flex flex-col gap-2">
           <div class="flex items-start justify-between gap-3">
             <div class="flex items-center gap-1.5 flex-wrap">
-              <span class="inline-flex items-center gap-1 rounded-md border border-violet-500/20 bg-violet-500/10 px-2 py-0.5 text-[10px] uppercase font-semibold tracking-wider text-violet-500/80">
+              <span
+                class="inline-flex items-center gap-1 rounded-md border border-violet-500/20 bg-violet-500/10 px-2 py-0.5 text-[10px] uppercase font-semibold tracking-wider text-violet-500/80"
+              >
                 <i class="fa-regular fa-cubes"></i> Template
               </span>
 
               ${lifeAreaBadge}
-
               ${
                 template.isFavorite
-                  ? `<span class="inline-flex items-center gap-1 rounded-md border border-yellow-500/20 bg-yellow-500/10 px-2 py-0.5 text-[10px] font-semibold text-yellow-500/80">
+                  ? `<span
+                      class="inline-flex items-center gap-1 rounded-md border border-yellow-500/20 bg-yellow-500/10 px-2 py-0.5 text-[10px] font-semibold text-yellow-500/80"
+                    >
                       <i class="fa-regular fa-star"></i> Favorite
                     </span>`
                   : ""
@@ -547,7 +663,9 @@ export const PlansItemComponent = {
             ${this._renderActionButtons(template.id)}
           </div>
 
-          <h3 class="text-sm lg:text-base font-bold text-color tracking-tight mt-1 wrap-break-word">
+          <h3
+            class="text-sm lg:text-base font-bold text-color tracking-tight mt-1 wrap-break-word"
+          >
             ${template.title || "Untitled Template"}
           </h3>
 
@@ -558,33 +676,51 @@ export const PlansItemComponent = {
           <div class="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
             ${
               template.baseline
-                ? `<div class="bg-surface/50 p-2 rounded-lg border border-border/40">
-                    <span class="text-[10px] font-semibold uppercase text-muted block">Baseline</span>
-                    <span class="text-secondary wrap-break-words">${template.baseline}</span>
+                ? `<div
+                    class="bg-surface/50 p-2 rounded-lg border border-border/40"
+                  >
+                    <span
+                      class="text-[10px] font-semibold uppercase text-muted block"
+                      >Baseline</span
+                    >
+                    <span class="text-secondary wrap-break-words"
+                      >${template.baseline}</span
+                    >
                   </div>`
                 : ""
             }
             ${
               template.optimal
-                ? `<div class="bg-surface/50 p-2 rounded-lg border border-border/40">
-                    <span class="text-[10px] font-semibold uppercase text-muted block">Optimal</span>
-                    <span class="text-secondary wrap-break-words">${template.optimal}</span>
+                ? `<div
+                    class="bg-surface/50 p-2 rounded-lg border border-border/40"
+                  >
+                    <span
+                      class="text-[10px] font-semibold uppercase text-muted block"
+                      >Optimal</span
+                    >
+                    <span class="text-secondary wrap-break-words"
+                      >${template.optimal}</span
+                    >
                   </div>`
                 : ""
             }
           </div>
         </div>
 
-        <div class="pt-3 border-t border-border/50 flex items-center justify-between">
+        <div
+          class="pt-3 border-t border-border/50 flex items-center justify-between"
+        >
           <span class="text-[11px] text-muted">
-            <i class="fa-regular fa-chart-line me-1"></i>Used: ${template.usageCount || 0} times
+            <i class="fa-regular fa-chart-line me-1"></i>Used:
+            ${template.usageCount || 0} times
           </span>
           <button
             type="button"
             data-id="${template.id}"
             class="use-template-btn inline-flex items-center gap-1.5 bg-brand/80 hover:bg-brand/90 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition shadow-md cursor-pointer"
           >
-            <i class="fa-regular fa-rocket pointer-events-none"></i> Use Template
+            <i class="fa-regular fa-rocket pointer-events-none"></i> Use
+            Template
           </button>
         </div>
       </div>

@@ -120,7 +120,41 @@ export const PlansActionController = {
         return;
       }
 
-      // B. TOGGLE INDIVIDUAL OBJECTIVE
+      // B. TOGGLE LOG METRICS DROPDOWN
+      const toggleMetricsBtn = target.closest(".toggle-metrics-btn");
+      if (toggleMetricsBtn) {
+        e.stopPropagation();
+        const logId = toggleMetricsBtn.dataset.logId;
+        if (!logId) return;
+
+        const container = document.getElementById(`metrics-dropdown-${logId}`);
+        const icon = toggleMetricsBtn.querySelector(".fa-chevron-down");
+        const label = toggleMetricsBtn.querySelector(".btn-label");
+
+        if (container) {
+          const isHidden = container.classList.contains("hidden");
+
+          if (isHidden) {
+            container.classList.replace("hidden", "grid");
+          } else {
+            container.classList.replace("grid", "hidden");
+          }
+
+          if (icon) {
+            icon.classList.toggle("rotate-180", !isHidden);
+          }
+
+          if (label) {
+            const hiddenCount = container.children.length;
+            label.textContent = isHidden
+              ? `Show ${hiddenCount} more metrics...`
+              : "Collapse metrics";
+          }
+        }
+        return;
+      }
+
+      // C. TOGGLE INDIVIDUAL OBJECTIVE
       const objectiveToggle = target.closest(".objective-toggle");
       if (objectiveToggle) {
         e.stopPropagation();
@@ -134,7 +168,7 @@ export const PlansActionController = {
         return;
       }
 
-      // C. TOGGLE TEMPLATE FAVORITE
+      // D. TOGGLE TEMPLATE FAVORITE
       const favoriteBtn = target.closest(".favorite-btn");
       if (favoriteBtn) {
         e.stopPropagation();
@@ -145,7 +179,7 @@ export const PlansActionController = {
         return;
       }
 
-      // D. EDIT MODAL TRIGGER
+      // E. EDIT MODAL TRIGGER
       const editBtn = target.closest(".edit-btn");
       if (editBtn) {
         if (
@@ -164,7 +198,7 @@ export const PlansActionController = {
         return;
       }
 
-      // E. DELETE MODAL TRIGGER
+      // F. DELETE MODAL TRIGGER
       const deleteBtn = target.closest(".delete-btn");
       if (deleteBtn) {
         if (
@@ -183,7 +217,7 @@ export const PlansActionController = {
         return;
       }
 
-      // F. DIRECT DELETE ITEM HANDLER
+      // G. DIRECT DELETE ITEM HANDLER
       const directDeleteBtn = target.closest(".direct-delete-btn");
       if (directDeleteBtn) {
         e.stopPropagation();

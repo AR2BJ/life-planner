@@ -60,7 +60,7 @@ export const EditModalsComponent = {
             type="button"
             data-action="edit-objective"
             data-objective-id="${obj.id}"
-            class="edit-btn h-7 w-7 sm:w-9 sm:h-9 items-center justify-center rounded-lg sm:rounded-xl border border-border bg-surface hover:bg-blue-600/10 hover:cursor-pointer transition"
+            class="edit-btn h-7 w-7 sm:w-9 sm:h-9 flex items-center justify-center rounded-lg sm:rounded-xl border border-border bg-surface hover:bg-blue-600/10 hover:cursor-pointer transition"
             title="Edit Objective"
           >
             <i class="fa-regular fa-pen-to-square text-blue-500/80 text-sm"></i>
@@ -88,34 +88,38 @@ export const EditModalsComponent = {
     return `
       <div
         data-metric-key="${key}"
-        class="subtask-item flex items-center justify-between gap-3 rounded-xl border border-border/70 bg-surface-2 p-1 shadow-sm transition"
+        class="subtask-item flex items-center justify-between gap-3 rounded-xl border border-border/70 bg-surface-2 p-2.5 shadow-xs transition hover:border-border"
       >
-        <div class="flex items-center gap-2 flex-1 min-w-0 ms-3">
-          <span class="text-sm font-semibold text-color shrink-0">${key}:</span>
-          <span class="text-sm text-secondary truncate">${value} ${unit}</span>
+        <div class="flex items-center flex-1 min-w-0">
+          <span class="ps-2 text-xs lg:text-sm font-semibold text-color truncate">
+            ${(key ?? "").replace(/"/g, "&quot;")}
+          </span>
         </div>
 
-        <div class="flex items-center gap-1 shrink-0">
+        <div class="flex items-center gap-1.5 shrink-0">
+          <div class="h-7 sm:h-9 flex items-center gap-1.5 px-4 rounded-xl bg-surface border border-border/80 text-sm font-semibold text-color">
+            <span class="text-brand/90 font-bold">${value}</span>
+            ${unit ? `<span class="text-secondary text-xs">${unit}</span>` : ""}
+          </div>
+
           <button
             type="button"
             data-action="edit-metric"
             data-metric-key="${key}"
-            class="edit-btn flex h-8 w-8 sm:w-10 sm:h-10 items-center justify-center rounded-lg sm:rounded-xl border border-border bg-surface hover:bg-blue-600/10 hover:cursor-pointer transition"
-            title="Edit metric"
+            class="edit-btn flex h-7 w-7 sm:w-9 sm:h-9 items-center justify-center rounded-lg sm:rounded-xl border border-border bg-surface hover:bg-blue-600/10 hover:cursor-pointer transition"
+            title="Edit Metric"
           >
-            <i
-              class="fa-regular fa-pen-to-square text-blue-500/80 text-base"
-            ></i>
+            <i class="fa-regular fa-pen-to-square text-blue-500/80 text-sm"></i>
           </button>
 
           <button
             type="button"
             data-action="delete-metric"
             data-metric-key="${key}"
-            class="delete-btn flex h-8 w-8 sm:w-10 sm:h-10 items-center justify-center rounded-lg sm:rounded-xl border border-border bg-surface hover:bg-red-600/10 hover:cursor-pointer transition"
-            title="Delete metric"
+            class="delete-btn flex h-7 w-7 sm:w-9 sm:h-9 items-center justify-center rounded-lg sm:rounded-xl border border-border bg-surface hover:bg-red-600/10 hover:cursor-pointer transition"
+            title="Delete Metric"
           >
-            <i class="fa-regular fa-trash-can text-red-500/80 text-base"></i>
+            <i class="fa-regular fa-trash-can text-red-500/80 text-sm"></i>
           </button>
         </div>
       </div>
@@ -321,7 +325,9 @@ export const EditModalsComponent = {
                   ></div>
                 </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 w-full mt-3.5">
+                <div
+                  class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 w-full mt-3.5"
+                >
                   <div
                     id="edit-plan-startdate-container"
                     class="w-full"
@@ -520,35 +526,47 @@ export const EditModalsComponent = {
               </button>
 
               <div class="accordion-content hidden p-3.5 lg:p-4">
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                  <input
-                    id="new-metric-key"
-                    type="text"
-                    placeholder="Metric key (e.g. sleep_hours)"
-                    class="h-10 lg:h-11 rounded-xl border border-border bg-surface px-3 text-xs lg:text-sm text-color placeholder:text-secondary/70 focus:border-brand/80 focus:outline-none"
-                  />
+                <div class="flex items-center gap-2 w-full">
+                  <div class="flex-1 min-w-0">
+                    <input
+                      id="new-metric-key"
+                      type="text"
+                      placeholder="Metric key (e.g. sleep_hours)..."
+                      class="w-full h-10 lg:h-11 rounded-xl border border-border bg-surface px-3 text-xs lg:text-sm text-color placeholder:text-secondary/70 focus:border-brand/80 focus:outline-none"
+                    />
+                  </div>
+
                   <input
                     id="new-metric-val"
                     type="text"
                     inputmode="decimal"
-                    placeholder="Value (e.g. 7.5)"
-                    class="h-10 lg:h-11 rounded-xl border border-border bg-surface px-3 text-xs lg:text-sm text-color placeholder:text-secondary/70 focus:border-brand/80 focus:outline-none"
+                    value="1"
+                    placeholder="Value"
+                    maxlength="7"
+                    min="1"
+                    pattern="^[0-9]*.?[0-9]*$"
+                    class="w-26 shrink-0 h-10 lg:h-11 rounded-xl border border-border bg-surface px-3 text-xs lg:text-sm text-center text-color placeholder:text-secondary/70 focus:border-brand/80 focus:outline-none field-sizing-content"
                   />
-                  <div class="flex gap-2">
-                    <input
-                      id="new-metric-unit"
-                      type="text"
-                      placeholder="Unit (e.g. hrs)"
-                      class="h-10 lg:h-11 w-full rounded-xl border border-border bg-surface px-3 text-xs lg:text-sm text-color placeholder:text-secondary/70 focus:border-brand/80 focus:outline-none"
-                    />
-                    <button
-                      id="btn-add-metric"
-                      type="button"
-                      class="h-10 lg:h-11 px-3 rounded-xl bg-brand/10 text-brand/80 transition hover:bg-brand/20 font-semibold text-xs lg:text-sm flex items-center justify-center shrink-0 cursor-pointer"
-                    >
-                      <i class="fa-regular fa-plus"></i>
-                    </button>
+
+                  <div class="flex-1 min-w-0">
+                    <div
+                      id="new-metric-unit-autocomplete"
+                      class="w-full min-w-0"
+                    ></div>
                   </div>
+                </div>
+
+                <div
+                  id="metric-form-actions"
+                  class="w-full mt-3.5"
+                >
+                  <button
+                    id="btn-add-metric"
+                    type="button"
+                    class="w-full h-10 rounded-xl bg-brand/10 text-brand/80 hover:bg-brand/20 font-semibold text-xs lg:text-sm flex items-center justify-center gap-1.5 transition cursor-pointer"
+                  >
+                    <i class="fa-regular fa-plus"></i> Add Metric
+                  </button>
                 </div>
 
                 <div
@@ -556,91 +574,93 @@ export const EditModalsComponent = {
                   class="w-full flex flex-col gap-2 mt-3.5"
                 ></div>
               </div>
-            </div>
 
-            <div
-              id="accordion-template-strategies"
-              class="accordion-item edit-tab-field hidden flex-col rounded-2xl border border-border/60 bg-surface-2/60 overflow-hidden shrink-0 transition-all duration-300"
-              data-tab="templates"
-            >
-              <button
-                type="button"
-                class="accordion-header w-full p-3.5 lg:p-4 border-b border-border flex items-center justify-between text-left cursor-pointer hover:bg-surface-2/80 transition"
+              <div
+                id="accordion-template-strategies"
+                class="accordion-item edit-tab-field hidden flex-col rounded-2xl border border-border/60 bg-surface-2/60 overflow-hidden shrink-0 transition-all duration-300"
+                data-tab="templates"
               >
-                <div class="flex items-center gap-3">
-                  <div
-                    class="flex h-9 w-9 lg:h-10 lg:w-10 shrink-0 self-start items-center justify-center rounded-lg lg:rounded-xl bg-brand/10 text-brand/80"
-                  >
-                    <i class="fa-regular fa-compass text-sm lg:text-base"></i>
+                <button
+                  type="button"
+                  class="accordion-header w-full p-3.5 lg:p-4 border-b border-border flex items-center justify-between text-left cursor-pointer hover:bg-surface-2/80 transition"
+                >
+                  <div class="flex items-center gap-3">
+                    <div
+                      class="flex h-9 w-9 lg:h-10 lg:w-10 shrink-0 self-start items-center justify-center rounded-lg lg:rounded-xl bg-brand/10 text-brand/80"
+                    >
+                      <i class="fa-regular fa-compass text-sm lg:text-base"></i>
+                    </div>
+                    <div>
+                      <h4 class="text-xs lg:text-sm font-semibold text-color">
+                        Execution Benchmarks
+                      </h4>
+                      <p
+                        class="text-[10px] lg:text-xs leading-4 text-secondary"
+                      >
+                        Set baseline strategy standards and optimal performance
+                        goals.
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <h4 class="text-xs lg:text-sm font-semibold text-color">
-                      Execution Benchmarks
-                    </h4>
-                    <p class="text-[10px] lg:text-xs leading-4 text-secondary">
-                      Set baseline strategy standards and optimal performance
-                      goals.
-                    </p>
-                  </div>
-                </div>
-                <i
-                  class="accordion-icon fa-regular fa-chevron-down text-secondary text-xs lg:text-sm transition-transform duration-200"
-                ></i>
-              </button>
+                  <i
+                    class="accordion-icon fa-regular fa-chevron-down text-secondary text-xs lg:text-sm transition-transform duration-200"
+                  ></i>
+                </button>
 
-              <div class="accordion-content hidden p-3.5 lg:p-4">
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 w-full">
-                  <div class="w-full flex flex-col">
-                    <label
-                      for="edit-template-baseline"
-                      class="mb-1.5 block ps-3 text-xs font-semibold text-secondary"
-                    >
-                      Baseline Strategy
-                    </label>
-                    <input
-                      id="edit-template-baseline"
-                      type="text"
-                      placeholder="e.g. Minimum acceptable standard"
-                      class="h-10 lg:h-11 w-full rounded-xl border border-border bg-surface px-4 text-sm text-color placeholder:text-secondary/70 focus:border-brand/80 focus:outline-none"
-                    />
-                  </div>
-                  <div class="w-full flex flex-col">
-                    <label
-                      for="edit-template-optimal"
-                      class="mb-1.5 block ps-3 text-xs font-semibold text-secondary"
-                    >
-                      Optimal Strategy
-                    </label>
-                    <input
-                      id="edit-template-optimal"
-                      type="text"
-                      placeholder="e.g. Best performance target"
-                      class="h-10 lg:h-11 w-full rounded-xl border border-border bg-surface px-4 text-sm text-color placeholder:text-secondary/70 focus:border-brand/80 focus:outline-none"
-                    />
+                <div class="accordion-content hidden p-3.5 lg:p-4">
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 w-full">
+                    <div class="w-full flex flex-col">
+                      <label
+                        for="edit-template-baseline"
+                        class="mb-1.5 block ps-3 text-xs font-semibold text-secondary"
+                      >
+                        Baseline Strategy
+                      </label>
+                      <input
+                        id="edit-template-baseline"
+                        type="text"
+                        placeholder="e.g. Minimum acceptable standard"
+                        class="h-10 lg:h-11 w-full rounded-xl border border-border bg-surface px-4 text-sm text-color placeholder:text-secondary/70 focus:border-brand/80 focus:outline-none"
+                      />
+                    </div>
+                    <div class="w-full flex flex-col">
+                      <label
+                        for="edit-template-optimal"
+                        class="mb-1.5 block ps-3 text-xs font-semibold text-secondary"
+                      >
+                        Optimal Strategy
+                      </label>
+                      <input
+                        id="edit-template-optimal"
+                        type="text"
+                        placeholder="e.g. Best performance target"
+                        class="h-10 lg:h-11 w-full rounded-xl border border-border bg-surface px-4 text-sm text-color placeholder:text-secondary/70 focus:border-brand/80 focus:outline-none"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          <div
-            class="grid grid-cols-2 gap-3 pt-3 border-t border-border shrink-0 w-full bg-surface mt-auto"
-          >
-            <button
-              id="cancel-edit"
-              type="button"
-              class="h-10 lg:h-11 rounded-lg lg:rounded-xl bg-surface-2 hover:border-primary text-secondary hover:text-color font-medium text-xs lg:text-sm transition border border-border cursor-pointer flex items-center justify-center"
+            <div
+              class="grid grid-cols-2 gap-3 pt-3 border-t border-border shrink-0 w-full bg-surface mt-auto"
             >
-              Cancel
-            </button>
+              <button
+                id="cancel-edit"
+                type="button"
+                class="h-10 lg:h-11 rounded-lg lg:rounded-xl bg-surface-2 hover:border-primary text-secondary hover:text-color font-medium text-xs lg:text-sm transition border border-border cursor-pointer flex items-center justify-center"
+              >
+                Cancel
+              </button>
 
-            <button
-              id="confirm-edit"
-              type="button"
-              class="h-10 lg:h-11 rounded-lg lg:rounded-xl bg-brand/80 hover:bg-brand text-white font-medium text-xs lg:text-sm transition shadow-md shadow-brand/10 cursor-pointer flex items-center justify-center gap-2"
-            >
-              <i class="fa-regular fa-check"></i> Save Changes
-            </button>
+              <button
+                id="confirm-edit"
+                type="button"
+                class="h-10 lg:h-11 rounded-lg lg:rounded-xl bg-brand/80 hover:bg-brand text-white font-medium text-xs lg:text-sm transition shadow-md shadow-brand/10 cursor-pointer flex items-center justify-center gap-2"
+              >
+                <i class="fa-regular fa-check"></i> Save Changes
+              </button>
+            </div>
           </div>
         </div>
       </div>
