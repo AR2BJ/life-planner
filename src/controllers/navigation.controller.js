@@ -5,9 +5,9 @@ import { GlobalLoaderService } from "@/services/loader.service.js";
 import { PlansController } from "./plans.controller.js";
 
 export class NavigationController {
-  static categoryKeyBuffer = "";
-  static categoryKeyTimeoutId = null;
-  static CATEGORY_KEY_TIMEOUT = 200;
+  static lifeAreaKeyBuffer = "";
+  static lifeAreaKeyTimeoutId = null;
+  static LIFEAREA_KEY_TIMEOUT = 200;
 
   static init() {
     this.setupNavigationListeners();
@@ -200,37 +200,39 @@ export class NavigationController {
         const currentSection = document.querySelector("section:not(.hidden)");
         if (currentSection?.id === "plans-view") {
           event.preventDefault();
-          this.queueCategoryShortcutKey(event.key);
+          this.queueLifeAreaShortcutKey(event.key);
         }
       }
     });
   }
 
-  static queueCategoryShortcutKey(digit) {
-    if (this.categoryKeyTimeoutId) clearTimeout(this.categoryKeyTimeoutId);
+  static queueLifeAreaShortcutKey(digit) {
+    if (this.lifeAreaKeyTimeoutId) clearTimeout(this.lifeAreaKeyTimeoutId);
 
-    if (this.categoryKeyBuffer.length >= 2) {
-      this.categoryKeyBuffer = digit;
+    if (this.lifeAreaKeyBuffer.length >= 2) {
+      this.lifeAreaKeyBuffer = digit;
     } else {
-      this.categoryKeyBuffer += digit;
+      this.lifeAreaKeyBuffer += digit;
     }
 
-    this.categoryKeyTimeoutId = setTimeout(() => {
-      this.processCategoryShortcutKey();
-    }, this.CATEGORY_KEY_TIMEOUT);
+    this.lifeAreaKeyTimeoutId = setTimeout(() => {
+      this.processLifeAreaShortcutKey();
+    }, this.LIFEAREA_KEY_TIMEOUT);
   }
 
-  static processCategoryShortcutKey() {
-    const index = parseInt(this.categoryKeyBuffer, 10);
-    this.categoryKeyBuffer = "";
-    this.categoryKeyTimeoutId = null;
+  static processLifeAreaShortcutKey() {
+    const index = parseInt(this.lifeAreaKeyBuffer, 10);
+    this.lifeAreaKeyBuffer = "";
+    this.lifeAreaKeyTimeoutId = null;
 
-    const categoryContainer = document.getElementById("category-filter-scroll");
-    const categoryButtons = Array.from(
-      categoryContainer
-        ? categoryContainer.querySelectorAll("button, .tag-filter-btn")
+    const lifeAreaContainer = document.getElementById(
+      "life-area-filter-scroll",
+    );
+    const lifeAreaButtons = Array.from(
+      lifeAreaContainer
+        ? lifeAreaContainer.querySelectorAll("button, .life-area-filter-btn")
         : document.querySelectorAll(
-            "#category-filter-scroll button, .tag-filter-btn",
+            "#life-area-filter-scroll button, .life-area-filter-btn",
           ),
     ).filter((btn) => {
       const style = window.getComputedStyle(btn);
@@ -241,7 +243,7 @@ export class NavigationController {
       );
     });
 
-    const targetButton = categoryButtons[index];
+    const targetButton = lifeAreaButtons[index];
     if (targetButton) setTimeout(() => targetButton.click(), 10);
   }
 

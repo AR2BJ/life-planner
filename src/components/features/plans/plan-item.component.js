@@ -173,7 +173,7 @@ export const PlansItemComponent = {
             class="fa-regular ${
               obj.completed
                 ? "fa-check text-xs font-bold"
-                : "fa-dialpad text-[10px]"
+                : "fa-hashtag text-[10px]"
             }"
           ></i>
         </button>
@@ -402,51 +402,47 @@ export const PlansItemComponent = {
                               </span>
                             </div>
 
-                            ${
-                              type === "milestone"
-                                ? `<span
-                                    class="text-[9px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/30 shrink-0"
-                                    >Milestone</span
-                                  >`
-                                : type === "boolean"
-                                  ? `<span
-                                      class="text-[9px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 shrink-0"
-                                      >Boolean</span
-                                    >`
-                                  : type === "numeric"
-                                    ? ` <div
-                                          class="flex items-center gap-1.5 shrink-0"
-                                        >
-                                          <input
-                                            type="number"
-                                            data-plan-id="${plan.id}"
-                                            data-objective-id="${obj.id}"
-                                            value="${current}"
-                                            min="0"
-                                            max="${target}"
-                                            class="objective-progress-input w-12 h-6 rounded-md border border-border/80 bg-surface/80 text-[11px] font-bold text-center text-color focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/30 focus:outline-none transition-all"
-                                          />
-
-                                          <span
-                                            class="text-[11px] text-muted font-semibold tracking-tight whitespace-nowrap flex items-center gap-2"
-                                          >
-                                            / &nbsp;${target}
-                                            ${
-                                              unit
-                                                ? `<span
-                                                    class="text-[10px] text-emerald-500/90 font-medium"
-                                                    >${unit}</span
-                                                  >`
-                                                : ""
-                                            }
-                                          </span>
+                            <div class="flex items-center gap-2 shrink-0">
+                              ${
+                                type === "numeric"
+                                  ? `
+                                    <div class="inline-flex items-center rounded-lg border border-emerald-500/20 bg-emerald-500/10 p-0.75 overflow-hidden shadow-xs">
+                                      <input
+                                        type="text"
+                                        inputmode="decimal"
+                                        id="${plan.id}"
+                                        data-plan-id="${plan.id}"
+                                        data-objective-id="${obj.id}"
+                                        data-target="${target}"
+                                        value="${current}"
+                                        class="objective-progress-input w-11 h-6 rounded-md bg-surface text-[11px] font-bold text-center text-emerald-400/80 focus:outline-none focus:ring-1 focus:ring-emerald-500/50 transition"
+                                      />
+                                      <div class="flex items-center gap-2 px-2 text-[10px] font-semibold text-emerald-400/80">
+                                        <span class="opacity-40">of</span>
+                                        <div> 
+                                          <span>${target}</span>
+                                          ${
+                                            unit
+                                              ? `<span class="text-emerald-500/80 font-bold ml-0.5">${unit}</span>`
+                                              : ""
+                                          }
                                         </div>
-                                        <span
-                                          class="text-[9px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shrink-0"
-                                          >Numeric</span
-                                        >`
-                                    : ""
-                            }
+                                      </div>
+                                    </div>
+                                  `
+                                  : ""
+                              }
+
+                              ${
+                                type === "milestone"
+                                  ? `<span class="h-8 text-[11px] uppercase font-bold tracking-wider inline-flex items-center rounded-lg px-2.5 overflow-hidden shadow-xs bg-yellow-500/10 text-yellow-400/80 border border-yellow-500/20">Milestone</span>`
+                                  : type === "boolean"
+                                    ? `<span class="h-8 text-[11px] uppercase font-bold tracking-wider inline-flex items-center rounded-lg px-2.5 overflow-hidden shadow-xs bg-cyan-500/10 text-cyan-400/80 border border-cyan-500/20">Boolean</span>`
+                                    : type === "numeric"
+                                      ? `<span class="h-8 text-[11px] uppercase font-bold tracking-wider inline-flex items-center rounded-lg px-2.5 overflow-hidden shadow-xs bg-emerald-500/10 text-emerald-400/80 border border-emerald-500/20">Numeric</span>`
+                                      : ""
+                              }
+                            </div>
                           </div>
                         `;
                       })

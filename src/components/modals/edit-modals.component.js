@@ -30,9 +30,17 @@ export const EditModalsComponent = {
           </span>
         </div>
 
-        <div class="flex items-center gap-1 shrink-0">
+        <div class="flex items-center gap-1.5 shrink-0">
           <span
-            class="h-7 sm:h-9 text-xs font-bold uppercase tracking-wider px-4 rounded-xl bg-brand/10 border border-brand/20 text-brand flex justify-center items-center gap-1.5"
+            class="h-7 sm:h-9 text-xs font-bold uppercase tracking-wider px-4 rounded-xl ${
+              type === "numeric"
+                ? "bg-emerald-500/10 border border-emerald-500/20 text-emerald-500/80"
+                : type === "boolean"
+                  ? "bg-cyan-500/10 border border-cyan-500/20 text-cyan-500/80"
+                  : type === "milestone"
+                    ? "bg-yellow-500/10 border border-yellow-500/20 text-yellow-500/80"
+                    : ""
+            } flex justify-center items-center gap-1.5"
           >
             ${type}
           </span>
@@ -41,7 +49,7 @@ export const EditModalsComponent = {
             type === "numeric"
               ? `
             <div class="h-7 sm:h-9 flex items-center gap-1.5 px-4 rounded-xl bg-surface border border-border/80 text-sm font-semibold text-color">
-              <span class="text-brand font-bold">${target}</span>
+              <span class="text-emerald-400/80 font-bold">${target}</span>
               ${unit ? `<span class="text-secondary">${unit}</span>` : ""}
             </div>
           `
@@ -55,9 +63,7 @@ export const EditModalsComponent = {
             class="edit-btn h-7 w-7 sm:w-9 sm:h-9 items-center justify-center rounded-lg sm:rounded-xl border border-border bg-surface hover:bg-blue-600/10 hover:cursor-pointer transition"
             title="Edit Objective"
           >
-            <i
-              class="fa-regular fa-pen-to-square text-blue-500/80 text-sm"
-            ></i>
+            <i class="fa-regular fa-pen-to-square text-blue-500/80 text-sm"></i>
           </button>
 
           <button
@@ -477,7 +483,7 @@ export const EditModalsComponent = {
 
                 <div
                   id="edit-log-plan-link-autocomplete"
-                  class="w-full"
+                  class="w-full mt-3.5"
                 ></div>
               </div>
             </div>
@@ -547,7 +553,7 @@ export const EditModalsComponent = {
 
                 <div
                   id="log-metrics-list"
-                  class="w-full flex flex-col gap-2 mt-1"
+                  class="w-full flex flex-col gap-2 mt-3.5"
                 ></div>
               </div>
             </div>

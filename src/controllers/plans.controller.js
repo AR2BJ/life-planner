@@ -165,7 +165,7 @@ export const PlansController = {
       "log-mood-autocomplete-wrapper",
     );
 
-    // 1. Life Area / Category Select
+    // 1. Life Area Select
     if (lifeAreaWrapper) {
       if (this.formLifeAreaAutocomplete) {
         this.formLifeAreaAutocomplete.destroy();
@@ -177,7 +177,7 @@ export const PlansController = {
         lifeAreaWrapper,
         lifeAreaOptions,
         {
-          label: "Category",
+          label: "Life Area",
           placeholder: "Select Area...",
           itemTitle: "name",
           itemValue: "id",
@@ -295,11 +295,11 @@ export const PlansController = {
     });
   },
 
-  getCategoriesForTab() {
+  getLifeAreasForTab() {
     return StateManager.getLifeAreas();
   },
 
-  getSelectedCategoryForTab(tab) {
+  getSelectedLifeAreaForTab(tab) {
     if (tab === "plans") return state.plansUI?.selectedLifeArea || "all";
     if (tab === "logs") return state.logsUI?.selectedLifeArea || "all";
     if (tab === "templates")
@@ -314,19 +314,19 @@ export const PlansController = {
     return "";
   },
 
-  renderCategories() {
-    const container = document.getElementById("category-filter-scroll");
+  renderLifeAreas() {
+    const container = document.getElementById("life-area-filter-scroll");
     if (!container) return;
 
     const currentTab = state.activeTab || "plans";
-    const categories = this.getCategoriesForTab();
-    const activeCategory = this.getSelectedCategoryForTab(currentTab);
+    const lifeAreas = this.getLifeAreasForTab();
+    const activeLifeArea = this.getSelectedLifeAreaForTab(currentTab);
 
     const allButtonHtml = `
       <button
-        data-tag="all"
-        class="tag-filter-btn h-8 shrink-0 whitespace-nowrap rounded-lg px-3.5 text-xs font-semibold transition cursor-pointer ${
-          activeCategory === "all"
+        data-life-area="all"
+        class="life-area-filter-btn h-8 shrink-0 whitespace-nowrap rounded-lg px-3.5 text-xs font-semibold transition cursor-pointer ${
+          activeLifeArea === "all"
             ? "bg-brand/80 text-white shadow-brand/10"
             : "bg-surface-2 hover:bg-surface-3 text-secondary hover:text-color"
         }"
@@ -335,9 +335,9 @@ export const PlansController = {
       </button>
     `;
 
-    const categoriesHtml = categories
+    const lifeAreasHtml = lifeAreas
       .map((cat) => {
-        const isActive = String(activeCategory) === String(cat.id);
+        const isActive = String(activeLifeArea) === String(cat.id);
         const activeClasses = isActive
           ? "bg-brand/80 text-white shadow-brand/10"
           : "bg-surface-2 hover:bg-surface-3 text-secondary hover:text-color";
@@ -353,8 +353,8 @@ export const PlansController = {
 
         return `
         <button
-          data-tag="${cat.id}"
-          class="tag-filter-btn flex items-center gap-1.5 h-8 shrink-0 whitespace-nowrap rounded-lg px-3.5 text-xs font-semibold transition cursor-pointer ${activeClasses}"
+          data-life-area="${cat.id}"
+          class="life-area-filter-btn flex items-center gap-1.5 h-8 shrink-0 whitespace-nowrap rounded-lg px-3.5 text-xs font-semibold transition cursor-pointer ${activeClasses}"
         >
           ${cat.icon ? `<i class="${iconClass} text-[11px]"></i>` : ""}
           <span>${cat.name}</span>
@@ -363,11 +363,11 @@ export const PlansController = {
       })
       .join("");
 
-    container.innerHTML = allButtonHtml + categoriesHtml;
+    container.innerHTML = allButtonHtml + lifeAreasHtml;
   },
 
   refreshUI() {
-    this.renderCategories();
+    this.renderLifeAreas();
 
     const allPlans = StateManager.getPlans();
     const filteredData = StateManager.getFilteredDataForActiveTab();
@@ -430,15 +430,33 @@ export const PlansController = {
 
   bindStaticEvents() {
     // 1. Tag Filters
-    const tagFilterBtn = document.getElementById("category-filter-scroll");
-    if (tagFilterBtn) {
-      tagFilterBtn.addEventListener("click", (e) => {
-        const btn = e.target.closest(".tag-filter-btn");
+    const lifeAreaFilterBtn = document.getElementById(
+      "life-area-filter-scroll",
+    );
+    if (lifeAreaFilterBtn) {
+      lifeAreaFilterBtn.addEventListener("click", (e) => {
+        const btn = e.target.closest(".life-area-filter-btn");
         if (!btn) return;
 
-        const selectedTag = btn.dataset.tag;
+        const selectedTag = btn.dataset.lifeArea;
         StateManager.setLifeAreaFilter(selectedTag);
         this.refreshUI();
+      });
+    }
+
+    const toggleFormBtn = document.getElementById("btn-toggle-plan-form");
+    const formContainer = document.getElementById("plan-form-container");
+    const formChevron = document.getElementById("form-chevron");
+    if (toggleFormBtn && formContainer && formChevron) {
+      toggleFormBtn.addEventListener("click", () => {
+        const isHidden = formContainer.classList.contains("hidden");
+        if (isHidden) {
+          formContainer.classList.replace("hidden", "flex");
+          formChevron.classList.add("rotate-180");
+        } else {
+          formContainer.classList.replace("flex", "hidden");
+          formChevron.classList.remove("rotate-180");
+        }
       });
     }
 

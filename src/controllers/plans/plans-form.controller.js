@@ -268,12 +268,29 @@ export const PlansFormController = {
     }
   },
 
+  sanitizeTargetValue(inputValue, enforceMinimum = false) {
+    const MIN_TARGET_VALUE = 1;
+    const MAX_TARGET_VALUE = 9999999;
+    const MAX_TARGET_LENGTH = 7;
+
+    let val = String(inputValue || "").replace(/[^0-9.]/g, "");
+    const parts = val.split(".");
+    if (parts.length > 2) val = `${parts[0]}.${parts.slice(1).join("")}`;
+    if (val.length > MAX_TARGET_LENGTH) val = val.slice(0, MAX_TARGET_LENGTH);
+    if (Number(val) > MAX_TARGET_VALUE) val = String(MAX_TARGET_VALUE);
+
+    if (enforceMinimum) {
+      const numVal = Number(val);
+      if (isNaN(numVal) || numVal < MIN_TARGET_VALUE) {
+        val = String(MIN_TARGET_VALUE);
+      }
+    }
+    return val;
+  },
+
   handleSaveObjective() {
     const input = document.getElementById("new-objective-input");
     const targetInput = document.getElementById("new-objective-target");
-
-    const MIN_TARGET_VALUE = 1;
-    const MAX_TARGET_VALUE = 9999999;
 
     if (!input) return;
     const title = input.value.trim();
@@ -289,11 +306,13 @@ export const PlansFormController = {
     const type = editObjectiveTypeAutocomplete
       ? editObjectiveTypeAutocomplete.getValue()
       : "boolean";
-    const parsedValue = Number(targetInput?.value);
-    const targetValue =
-      isNaN(parsedValue) || parsedValue < MIN_TARGET_VALUE
-        ? MIN_TARGET_VALUE
-        : Math.min(parsedValue, MAX_TARGET_VALUE);
+
+    const sanitizedTarget = this.sanitizeTargetValue(
+      targetInput?.value || "1",
+      true,
+    );
+    const targetValue = Number(sanitizedTarget);
+
     const unit = editObjectiveUnitAutocomplete
       ? editObjectiveUnitAutocomplete.getValue()
       : "count";
@@ -330,30 +349,18 @@ export const PlansFormController = {
     const targetInput = document.getElementById("new-objective-target");
     const actionsContainer = document.getElementById("objective-form-actions");
 
-    const MIN_TARGET_VALUE = 1;
-    const MAX_TARGET_VALUE = 9999999;
-    const MAX_TARGET_LENGTH = 7;
+    if (targetInput) {
+      targetInput.type = "text";
+      targetInput.setAttribute("inputmode", "decimal");
 
-    const sanitizeTargetInput = (inputEl, enforceMinimum = false) => {
-      let val = inputEl.value.replace(/[^0-9.]/g, "");
-      const parts = val.split(".");
-      if (parts.length > 2) val = `${parts[0]}.${parts.slice(1).join("")}`;
-      if (val.length > MAX_TARGET_LENGTH) val = val.slice(0, MAX_TARGET_LENGTH);
-      if (Number(val) > MAX_TARGET_VALUE) val = String(MAX_TARGET_VALUE);
-      if (enforceMinimum) {
-        const numVal = Number(val);
-        if (isNaN(numVal) || numVal < MIN_TARGET_VALUE)
-          val = String(MIN_TARGET_VALUE);
-      }
-      inputEl.value = val;
-    };
+      targetInput.addEventListener("input", (e) => {
+        e.target.value = this.sanitizeTargetValue(e.target.value, false);
+      });
 
-    targetInput?.addEventListener("input", (e) =>
-      sanitizeTargetInput(e.target, false),
-    );
-    targetInput?.addEventListener("blur", (e) =>
-      sanitizeTargetInput(e.target, true),
-    );
+      targetInput.addEventListener("blur", (e) => {
+        e.target.value = this.sanitizeTargetValue(e.target.value, true);
+      });
+    }
 
     input?.addEventListener("keydown", (e) => {
       if (e.key === "Enter") {

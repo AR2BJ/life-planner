@@ -313,7 +313,7 @@ export const PlansView = {
               </button>
 
               <div
-                id="category-filter-scroll"
+                id="life-area-filter-scroll"
                 class="flex flex-1 min-w-0 flex-row items-center gap-2 overflow-x-auto px-1 scrollbar-none scroll-smooth transition-all duration-300"
               ></div>
 
@@ -359,7 +359,7 @@ export const PlansView = {
 };
 
 function setupPlanFiltersDragScroll() {
-  const scrollContainer = document.getElementById("category-filter-scroll");
+  const scrollContainer = document.getElementById("life-area-filter-scroll");
   const btnLeft = document.getElementById("btn-scroll-left");
   const btnRight = document.getElementById("btn-scroll-right");
 

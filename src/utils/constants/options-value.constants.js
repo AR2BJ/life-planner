@@ -102,11 +102,6 @@ export const OBJECTIVE_TYPES = [
 
 export const OBJECTIVE_UNITS = [
   {
-    id: "count",
-    name: "Count / Times",
-    icon: "fa-solid fa-calculator text-blue-500/80",
-  },
-  {
     id: "hrs",
     name: "Hours (hrs)",
     icon: "fa-solid fa-clock text-violet-500/80",
@@ -127,14 +122,84 @@ export const OBJECTIVE_UNITS = [
     icon: "fa-solid fa-percent text-yellow-500/80",
   },
   {
+    id: "km",
+    name: "Kilometers (km)",
+    icon: "fa-solid fa-route text-teal-500/80",
+  },
+  {
+    id: "usd",
+    name: "Currency ($ / USD)",
+    icon: "fa-solid fa-dollar-sign text-red-600/80",
+  },
+  {
+    id: "reps",
+    name: "Repetitions (Reps)",
+    icon: "fa-solid fa-dumbbell text-slate-600/80",
+  },
+  {
+    id: "cal",
+    name: "Calories (kcal)",
+    icon: "fa-solid fa-fire text-orange-500/80",
+  },
+  {
+    id: "streak",
+    name: "Streak (Days)",
+    icon: "fa-solid fa-fire-flame-curved text-indigo-500/80",
+  },
+  {
+    id: "liters",
+    name: "Liters (L)",
+    icon: "fa-solid fa-glass-water text-sky-500/80",
+  },
+  {
+    id: "chapters",
+    name: "Chapters",
+    icon: "fa-solid fa-book-bookmark text-green-500/80",
+  },
+  {
+    id: "projects",
+    name: "Projects",
+    icon: "fa-solid fa-diagram-project text-mist-500/80",
+  },
+  {
+    id: "count",
+    name: "Count",
+    icon: "fa-solid fa-calculator text-blue-500/80",
+  },
+  {
     id: "pages",
     name: "Pages",
     icon: "fa-solid fa-book-open text-cyan-500/80",
   },
   {
+    id: "checkins",
+    name: "Check-ins",
+    icon: "fa-solid fa-square-check text-mauve-500/80",
+  },
+  {
     id: "step",
     name: "Steps",
     icon: "fa-solid fa-shoe-prints text-lime-500/80",
+  },
+  {
+    id: "episodes",
+    name: "Episodes",
+    icon: "fa-solid fa-circle-play text-rose-500/80",
+  },
+  {
+    id: "lessons",
+    name: "Lessons",
+    icon: "fa-solid fa-graduation-cap text-purple-500/80",
+  },
+  {
+    id: "words",
+    name: "Words Written",
+    icon: "fa-solid fa-pen-nib text-amber-500/80",
+  },
+  {
+    id: "points",
+    name: "Story Points",
+    icon: "fa-solid fa-chart-line text-fuchsia-500/80",
   },
 ];
 
