@@ -16,6 +16,34 @@ export const PlansActionController = {
     this.bindDynamicEvents();
   },
 
+  // --- HELPER FOR IN-CARD INPUT VALIDATION ---
+  sanitizeObjectiveProgressValue(
+    inputValue,
+    targetValue = 1,
+    enforceMinimum = false,
+  ) {
+    const MIN_VALUE = 0;
+    const MAX_VALUE = Number(targetValue) > 0 ? Number(targetValue) : 9999999;
+    const MAX_LENGTH = 7;
+
+    let val = String(inputValue || "").replace(/[^0-9.]/g, "");
+
+    const parts = val.split(".");
+    if (parts.length > 2) val = `${parts[0]}.${parts.slice(1).join("")}`;
+
+    if (val.length > MAX_LENGTH) val = val.slice(0, MAX_LENGTH);
+
+    if (Number(val) > MAX_VALUE) val = String(MAX_VALUE);
+
+    if (enforceMinimum) {
+      const numVal = Number(val);
+      if (isNaN(numVal) || numVal < MIN_VALUE) {
+        val = String(MIN_VALUE);
+      }
+    }
+    return val;
+  },
+
   handleToggleObjective(planId, objectiveId) {
     const plans = StateManager.getPlans() || [];
     const targetPlan = plans.find((p) => String(p.id) === String(planId));
@@ -203,14 +231,39 @@ export const PlansActionController = {
     const listContainer = document.getElementById("plan-list");
     if (!listContainer) return;
 
+    listContainer.addEventListener("input", (e) => {
+      const target = e.target;
+      if (target.classList.contains("objective-progress-input")) {
+        const targetVal = target.dataset.target || 9999999;
+        target.value = this.sanitizeObjectiveProgressValue(
+          target.value,
+          targetVal,
+          false,
+        );
+      }
+    });
+
     listContainer.addEventListener("change", (e) => {
       const target = e.target;
       if (target.classList.contains("objective-progress-input")) {
         const planId = target.dataset.planId;
         const objectiveId = target.dataset.objectiveId;
+        const targetVal = target.dataset.target || 9999999;
+
+        const sanitizedVal = this.sanitizeObjectiveProgressValue(
+          target.value,
+          targetVal,
+          true,
+        );
+        target.value = sanitizedVal;
+
         if (planId && objectiveId) {
           openObjectivesState.expandedPlanIds.add(planId);
-          this.handleObjectiveProgressChange(planId, objectiveId, target.value);
+          this.handleObjectiveProgressChange(
+            planId,
+            objectiveId,
+            Number(sanitizedVal),
+          );
         }
       }
     });
