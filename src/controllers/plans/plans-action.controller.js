@@ -3,6 +3,11 @@ import {
   MOOD_OPTIONS,
 } from "@/utils/constants/options-value.constants.js";
 import {
+  mapTemplateToObjectives,
+  openObjectivesState,
+  todayISO,
+} from "@/utils/helpers.js";
+import {
   setPendingDeleteId,
   setPendingEditId,
 } from "./plans-form.controller.js";
@@ -12,7 +17,6 @@ import { PlanAutoLogService } from "@/services/plan-auto-log.service.js";
 import { PlanService } from "@/services/plans.service.js";
 import { PlansItemComponent } from "@/components/features/plans/plan-item.component.js";
 import { StateManager } from "@/models/state.model.js";
-import { openObjectivesState } from "@/utils/helpers.js";
 
 export const PlansActionController = {
   init(mainController) {
@@ -446,7 +450,53 @@ export const PlansActionController = {
         return;
       }
 
-      // 8. TOGGLE TEMPLATE FAVORITE
+      // 8. TOGGLE TEMPLATE USE BUTTON HANDLER
+      const useTemplateBtn = target.closest(".use-template-btn");
+      if (useTemplateBtn) {
+        e.stopPropagation();
+        const templateId = useTemplateBtn.dataset.id;
+        if (!templateId) return;
+
+        const templates = StateManager.getTemplates() || [];
+        const targetTemplate = templates.find(
+          (t) => String(t.id) === String(templateId),
+        );
+        if (!targetTemplate) return;
+
+        // 1. Update usage count
+        targetTemplate.usageCount = (targetTemplate.usageCount || 0) + 1;
+        StateManager.save({ templates });
+
+        // 2. Generate objectives schema-compliant
+        const generatedObjectives = mapTemplateToObjectives(targetTemplate);
+
+        // 3. Create Plan with normalized objectives structure
+        const plans = StateManager.getPlans() || [];
+        const newPlan = PlanService.createPlan(plans, {
+          title: targetTemplate.title,
+          description: targetTemplate.description,
+          lifeAreaId: targetTemplate.lifeAreaId || "health",
+          state: "active",
+          period: { startDate: todayISO(), endDate: null },
+          objectives: generatedObjectives,
+        });
+
+        StateManager.save({ plans: newPlan });
+
+        // 4. Switch UI State
+        StateManager.setTab("plans");
+        this.mainController.refreshUI();
+
+        NotificationService.show({
+          type: "success",
+          message: `Plan created from "${targetTemplate.title}" with ${generatedObjectives.length} objectives`,
+          icon: "fa-rocket",
+          duration: 4000,
+        });
+        return;
+      }
+
+      // 9. TOGGLE TEMPLATE FAVORITE
       const favoriteBtn = target.closest(".favorite-btn");
       if (favoriteBtn) {
         e.stopPropagation();
@@ -457,7 +507,7 @@ export const PlansActionController = {
         return;
       }
 
-      // 9. EDIT MODAL TRIGGER
+      // 10. EDIT MODAL TRIGGER
       const editBtn = target.closest(".edit-btn");
       if (editBtn) {
         if (
@@ -476,7 +526,7 @@ export const PlansActionController = {
         return;
       }
 
-      // 10. DELETE MODAL TRIGGER
+      // 11. DELETE MODAL TRIGGER
       const deleteBtn = target.closest(".delete-btn");
       if (deleteBtn) {
         if (
@@ -495,7 +545,7 @@ export const PlansActionController = {
         return;
       }
 
-      // 11. DIRECT DELETE ITEM HANDLER
+      // 12. DIRECT DELETE ITEM HANDLER
       const directDeleteBtn = target.closest(".direct-delete-btn");
       if (directDeleteBtn) {
         e.stopPropagation();

@@ -60,3 +60,38 @@ export function formatNumberWithCommas(val) {
   if (!cleanNum) return "";
   return parseInt(cleanNum, 10).toLocaleString("en-US");
 }
+
+/**
+ * Maps template properties (baseline & optimal) into Plan Objectives matching storage schema
+ * @param {Object} template - Target template object
+ * @returns {Array} List of formatted objectives
+ */
+export function mapTemplateToObjectives(template) {
+  const objectives = [];
+
+  if (template.baseline && template.baseline.trim() !== "") {
+    objectives.push({
+      id: generateId(),
+      title: `Baseline: ${template.baseline.trim()}`,
+      type: "boolean",
+      targetValue: 1,
+      currentValue: 0,
+      unit: "task",
+      completed: false,
+    });
+  }
+
+  if (template.optimal && template.optimal.trim() !== "") {
+    objectives.push({
+      id: generateId(),
+      title: `Optimal: ${template.optimal.trim()}`,
+      type: "boolean",
+      targetValue: 1,
+      currentValue: 0,
+      unit: "task",
+      completed: false,
+    });
+  }
+
+  return objectives;
+}

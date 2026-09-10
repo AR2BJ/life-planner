@@ -688,9 +688,9 @@ export const PlansItemComponent = {
     return `
       <div
         data-id="${log.id}"
-        class="log-item group relative flex flex-col gap-3 p-3 md:p-4 rounded-xl bg-surface-2/40 hover:bg-surface-2/60 transition-all border border-border/40"
+        class="log-item group relative flex flex-col gap-4 p-3 md:p-4 rounded-xl bg-surface-2/40 hover:bg-surface-2/60 transition-all border border-border/40"
       >
-        <div class="flex items-start justify-between gap-3 w-full">
+        <div class="flex items-start justify-between gap-4 w-full">
           <div class="flex flex-col min-w-0 w-full gap-1.5">
             <div class="flex items-center gap-2 flex-wrap">
               ${moodBadge} ${energyBadge}
@@ -731,90 +731,135 @@ export const PlansItemComponent = {
     return `
       <div
         data-id="${template.id}"
-        class="template-item group relative flex flex-col justify-between gap-4 p-3 md:p-4 rounded-xl bg-surface-2/40 hover:bg-surface-2/60 transition-all border border-dashed border-border/80"
+        class="template-item relative flex flex-col justify-between gap-4 p-3 md:p-4 rounded-2xl bg-surface-2/30 transition-all duration-300 border border-dashed border-border/80 shadow-xs"
       >
-        <div class="flex flex-col gap-2">
-          <div class="flex items-start justify-between gap-3">
-            <div class="flex items-center gap-1.5 flex-wrap">
+        <div class="flex items-start justify-between gap-4">
+          <div class="flex flex-col min-w-0 w-full gap-1.5 pe-12">
+            <div class="flex items-center gap-2 flex-wrap">
               <span
-                class="inline-flex items-center gap-1 rounded-md border border-violet-500/20 bg-violet-500/10 px-2 py-0.5 text-[10px] uppercase font-semibold tracking-wider text-violet-500/80"
+                class="inline-flex items-center gap-1.5 rounded-md border border-violet-500/30 bg-violet-500/10 px-2.5 py-0.5 text-[10px] uppercase font-semibold tracking-wider text-violet-400"
               >
-                <i class="fa-regular fa-cubes"></i> Template
+                <i class="fa-regular fa-cubes text-[10px]"></i> Template
               </span>
 
               ${lifeAreaBadge}
               ${
                 template.isFavorite
                   ? `<span
-                      class="inline-flex items-center gap-1 rounded-md border border-yellow-500/20 bg-yellow-500/10 px-2 py-0.5 text-[10px] font-semibold text-yellow-500/80"
-                    >
-                      <i class="fa-regular fa-star"></i> Favorite
-                    </span>`
+                    class="inline-flex items-center gap-1 rounded-md border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold text-amber-400 uppercase tracking-wider"
+                  >
+                    <i class="fa-solid fa-star text-[9px]"></i> Favorite
+                  </span>`
                   : ""
               }
             </div>
+            <h2
+              class="text-base font-bold mt-1 text-color wrap-break-word"
+            >
+              ${template.title || "Untitled Template"}
+            </h2>
 
+            ${
+              template.description
+                ? `<p class="text-xs lg:text-sm text-secondary/90 leading-relaxed wrap-break-word">
+                      ${template.description}
+                    </p>`
+                : ""
+            }
+          </div>
+
+          <div
+            class="absolute top-3 right-3 md:static flex self-start md:top-auto md:right-auto z-20 shrink-0 items-center gap-1.5"
+          >
+            <button
+              type="button"
+              data-id="${template.id}"
+              class="favorite-btn w-8 h-8 md:w-9 md:h-9 rounded-lg bg-surface-2 hover:bg-amber-600/10 border border-border flex items-center justify-center cursor-pointer transition group"
+              title="Toggle Favorite"
+            >
+              <i
+                class="${
+                  template.isFavorite
+                    ? "fa-solid text-amber-400/80"
+                    : "fa-regular text-secondary/80"
+                } fa-star text-sm md:text-base pointer-events-none transition-all group-hover:text-amber-400/80"
+              ></i>
+            </button>
             ${this._renderActionButtons(template.id)}
           </div>
-
-          <h3
-            class="text-sm lg:text-base font-bold text-color tracking-tight mt-1 wrap-break-word"
-          >
-            ${template.title || "Untitled Template"}
-          </h3>
-
-          <p class="text-xs text-secondary/90 leading-relaxed wrap-break-word">
-            ${template.description || "No description provided."}
-          </p>
-
-          <div class="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-            ${
-              template.baseline
-                ? `<div
-                    class="bg-surface/50 p-2 rounded-lg border border-border/40"
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mt-1">
+          ${
+            template.baseline
+              ? `<div
+                  class="relative overflow-hidden rounded-xl bg-surface/80 p-3 border border-border/50 flex flex-col justify-between gap-1 group/base hover:border-slate-400/40 transition-colors"
+                >
+                  <div
+                    class="flex items-center justify-between text-[10px] font-extrabold uppercase tracking-wider text-slate-400"
                   >
+                    <span class="flex items-center gap-1.5">
+                      <i class="fa-regular fa-gauge-min text-slate-400"></i>
+                      Baseline
+                    </span>
                     <span
-                      class="text-[10px] font-semibold uppercase text-muted block"
-                      >Baseline</span
+                      class="text-[9px] px-1.5 py-0.5 rounded bg-slate-500/10 text-slate-400 border border-slate-500/20"
+                      >Min</span
                     >
-                    <span class="text-secondary wrap-break-words"
-                      >${template.baseline}</span
-                    >
-                  </div>`
-                : ""
-            }
-            ${
-              template.optimal
-                ? `<div
-                    class="bg-surface/50 p-2 rounded-lg border border-border/40"
+                  </div>
+                  <span
+                    class="text-xs font-semibold text-color/90 mt-1 wrap-break-word leading-snug"
                   >
+                    ${template.baseline}
+                  </span>
+                </div>`
+              : ""
+          }
+          ${
+            template.optimal
+              ? `<div
+                  class="relative overflow-hidden rounded-xl bg-emerald-500/5 p-3 border border-emerald-500/20 flex flex-col justify-between gap-1 group/opt hover:border-emerald-500/40 transition-colors"
+                >
+                  <div
+                    class="flex items-center justify-between text-[10px] font-extrabold uppercase tracking-wider text-emerald-400"
+                  >
+                    <span class="flex items-center gap-1.5">
+                      <i class="fa-regular fa-gauge-max text-emerald-400"></i>
+                      Optimal
+                    </span>
                     <span
-                      class="text-[10px] font-semibold uppercase text-muted block"
-                      >Optimal</span
+                      class="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                      >Target</span
                     >
-                    <span class="text-secondary wrap-break-words"
-                      >${template.optimal}</span
-                    >
-                  </div>`
-                : ""
-            }
-          </div>
+                  </div>
+                  <span
+                    class="text-xs font-semibold text-color mt-1 wrap-break-word leading-snug"
+                  >
+                    ${template.optimal}
+                  </span>
+                </div>`
+              : ""
+          }
         </div>
 
         <div
-          class="pt-3 border-t border-border/50 flex items-center justify-between"
+          class="pt-3 border-t border-border/50 flex items-center justify-between gap-2"
         >
-          <span class="text-[11px] text-muted">
-            <i class="fa-regular fa-chart-line me-1"></i>Used:
-            ${template.usageCount || 0} times
+          <span
+            class="text-[11px] font-medium text-muted flex items-center gap-1.5"
+          >
+            <i class="fa-regular fa-chart-line-up text-brand/80"></i>
+            Used
+            <strong class="text-color">${template.usageCount || 0}</strong>
+            times
           </span>
+
           <button
             type="button"
             data-id="${template.id}"
-            class="use-template-btn inline-flex items-center gap-1.5 bg-brand/80 hover:bg-brand/90 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition shadow-md cursor-pointer"
+            class="use-template-btn inline-flex items-center gap-2 bg-brand hover:bg-brand/90 active:scale-95 text-white text-xs font-bold px-3.5 py-2 rounded-xl transition shadow-md shadow-brand/20 cursor-pointer"
           >
-            <i class="fa-regular fa-rocket pointer-events-none"></i> Use
-            Template
+            <i class="fa-regular fa-rocket text-xs pointer-events-none"></i>
+            <span>Use Template</span>
           </button>
         </div>
       </div>
