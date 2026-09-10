@@ -1357,7 +1357,7 @@ export const PlansFormController = {
           if (this.mainController?.refreshUI) this.mainController.refreshUI();
 
           NotificationService.show({
-            type: "warning",
+            type: "error",
             message: `Item deleted successfully`,
             icon: "fa-trash-can",
             duration: 5000,

@@ -1,4 +1,8 @@
 import {
+  ENERGY_LEVEL_OPTIONS,
+  MOOD_OPTIONS,
+} from "@/utils/constants/options-value.constants.js";
+import {
   setPendingDeleteId,
   setPendingEditId,
 } from "./plans-form.controller.js";
@@ -227,6 +231,50 @@ export const PlansActionController = {
     });
   },
 
+  cycleLogMood(logId) {
+    const logs = StateManager.getLogs() || [];
+    const targetLog = logs.find((l) => String(l.id) === String(logId));
+    if (!targetLog) return;
+
+    const moodValues = MOOD_OPTIONS.map((m) => m.value);
+    const currentIndex = moodValues.indexOf(targetLog.mood || "neutral");
+    const nextMood = moodValues[(currentIndex + 1) % moodValues.length];
+
+    targetLog.mood = nextMood;
+
+    StateManager.save({ logs });
+    this.mainController.refreshUI();
+
+    NotificationService.show({
+      type: "info",
+      message: `Mood updated to "${nextMood.toUpperCase()}"`,
+      icon: "fa-face-smile",
+      duration: 5000,
+    });
+  },
+
+  cycleLogEnergy(logId) {
+    const logs = StateManager.getLogs() || [];
+    const targetLog = logs.find((l) => String(l.id) === String(logId));
+    if (!targetLog) return;
+
+    const energyValues = ENERGY_LEVEL_OPTIONS.map((e) => Number(e.value));
+    const currentIndex = energyValues.indexOf(Number(targetLog.energy) || 3);
+    const nextEnergy = energyValues[(currentIndex + 1) % energyValues.length];
+
+    targetLog.energy = nextEnergy;
+
+    StateManager.save({ logs });
+    this.mainController.refreshUI();
+
+    NotificationService.show({
+      type: "info",
+      message: `Energy updated to ${nextEnergy}/5`,
+      icon: "fa-bolt",
+      duration: 5000,
+    });
+  },
+
   bindDynamicEvents() {
     const listContainer = document.getElementById("plan-list");
     if (!listContainer) return;
@@ -376,7 +424,29 @@ export const PlansActionController = {
         return;
       }
 
-      // 6. TOGGLE TEMPLATE FAVORITE
+      // 6. CYCLE MOOD BUTTON
+      const moodCycleBtn = target.closest(".mood-cycle-btn");
+      if (moodCycleBtn) {
+        e.stopPropagation();
+        const logId = moodCycleBtn.dataset.logId;
+        if (logId) {
+          this.cycleLogMood(logId);
+        }
+        return;
+      }
+
+      // 7. CYCLE ENERGY BUTTON
+      const energyCycleBtn = target.closest(".energy-cycle-btn");
+      if (energyCycleBtn) {
+        e.stopPropagation();
+        const logId = energyCycleBtn.dataset.logId;
+        if (logId) {
+          this.cycleLogEnergy(logId);
+        }
+        return;
+      }
+
+      // 8. TOGGLE TEMPLATE FAVORITE
       const favoriteBtn = target.closest(".favorite-btn");
       if (favoriteBtn) {
         e.stopPropagation();
@@ -387,7 +457,7 @@ export const PlansActionController = {
         return;
       }
 
-      // 7. EDIT MODAL TRIGGER
+      // 9. EDIT MODAL TRIGGER
       const editBtn = target.closest(".edit-btn");
       if (editBtn) {
         if (
@@ -406,7 +476,7 @@ export const PlansActionController = {
         return;
       }
 
-      // 8. DELETE MODAL TRIGGER
+      // 10. DELETE MODAL TRIGGER
       const deleteBtn = target.closest(".delete-btn");
       if (deleteBtn) {
         if (
@@ -425,7 +495,7 @@ export const PlansActionController = {
         return;
       }
 
-      // 9. DIRECT DELETE ITEM HANDLER
+      // 11. DIRECT DELETE ITEM HANDLER
       const directDeleteBtn = target.closest(".direct-delete-btn");
       if (directDeleteBtn) {
         e.stopPropagation();

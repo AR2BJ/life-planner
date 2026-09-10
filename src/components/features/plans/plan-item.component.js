@@ -65,7 +65,7 @@ export const PlansItemComponent = {
     `;
   },
 
-  _getMoodBadgeHtml(moodValue) {
+  _getMoodBadgeHtml(moodValue, logId) {
     const matched = MOOD_OPTIONS.find(
       (m) => String(m.value) === String(moodValue),
     );
@@ -78,16 +78,22 @@ export const PlansItemComponent = {
     const iconClass = this._normalizeIconClass(moodData.icon);
 
     return `
-      <span
-        class="inline-flex items-center gap-1 rounded-md border ${moodData.class} px-2 py-0.5 text-[10px] uppercase font-semibold"
+      <button
+        type="button"
+        data-log-id="${logId}"
+        data-current-mood="${moodData.value || moodValue}"
+        class="mood-cycle-btn inline-flex items-center gap-1 rounded-md border ${moodData.class} px-2 py-0.5 text-[10px] uppercase font-semibold cursor-pointer hover:opacity-80 active:scale-95 transition-all select-none"
+        title="Click to cycle mood"
       >
-        <i class="${iconClass} text-[9px]"></i>
+        <i
+          class="${iconClass} text-[9px] transition-transform duration-300"
+        ></i>
         <span>${moodData.label}</span>
-      </span>
+      </button>
     `;
   },
 
-  _getEnergyBadgeHtml(energyValue) {
+  _getEnergyBadgeHtml(energyValue, logId) {
     const matched = ENERGY_LEVEL_OPTIONS.find(
       (e) => Number(e.value) === Number(energyValue),
     );
@@ -100,12 +106,18 @@ export const PlansItemComponent = {
     const iconClass = this._normalizeIconClass(energyData.icon);
 
     return `
-      <span
-        class="inline-flex items-center gap-1 rounded-md border ${energyData.class} px-2 py-0.5 text-[10px] uppercase font-semibold"
+      <button
+        type="button"
+        data-log-id="${logId}"
+        data-current-energy="${energyValue}"
+        class="energy-cycle-btn inline-flex items-center gap-1 rounded-md border ${energyData.class} px-2 py-0.5 text-[10px] uppercase font-semibold cursor-pointer hover:opacity-80 active:scale-95 transition-all select-none"
+        title="Click to cycle energy level"
       >
-        <i class="${iconClass} text-[9px]"></i>
+        <i
+          class="${iconClass} text-[9px] transition-transform duration-300"
+        ></i>
         <span>${energyData.label}</span>
-      </span>
+      </button>
     `;
   },
 
@@ -646,8 +658,8 @@ export const PlansItemComponent = {
   },
 
   renderLog(log) {
-    const moodBadge = this._getMoodBadgeHtml(log.mood);
-    const energyBadge = this._getEnergyBadgeHtml(log.energy);
+    const moodBadge = this._getMoodBadgeHtml(log.mood, log.id);
+    const energyBadge = this._getEnergyBadgeHtml(log.energy, log.id);
     const metricsHtml = this._renderMetricsHtml(log.id, log.metrics);
 
     let linkedPlanBadgeHtml = "";
