@@ -574,69 +574,67 @@ export const EditModalsComponent = {
                   class="w-full flex flex-col gap-2 mt-3.5"
                 ></div>
               </div>
+            </div>
 
-              <div
-                id="accordion-template-strategies"
-                class="accordion-item edit-tab-field hidden flex-col rounded-2xl border border-border/60 bg-surface-2/60 overflow-hidden shrink-0 transition-all duration-300"
-                data-tab="templates"
+            <div
+              id="accordion-template-strategies"
+              class="accordion-item edit-tab-field hidden flex-col rounded-2xl border border-border/60 bg-surface-2/60 overflow-hidden shrink-0 transition-all duration-300"
+              data-tab="templates"
+            >
+              <button
+                type="button"
+                class="accordion-header w-full p-3.5 lg:p-4 border-b border-border flex items-center justify-between text-left cursor-pointer hover:bg-surface-2/80 transition"
               >
-                <button
-                  type="button"
-                  class="accordion-header w-full p-3.5 lg:p-4 border-b border-border flex items-center justify-between text-left cursor-pointer hover:bg-surface-2/80 transition"
-                >
-                  <div class="flex items-center gap-3">
-                    <div
-                      class="flex h-9 w-9 lg:h-10 lg:w-10 shrink-0 self-start items-center justify-center rounded-lg lg:rounded-xl bg-brand/10 text-brand/80"
-                    >
-                      <i class="fa-regular fa-compass text-sm lg:text-base"></i>
-                    </div>
-                    <div>
-                      <h4 class="text-xs lg:text-sm font-semibold text-color">
-                        Execution Benchmarks
-                      </h4>
-                      <p
-                        class="text-[10px] lg:text-xs leading-4 text-secondary"
-                      >
-                        Set baseline strategy standards and optimal performance
-                        goals.
-                      </p>
-                    </div>
+                <div class="flex items-center gap-3">
+                  <div
+                    class="flex h-9 w-9 lg:h-10 lg:w-10 shrink-0 self-start items-center justify-center rounded-lg lg:rounded-xl bg-brand/10 text-brand/80"
+                  >
+                    <i class="fa-regular fa-compass text-sm lg:text-base"></i>
                   </div>
-                  <i
-                    class="accordion-icon fa-regular fa-chevron-down text-secondary text-xs lg:text-sm transition-transform duration-200"
-                  ></i>
-                </button>
+                  <div>
+                    <h4 class="text-xs lg:text-sm font-semibold text-color">
+                      Execution Benchmarks
+                    </h4>
+                    <p class="text-[10px] lg:text-xs leading-4 text-secondary">
+                      Set baseline strategy standards and optimal performance
+                      goals.
+                    </p>
+                  </div>
+                </div>
+                <i
+                  class="accordion-icon fa-regular fa-chevron-down text-secondary text-xs lg:text-sm transition-transform duration-200"
+                ></i>
+              </button>
 
-                <div class="accordion-content hidden p-3.5 lg:p-4">
-                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 w-full">
-                    <div class="w-full flex flex-col">
-                      <label
-                        for="edit-template-baseline"
-                        class="mb-1.5 block ps-3 text-xs font-semibold text-secondary"
-                      >
-                        Baseline Strategy
-                      </label>
-                      <input
-                        id="edit-template-baseline"
-                        type="text"
-                        placeholder="e.g. Minimum acceptable standard"
-                        class="h-10 lg:h-11 w-full rounded-xl border border-border bg-surface px-4 text-sm text-color placeholder:text-secondary/70 focus:border-brand/80 focus:outline-none"
-                      />
-                    </div>
-                    <div class="w-full flex flex-col">
-                      <label
-                        for="edit-template-optimal"
-                        class="mb-1.5 block ps-3 text-xs font-semibold text-secondary"
-                      >
-                        Optimal Strategy
-                      </label>
-                      <input
-                        id="edit-template-optimal"
-                        type="text"
-                        placeholder="e.g. Best performance target"
-                        class="h-10 lg:h-11 w-full rounded-xl border border-border bg-surface px-4 text-sm text-color placeholder:text-secondary/70 focus:border-brand/80 focus:outline-none"
-                      />
-                    </div>
+              <div class="accordion-content hidden p-3.5 lg:p-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 w-full">
+                  <div class="w-full flex flex-col">
+                    <label
+                      for="edit-template-baseline"
+                      class="mb-1.5 block ps-3 text-xs font-semibold text-secondary"
+                    >
+                      Baseline Strategy
+                    </label>
+                    <input
+                      id="edit-template-baseline"
+                      type="text"
+                      placeholder="e.g. Minimum acceptable standard"
+                      class="h-10 lg:h-11 w-full rounded-xl border border-border bg-surface px-4 text-sm text-color placeholder:text-secondary/70 focus:border-brand/80 focus:outline-none"
+                    />
+                  </div>
+                  <div class="w-full flex flex-col">
+                    <label
+                      for="edit-template-optimal"
+                      class="mb-1.5 block ps-3 text-xs font-semibold text-secondary"
+                    >
+                      Optimal Strategy
+                    </label>
+                    <input
+                      id="edit-template-optimal"
+                      type="text"
+                      placeholder="e.g. Best performance target"
+                      class="h-10 lg:h-11 w-full rounded-xl border border-border bg-surface px-4 text-sm text-color placeholder:text-secondary/70 focus:border-brand/80 focus:outline-none"
+                    />
                   </div>
                 </div>
               </div>
