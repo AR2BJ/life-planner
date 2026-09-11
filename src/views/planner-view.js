@@ -1,8 +1,8 @@
-export const PlansView = {
+export const PlannerView = {
   render() {
     return `
       <section
-        id="plans-view"
+        id="planner-view"
         class="hidden w-full min-w-0 flex-col"
       >
         <div
@@ -49,7 +49,7 @@ export const PlansView = {
             </span>
             <input
               type="text"
-              id="search-plans"
+              id="search-planner"
               placeholder="Search items..."
               class="w-full ps-10 pe-10 py-2.5 text-sm rounded-xl border border-border bg-surface text-color placeholder:text-muted/70 focus:outline-none focus:border-brand/50 transition-all shadow-sm"
             />
@@ -82,7 +82,7 @@ export const PlansView = {
             class="flex flex-col rounded-xl border border-border bg-surface transition-all overflow-hidden shadow-sm"
           >
             <button
-              id="btn-toggle-plan-form"
+              id="btn-toggle-planner-form"
               class="w-full px-5 py-4 flex flex-row items-center justify-between text-left font-bold text-slate-500/80 hover:bg-surface-2/40 transition cursor-pointer"
             >
               <div class="flex items-center gap-2">
@@ -103,7 +103,7 @@ export const PlansView = {
             </button>
 
             <div
-              id="plan-form-container"
+              id="planner-form-container"
               class="hidden p-5 bg-surface-2/20 animate-slide-down flex-col gap-4 rounded-b-2xl border-t border-border"
             >
               <div
@@ -341,7 +341,7 @@ export const PlansView = {
             </div>
 
             <div
-              id="plan-count-badge"
+              id="planner-count-badge"
               class="shrink-0 flex justify-center items-center gap-1.5 px-4 py-1.5 bg-surface-3 rounded-xl text-xs font-bold text-color select-none"
             >
               0 Items
@@ -350,7 +350,7 @@ export const PlansView = {
         </div>
 
         <div
-          id="plan-list"
+          id="planner-list"
           class="mt-6 w-full space-y-3"
         ></div>
       </section>
@@ -385,19 +385,15 @@ function setupPlanFiltersDragScroll() {
       scrollContainer.offsetParent === null ||
       scrollContainer.clientWidth === 0
     ) {
-      btnLeft.classList.add("hidden");
-      btnLeft.classList.remove("flex");
-      btnRight.classList.add("hidden");
-      btnRight.classList.remove("flex");
+      btnLeft.classList.replace("flex", "hidden");
+      btnRight.classList.replace("flex", "hidden");
       scrollContainer.style.maskImage = "none";
       return;
     }
 
     if (!hasOverflow) {
-      btnLeft.classList.add("hidden");
-      btnLeft.classList.remove("flex");
-      btnRight.classList.add("hidden");
-      btnRight.classList.remove("flex");
+      btnLeft.classList.replace("flex", "hidden");
+      btnRight.classList.replace("flex", "hidden");
       scrollContainer.style.maskImage = "none";
       return;
     }
@@ -435,7 +431,7 @@ function setupPlanFiltersDragScroll() {
   });
   mutationObserver.observe(scrollContainer, { childList: true, subtree: true });
 
-  const viewSection = document.getElementById("plans-view");
+  const viewSection = document.getElementById("planner-view");
   if (viewSection) {
     const sectionObserver = new MutationObserver(() => {
       if (!viewSection.classList.contains("hidden")) {

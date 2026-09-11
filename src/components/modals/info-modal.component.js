@@ -36,12 +36,14 @@ export const InfoModalComponent = {
                                   >`,
                               )
                               .join(
-                                '<span class="text-[10px] text-muted">/</span>',
+                                '<span class="text-[10px] text-muted">+</span>',
                               )}
                           </div>
                         `,
                       )
-                      .join('<span class="text-[10px] text-muted">+</span>')}
+                      .join(
+                        '<span class="text-[10px] text-muted mx-0.5">/</span>',
+                      )}
                   </div>
                 </div>
               `,
@@ -50,6 +52,84 @@ export const InfoModalComponent = {
           </div>
         `,
     ).join("");
+  },
+
+  renderFeatureGuideData() {
+    return `
+      <div class="space-y-3">
+        <!-- 1. Objectives & Progress Tracking -->
+        <div class="p-3.5 bg-surface-2 border border-border rounded-2xl">
+          <h4
+            class="text-xs font-bold text-brand uppercase tracking-wider flex items-center gap-2 mb-1.5"
+          >
+            <i class="fa-regular fa-bullseye"></i> Objectives & Progress Tracking
+          </h4>
+          <p class="text-xs text-secondary leading-relaxed">
+            Break down plans into quantifiable Objectives (Boolean, Numeric, or Milestones). Target values and current progress dynamically calculate the plan's overall completion percentage.
+          </p>
+        </div>
+
+        <!-- 2. Execution Logs & Timeline -->
+        <div class="p-3.5 bg-surface-2 border border-border rounded-2xl">
+          <h4
+            class="text-xs font-bold text-blue-500/90 uppercase tracking-wider flex items-center gap-2 mb-1.5"
+          >
+            <i class="fa-regular fa-clipboard-list"></i> Execution Logs & Timeline
+          </h4>
+          <p class="text-xs text-secondary leading-relaxed">
+            Track daily or periodic progress using Logs. Record actual metric achievements, log notes, and review your timeline history to maintain consistency over time.
+          </p>
+        </div>
+
+        <!-- 3. Reusable Templates (Baseline vs Optimal) -->
+        <div class="p-3.5 bg-surface-2 border border-border rounded-2xl">
+          <h4
+            class="text-xs font-bold text-emerald-500/90 uppercase tracking-wider flex items-center gap-2 mb-1.5"
+          >
+            <i class="fa-regular fa-copy"></i> Templates (Baseline & Optimal)
+          </h4>
+          <p class="text-xs text-secondary leading-relaxed">
+            Define minimum (<kbd class="px-1.5 py-0.5 text-[10px] bg-surface border border-border rounded shadow-2xs">Baseline</kbd>) and stretch (<kbd class="px-1.5 py-0.5 text-[10px] bg-surface border border-border rounded shadow-2xs">Optimal</kbd>) targets in Templates. Click <strong>Use Template</strong> to generate new plans instantly.
+          </p>
+        </div>
+
+        <!-- 4. Deep Analytics & Heatmaps -->
+        <div class="p-3.5 bg-surface-2 border border-border rounded-2xl">
+          <h4
+            class="text-xs font-bold text-purple-500/90 uppercase tracking-wider flex items-center gap-2 mb-1.5"
+          >
+            <i class="fa-regular fa-chart-pie"></i> Visual Analytics & Insights
+          </h4>
+          <p class="text-xs text-secondary leading-relaxed">
+            Analyze your performance across different Life Areas using interactive Heatmaps, Category Progress Charts, and Trend Graphs in the Analytics view.
+          </p>
+        </div>
+
+        <!-- 5. Fast Life Area Filter -->
+        <div class="p-3.5 bg-surface-2 border border-border rounded-2xl">
+          <h4
+            class="text-xs font-bold text-amber-500/90 uppercase tracking-wider flex items-center gap-2 mb-1.5"
+          >
+            <i class="fa-regular fa-layer-group"></i> Life Area Categorization
+          </h4>
+          <p class="text-xs text-secondary leading-relaxed">
+            Organize plans into 8 core Life Areas. Press numbers <kbd class="px-1.5 py-0.5 text-[10px] bg-surface border border-border rounded shadow-2xs">0</kbd> through <kbd class="px-1.5 py-0.5 text-[10px] bg-surface border border-border rounded shadow-2xs">7</kbd> on your keyboard to rapidly filter items in Plans, Logs, or Templates views.
+          </p>
+        </div>
+
+        <!-- 6. Data Security & Storage Management -->
+        <div class="p-3.5 bg-surface-2 border border-border rounded-2xl">
+          <h4
+            class="text-xs font-bold text-rose-500/90 uppercase tracking-wider flex items-center gap-2 mb-1.5"
+          >
+            <i class="fa-regular fa-database"></i> Data Management & Backups
+          </h4>
+          <p class="text-xs text-secondary leading-relaxed">
+            Your data is stored locally for max privacy. Use Settings to Export full JSON backups or Import previous states. The Purge Terminal allows safe system resets.
+          </p>
+        </div>
+      </div>
+    `;
   },
 
   render() {
@@ -80,7 +160,7 @@ export const InfoModalComponent = {
                   Life Planner Help Center
                 </h3>
                 <p class="text-xs text-secondary">
-                  Plan editing tips and shortcuts.
+                  System guide, editing tips, and keyboard shortcuts.
                 </p>
               </div>
             </div>
@@ -100,7 +180,7 @@ export const InfoModalComponent = {
               id="tab-help-safeguard"
               class="flex-1 py-2 text-xs font-bold rounded-lg bg-brand text-white transition cursor-pointer"
             >
-              <i class="fa-regular fa-list-check me-1.5"></i> Plan Guide
+              <i class="fa-regular fa-list-check me-1.5"></i> Feature Guide
             </button>
             <button
               id="tab-help-shortcuts"
@@ -116,63 +196,8 @@ export const InfoModalComponent = {
           >
             <div
               id="content-help-safeguard"
-              class="space-y-4"
             >
-              <div class="p-4 bg-surface-2 border border-border rounded-2xl">
-                <h4
-                  class="text-xs font-bold text-brand uppercase tracking-wider flex items-center gap-2 mb-1.5"
-                >
-                  <i class="fa-regular fa-layer-group"></i> Subplans & Progress
-                </h4>
-                <p class="text-xs text-secondary leading-relaxed">
-                  Break complex plans into actionable subplans inside the Edit
-                  Modal. Track completion progress dynamically as subplans are
-                  marked done.
-                </p>
-              </div>
-
-              <div class="p-4 bg-surface-2 border border-border rounded-2xl">
-                <h4
-                  class="text-xs font-bold text-emerald-500/80 uppercase tracking-wider flex items-center gap-2 mb-1.5"
-                >
-                  <i class="fa-regular fa-tags"></i> Dynamic Tags & Combobox
-                </h4>
-                <p class="text-xs text-secondary leading-relaxed">
-                  Organize plans using tags. Press
-                  <kbd
-                    class="px-1.5 py-0.5 text-[10px] bg-surface border border-border rounded shadow-2xs"
-                    >Enter</kbd
-                  >
-                  or
-                  <kbd
-                    class="px-1.5 py-0.5 text-[10px] bg-surface border border-border rounded shadow-2xs"
-                    >,</kbd
-                  >
-                  to confirm a new tag, or select existing tags from the smart
-                  combobox dropdown.
-                </p>
-              </div>
-
-              <div class="p-4 bg-surface-2 border border-border rounded-2xl">
-                <h4
-                  class="text-xs font-bold text-amber-500/80 uppercase tracking-wider flex items-center gap-2 mb-1.5"
-                >
-                  <i class="fa-regular fa-bolt"></i> Quick Modal Actions
-                </h4>
-                <p class="text-xs text-secondary leading-relaxed">
-                  Inside open modals, press
-                  <kbd
-                    class="px-1.5 py-0.5 text-[10px] bg-surface border border-border rounded shadow-2xs"
-                    >Ctrl + Enter</kbd
-                  >
-                  to quickly execute save/delete actions, or
-                  <kbd
-                    class="px-1.5 py-0.5 text-[10px] bg-surface border border-border rounded shadow-2xs"
-                    >Esc</kbd
-                  >
-                  to dismiss.
-                </p>
-              </div>
+              ${InfoModalComponent.renderFeatureGuideData()}
             </div>
 
             <div

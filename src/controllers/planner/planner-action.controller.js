@@ -10,15 +10,15 @@ import {
 import {
   setPendingDeleteId,
   setPendingEditId,
-} from "./plans-form.controller.js";
+} from "./planner-form.controller.js";
 
 import { NotificationService } from "@/services/notification.service.js";
 import { PlanAutoLogService } from "@/services/plan-auto-log.service.js";
-import { PlanService } from "@/services/plans.service.js";
-import { PlansItemComponent } from "@/components/features/plans/plan-item.component.js";
+import { PlannerItemComponent } from "@/components/features/planner/planner-item.component.js";
+import { PlannerService } from "@/services/planner.service.js";
 import { StateManager } from "@/models/state.model.js";
 
-export const PlansActionController = {
+export const PlannerActionController = {
   init(mainController) {
     this.mainController = mainController;
     this.bindDynamicEvents();
@@ -57,7 +57,7 @@ export const PlansActionController = {
     const targetPlan = plans.find((p) => String(p.id) === String(planId));
     if (!targetPlan) return;
 
-    const updatedPlans = PlanService.toggleObjective(
+    const updatedPlans = PlannerService.toggleObjective(
       plans,
       planId,
       objectiveId,
@@ -83,7 +83,7 @@ export const PlansActionController = {
     const targetPlan = plans.find((p) => String(p.id) === String(planId));
     if (!targetPlan) return;
 
-    const updatedPlans = PlanService.updateObjectiveProgress(
+    const updatedPlans = PlannerService.updateObjectiveProgress(
       plans,
       planId,
       objectiveId,
@@ -105,9 +105,13 @@ export const PlansActionController = {
     );
     if (!targetTemplate) return;
 
-    const updatedTemplates = PlanService.editTemplate(templates, templateId, {
-      isFavorite: !targetTemplate.isFavorite,
-    });
+    const updatedTemplates = PlannerService.editTemplate(
+      templates,
+      templateId,
+      {
+        isFavorite: !targetTemplate.isFavorite,
+      },
+    );
 
     StateManager.save({ templates: updatedTemplates });
     this.mainController.refreshUI();
@@ -130,7 +134,7 @@ export const PlansActionController = {
     const completedObj = objectives.filter(
       (obj) =>
         obj.completed ||
-        PlansItemComponent._calculateObjectiveProgress?.(obj) === 100,
+        PlannerItemComponent._calculateObjectiveProgress?.(obj) === 100,
     ).length;
 
     const isAllCompleted = completedObj === totalObj;
@@ -280,7 +284,7 @@ export const PlansActionController = {
   },
 
   bindDynamicEvents() {
-    const listContainer = document.getElementById("plan-list");
+    const listContainer = document.getElementById("planner-list");
     if (!listContainer) return;
 
     listContainer.addEventListener("input", (e) => {
@@ -472,10 +476,10 @@ export const PlansActionController = {
 
         // 3. Create Plan with normalized objectives structure
         const plans = StateManager.getPlans() || [];
-        const newPlan = PlanService.createPlan(plans, {
+        const newPlan = PlannerService.createPlan(plans, {
           title: targetTemplate.title,
           description: targetTemplate.description,
-          lifeAreaId: targetTemplate.lifeAreaId || "health",
+          lifeAreaId: targetTemplate.lifeAreaId || "productivity",
           state: "active",
           period: { startDate: todayISO(), endDate: null },
           objectives: generatedObjectives,
@@ -555,13 +559,13 @@ export const PlansActionController = {
         const currentState = StateManager.getState();
 
         if (activeTab === "plans") {
-          const plans = PlanService.deletePlan(currentState.plans || [], id);
+          const plans = PlannerService.deletePlan(currentState.plans || [], id);
           StateManager.save({ plans });
         } else if (activeTab === "logs") {
-          const logs = PlanService.deleteLog(currentState.logs || [], id);
+          const logs = PlannerService.deleteLog(currentState.logs || [], id);
           StateManager.save({ logs });
         } else if (activeTab === "templates") {
-          const templates = PlanService.deleteTemplate(
+          const templates = PlannerService.deleteTemplate(
             currentState.templates || [],
             id,
           );

@@ -13,7 +13,7 @@ import { DatePickerComponent } from "@/components/ui/date-picker.component.js";
 import { EditModalsComponent } from "@/components/modals/edit-modals.component.js";
 import { GlobalLoaderService } from "@/services/loader.service.js";
 import { NotificationService } from "@/services/notification.service.js";
-import { PlanService } from "@/services/plans.service.js";
+import { PlannerService } from "@/services/planner.service.js";
 import { StateManager } from "@/models/state.model.js";
 
 let pendingDeleteId = null;
@@ -59,11 +59,11 @@ export function setPendingDeleteId(id) {
 export function setPendingEditId(id) {
   pendingEditId = id;
   if (id) {
-    PlansFormController.populateEditModal(id);
+    PlannerFormController.populateEditModal(id);
   }
 }
 
-export const PlansFormController = {
+export const PlannerFormController = {
   init(mainController) {
     this.mainController = mainController;
 
@@ -650,11 +650,10 @@ export const PlansFormController = {
           itemTitle: "name",
           itemValue: "id",
           itemIcon: "icon",
-          defaultValue: "health",
           placeholder: "Select life area...",
         },
       );
-      createPlanLifeAreaAutocomplete.setValue("health");
+      createPlanLifeAreaAutocomplete.setValue("productivity");
     }
 
     const planStateContainer = document.getElementById(
@@ -670,7 +669,6 @@ export const PlansFormController = {
           itemTitle: "name",
           itemValue: "id",
           itemIcon: "icon",
-          defaultValue: "active",
           placeholder: "Select state...",
         },
       );
@@ -735,7 +733,6 @@ export const PlansFormController = {
           itemTitle: "label",
           itemValue: "value",
           itemIcon: "icon",
-          defaultValue: 3,
           placeholder: "Select energy level...",
         },
       );
@@ -755,7 +752,6 @@ export const PlansFormController = {
           itemTitle: "label",
           itemValue: "value",
           itemIcon: "icon",
-          defaultValue: "neutral",
           placeholder: "Select mood...",
         },
       );
@@ -802,11 +798,10 @@ export const PlansFormController = {
           itemTitle: "name",
           itemValue: "id",
           itemIcon: "icon",
-          defaultValue: "health",
           placeholder: "Select life area...",
         },
       );
-      createTemplateLifeAreaAutocomplete.setValue("health");
+      createTemplateLifeAreaAutocomplete.setValue("productivity");
     }
   },
 
@@ -888,7 +883,7 @@ export const PlansFormController = {
           },
         );
         editPlanLifeAreaAutocomplete.setValue(
-          currentItem.lifeAreaId || "health",
+          currentItem.lifeAreaId || "productivity",
         );
       }
 
@@ -922,7 +917,6 @@ export const PlansFormController = {
             itemTitle: "name",
             itemValue: "id",
             itemIcon: "icon",
-            defaultValue: "boolean",
             placeholder: "Type...",
             containerClass: "bg-surface!",
             onChange: (value) => {
@@ -948,7 +942,6 @@ export const PlansFormController = {
             itemTitle: "name",
             itemValue: "id",
             itemIcon: "icon",
-            defaultValue: "count",
             placeholder: "Unit...",
             containerClass: "bg-surface!",
           },
@@ -1004,7 +997,6 @@ export const PlansFormController = {
             itemTitle: "name",
             itemValue: "id",
             itemIcon: "icon",
-            defaultValue: "count",
             placeholder: "Unit...",
             containerClass: "bg-surface!",
           },
@@ -1105,7 +1097,7 @@ export const PlansFormController = {
           },
         );
         editTemplateLifeAreaAutocomplete.setValue(
-          currentItem.lifeAreaId || "health",
+          currentItem.lifeAreaId || "productivity",
         );
       }
 
@@ -1127,6 +1119,8 @@ export const PlansFormController = {
     this.updateAddButtonText();
     this.toggleFormTabFields();
 
+    const titleInput = document.getElementById("create-item-title");
+    const descInput = document.getElementById("create-item-desc");
     const addBtn = document.getElementById("add-plan-btn");
 
     const handleCreateItem = () => {
@@ -1137,16 +1131,13 @@ export const PlansFormController = {
       setTimeout(() => {
         try {
           const currentStateData = StateManager.getState();
-          const sharedTitle = document
-            .getElementById("create-item-title")
-            ?.value.trim();
-          const sharedDesc =
-            document.getElementById("create-item-desc")?.value.trim() || "";
+          const sharedTitle = titleInput?.value.trim();
+          const sharedDesc = descInput?.value.trim() || "";
 
           if (activeTab === "plans") {
             const lifeAreaId = createPlanLifeAreaAutocomplete
               ? createPlanLifeAreaAutocomplete.getValue()
-              : "health";
+              : "productivity";
             const state = createPlanStateAutocomplete
               ? createPlanStateAutocomplete.getValue()
               : "active";
@@ -1157,7 +1148,7 @@ export const PlansFormController = {
               ? createPlanEndDatePicker.value
               : null;
 
-            const updatedPlans = PlanService.createPlan(
+            const updatedPlans = PlannerService.createPlan(
               currentStateData.plans || [],
               {
                 title: sharedTitle,
@@ -1190,7 +1181,7 @@ export const PlansFormController = {
               }
             }
 
-            const updatedLogs = PlanService.createLog(
+            const updatedLogs = PlannerService.createLog(
               currentStateData.logs || [],
               {
                 title: sharedTitle,
@@ -1215,12 +1206,12 @@ export const PlansFormController = {
                 ?.value.trim() || "";
             const lifeAreaId = createTemplateLifeAreaAutocomplete
               ? createTemplateLifeAreaAutocomplete.getValue()
-              : "health";
+              : "productivity";
             const isFavorite =
               document.getElementById("create-template-favorite")?.checked ||
               false;
 
-            const updatedTemplates = PlanService.createTemplate(
+            const updatedTemplates = PlannerService.createTemplate(
               currentStateData.templates || [],
               {
                 title: sharedTitle,
@@ -1265,6 +1256,34 @@ export const PlansFormController = {
 
     addBtn?.addEventListener("click", handleCreateItem);
 
+    titleInput?.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        handleCreateItem();
+      }
+    });
+
+    document.addEventListener("keydown", (e) => {
+      const deleteModal = document.getElementById("delete-modal");
+      const editModal = document.getElementById("edit-modal");
+
+      const deleteOpen =
+        deleteModal && !deleteModal.classList.contains("hidden");
+      const editOpen = editModal && !editModal.classList.contains("hidden");
+
+      if (!deleteOpen && !editOpen) return;
+
+      if (e.key === "Escape") {
+        if (deleteOpen) this.mainController.toggleModal("delete-modal", false);
+        if (editOpen) this.mainController.toggleModal("edit-modal", false);
+      }
+
+      if (e.key === "Enter" && e.ctrlKey) {
+        if (deleteOpen) this.executeDelete();
+        if (editOpen) this.executeEdit();
+      }
+    });
+
     const addClick = (id, cb) =>
       document.getElementById(id)?.addEventListener("click", cb);
 
@@ -1302,7 +1321,7 @@ export const PlansFormController = {
     if (favCheckbox) favCheckbox.checked = false;
 
     if (createPlanLifeAreaAutocomplete)
-      createPlanLifeAreaAutocomplete.setValue("health");
+      createPlanLifeAreaAutocomplete.setValue("productivity");
     if (createPlanStateAutocomplete)
       createPlanStateAutocomplete.setValue("active");
     if (createLogEnergyAutocomplete) createLogEnergyAutocomplete.setValue(3);
@@ -1311,7 +1330,7 @@ export const PlansFormController = {
     if (createLogPlanLinkAutocomplete)
       createLogPlanLinkAutocomplete.setValue(null);
     if (createTemplateLifeAreaAutocomplete)
-      createTemplateLifeAreaAutocomplete.setValue("health");
+      createTemplateLifeAreaAutocomplete.setValue("productivity");
 
     if (createPlanStartDatePicker) createPlanStartDatePicker.value = todayISO();
     if (createPlanEndDatePicker) createPlanEndDatePicker.value = "";
@@ -1337,13 +1356,13 @@ export const PlansFormController = {
       setTimeout(() => {
         try {
           if (activeTab === "plans") {
-            const plans = PlanService.deletePlan(stateData.plans || [], id);
+            const plans = PlannerService.deletePlan(stateData.plans || [], id);
             StateManager.save({ plans });
           } else if (activeTab === "logs") {
-            const logs = PlanService.deleteLog(stateData.logs || [], id);
+            const logs = PlannerService.deleteLog(stateData.logs || [], id);
             StateManager.save({ logs });
           } else if (activeTab === "templates") {
-            const templates = PlanService.deleteTemplate(
+            const templates = PlannerService.deleteTemplate(
               stateData.templates || [],
               id,
             );
@@ -1416,7 +1435,7 @@ export const PlansFormController = {
             targetState = "active";
           }
 
-          const updatedPlans = PlanService.editPlan(
+          const updatedPlans = PlannerService.editPlan(
             stateData.plans || [],
             pendingEditId,
             {
@@ -1448,7 +1467,7 @@ export const PlansFormController = {
             }
           }
 
-          const updatedLogs = PlanService.editLog(
+          const updatedLogs = PlannerService.editLog(
             stateData.logs || [],
             pendingEditId,
             {
@@ -1467,7 +1486,7 @@ export const PlansFormController = {
           );
           StateManager.save({ logs: updatedLogs });
         } else if (activeTab === "templates") {
-          const updatedTemplates = PlanService.editTemplate(
+          const updatedTemplates = PlannerService.editTemplate(
             stateData.templates || [],
             pendingEditId,
             {

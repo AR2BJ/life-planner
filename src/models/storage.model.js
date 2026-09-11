@@ -8,7 +8,7 @@ export function normalizePlan(data = {}) {
     id: String(data.id || generateId()),
     title: data.title || "Untitled Plan",
     description: data.description || "",
-    lifeAreaId: data.lifeAreaId ? String(data.lifeAreaId) : "health",
+    lifeAreaId: data.lifeAreaId ? String(data.lifeAreaId) : "productivity",
     state: data.state || "active",
     period: {
       startDate: data.period?.startDate || todayISO(),
@@ -50,7 +50,7 @@ export function normalizeTemplate(data = {}) {
     id: String(data.id || generateId()),
     title: data.title || "Untitled Template",
     description: data.description || "",
-    lifeAreaId: data.lifeAreaId ? String(data.lifeAreaId) : "health",
+    lifeAreaId: data.lifeAreaId ? String(data.lifeAreaId) : "productivity",
     baseline: data.baseline || "",
     optimal: data.optimal || "",
     isFavorite: Boolean(data.isFavorite),

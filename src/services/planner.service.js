@@ -1,6 +1,6 @@
 import { generateId, todayISO } from "@/utils/helpers.js";
 
-export const PlanService = {
+export const PlannerService = {
   // ==========================================
   // 1. PLANS
   // ==========================================
@@ -16,7 +16,7 @@ export const PlanService = {
       id: String(planData.id || generateId()),
       title: cleanedTitle,
       description: (planData.description || "").trim(),
-      lifeAreaId: String(planData.lifeAreaId || "health"),
+      lifeAreaId: String(planData.lifeAreaId || "productivity"),
       state: planData.state || "active", // "active" | "paused" | "completed"
       period: {
         startDate: planData.period?.startDate || todayISO(),
@@ -211,7 +211,7 @@ export const PlanService = {
       id: String(templateData.id || generateId()),
       title: cleanedTitle,
       description: (templateData.description || "").trim(),
-      lifeAreaId: String(templateData.lifeAreaId || "health"),
+      lifeAreaId: String(templateData.lifeAreaId || "productivity"),
       baseline: (templateData.baseline || "").trim(),
       optimal: (templateData.optimal || "").trim(),
       isFavorite: Boolean(templateData.isFavorite),

@@ -2,7 +2,7 @@ import { StateManager, state } from "@/models/state.model.js";
 
 import { AnalyticsController } from "./analytics.controller.js";
 import { GlobalLoaderService } from "@/services/loader.service.js";
-import { PlansController } from "./plans.controller.js";
+import { PlannerController } from "./planner.controller.js";
 
 export class NavigationController {
   static lifeAreaKeyBuffer = "";
@@ -16,8 +16,8 @@ export class NavigationController {
   }
 
   static setupNavigationListeners() {
-    document.getElementById("nav-plans")?.addEventListener("click", () => {
-      this.setActiveTab("plans");
+    document.getElementById("nav-planner")?.addEventListener("click", () => {
+      this.setActiveTab("planner");
     });
     document.getElementById("nav-analytics")?.addEventListener("click", () => {
       this.setActiveTab("analytics");
@@ -26,8 +26,8 @@ export class NavigationController {
       this.setActiveTab("settings");
     });
 
-    document.getElementById("mobile-plans")?.addEventListener("click", () => {
-      this.setActiveTab("plans");
+    document.getElementById("mobile-planner")?.addEventListener("click", () => {
+      this.setActiveTab("planner");
     });
     document
       .getElementById("mobile-analytics")
@@ -41,21 +41,21 @@ export class NavigationController {
       });
   }
 
-  static setActiveTab(tabType = "plans") {
+  static setActiveTab(tabType = "planner") {
     StateManager.setView(tabType);
     this.updateNavigationDOM();
     this.showSection(tabType);
 
-    if (tabType === "plans") {
-      PlansController.refreshUI();
-      PlansController.updateTabStyles(state.activeTab);
+    if (tabType === "planner") {
+      PlannerController.refreshUI();
+      PlannerController.updateTabStyles(state.activeTab);
     } else if (tabType === "analytics") {
       AnalyticsController.dispatchRender(StateManager.getPlans());
     }
   }
 
   static updateNavigationDOM() {
-    const views = ["plans", "analytics", "settings"];
+    const views = ["planner", "analytics", "settings"];
     const currentView = state.currentView;
 
     views.forEach((v) => {
@@ -84,14 +84,12 @@ export class NavigationController {
 
   static showSection(sectionType) {
     document.querySelectorAll('section[id$="-view"]').forEach((section) => {
-      section.classList.add("hidden");
-      section.classList.remove("flex");
+      section.classList.replace("flex", "hidden");
     });
 
     const activeSection = document.getElementById(`${sectionType}-view`);
     if (activeSection) {
-      activeSection.classList.remove("hidden");
-      activeSection.classList.add("flex");
+      activeSection.classList.replace("hidden", "flex");
     }
   }
 
@@ -128,11 +126,11 @@ export class NavigationController {
 
       if (event.altKey) {
         if (key === "b") return dispatchAsyncClick("scroll-to-top-btn");
-        if (key === "c") return dispatchAsyncClick("btn-toggle-plan-form");
+        if (key === "c") return dispatchAsyncClick("btn-toggle-planner-form");
         if (key === "t") return dispatchAsyncClick("theme-toggle");
         if (key === "n") return dispatchAsyncClick("menu-toggle");
-        if (key === "g") return dispatchAsyncClick("tab-plans");
-        if (key === "d") return dispatchAsyncClick("tab-logs");
+        if (key === "p") return dispatchAsyncClick("tab-plans");
+        if (key === "l") return dispatchAsyncClick("tab-logs");
         if (key === "x") return dispatchAsyncClick("tab-templates");
 
         if (key === "r") {
@@ -177,14 +175,14 @@ export class NavigationController {
       if (event.shiftKey && ["p", "a", "s"].includes(key)) {
         event.preventDefault();
         const targetTab =
-          key === "p" ? "plans" : key === "a" ? "analytics" : "settings";
+          key === "p" ? "planner" : key === "a" ? "analytics" : "settings";
         this.setActiveTab(targetTab);
         return;
       }
 
       if (key === "/") {
         const searchInput =
-          document.getElementById("search-plans") ||
+          document.getElementById("search-planner") ||
           document.querySelector('input[type="search"]');
         if (searchInput) {
           event.preventDefault();
@@ -196,9 +194,9 @@ export class NavigationController {
 
       if (event.key === "?") return dispatchAsyncClick("help-toggle");
 
-      if (["0", "1", "2", "3", "4", "5", "6", "7"].includes(event.key)) {
+      if (["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"].includes(event.key)) {
         const currentSection = document.querySelector("section:not(.hidden)");
-        if (currentSection?.id === "plans-view") {
+        if (currentSection?.id === "planner-view") {
           event.preventDefault();
           this.queueLifeAreaShortcutKey(event.key);
         }
@@ -225,15 +223,8 @@ export class NavigationController {
     this.lifeAreaKeyBuffer = "";
     this.lifeAreaKeyTimeoutId = null;
 
-    const lifeAreaContainer = document.getElementById(
-      "life-area-filter-scroll",
-    );
     const lifeAreaButtons = Array.from(
-      lifeAreaContainer
-        ? lifeAreaContainer.querySelectorAll("button, .life-area-filter-btn")
-        : document.querySelectorAll(
-            "#life-area-filter-scroll button, .life-area-filter-btn",
-          ),
+      document.querySelectorAll(".life-area-filter-btn"),
     ).filter((btn) => {
       const style = window.getComputedStyle(btn);
       return (
@@ -250,7 +241,6 @@ export class NavigationController {
   static closeAllActiveModals() {
     const modalIds = [
       "help-modal",
-      "plan-modal",
       "delete-modal",
       "reset-modal",
       "edit-modal",
@@ -265,6 +255,6 @@ export class NavigationController {
   }
 
   static setDefaultActive() {
-    this.setActiveTab("plans");
+    this.setActiveTab("planner");
   }
 }

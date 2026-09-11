@@ -17,16 +17,16 @@ import { HeaderComponent } from "@/components/shared/header.component.js";
 import { InfoModalComponent } from "@/components/modals/info-modal.component.js";
 import { MobileNavComponent } from "@/components/layout/mobile-nav.component.js";
 import { NavigationController } from "./navigation.controller.js";
-import { PlansActionController } from "./plans/plans-action.controller.js";
-import { PlansFormController } from "./plans/plans-form.controller.js";
-import { PlansView } from "@/views/plans-view.js";
+import { PlannerActionController } from "./planner/planner-action.controller.js";
+import { PlannerFormController } from "./planner/planner-form.controller.js";
+import { PlannerView } from "@/views/planner-view.js";
 import { SettingsViewComponent } from "@/components/features/settings/settings-view.component.js";
 import { eventBus } from "@/services/event-bus.service.js";
 import { openObjectivesState } from "@/utils/helpers.js";
-import { renderPlanList } from "@/views/plans/plan-list.renderer.js";
+import { renderPlannerList } from "@/views/planner/planner-list.renderer.js";
 import { store } from "@/services/store.service.js";
 
-export const PlansController = {
+export const PlannerController = {
   init() {
     StateManager.init();
     this.renderComponent();
@@ -35,8 +35,8 @@ export const PlansController = {
     this.initFormAutocompletes();
     this.refreshUI();
 
-    PlansFormController.init(this);
-    PlansActionController.init(this);
+    PlannerFormController.init(this);
+    PlannerActionController.init(this);
 
     this.bindStaticEvents();
     this.bindMenuToggle();
@@ -91,13 +91,10 @@ export const PlansController = {
             setTimeout(() => {
               try {
                 const ui = StateManager.getActiveUIState();
-                if (currentTab === "plans") {
-                  ui.currentState = selectedVal;
-                } else if (currentTab === "logs") {
-                  ui.dateFilter = selectedVal;
-                } else if (currentTab === "templates") {
-                  ui.templateType = selectedVal;
+                if (ui) {
+                  ui.filterBy = selectedVal;
                 }
+                
                 StateManager.notifyActiveTabChanged();
                 this.refreshUI();
               } finally {
@@ -138,6 +135,7 @@ export const PlansController = {
             setTimeout(() => {
               try {
                 store.setSortBy(selectedVal);
+                this.refreshUI();
               } finally {
                 GlobalLoaderService.hide();
               }
@@ -246,16 +244,17 @@ export const PlansController = {
   },
 
   getSelectedFilterForTab(tab) {
-    if (tab === "plans") return state.plansUI?.currentState || "all";
-    if (tab === "logs") return state.logsUI?.dateFilter || "all";
-    if (tab === "templates") return state.templatesUI?.templateType || "all";
+    if (tab === "plans") return state.plansUI?.filterBy || "all";
+    if (tab === "logs") return state.logsUI?.filterBy || "all";
+    if (tab === "templates") return state.templatesUI?.filterBy || "all";
     return "all";
   },
 
   getSelectedSortForTab(tab) {
-    if (tab === "plans") return state.plansUI?.sortBy || "date_desc";
+    if (tab === "plans") return state.plansUI?.sortBy || "created_desc";
     if (tab === "logs") return state.logsUI?.sortBy || "date_desc";
-    if (tab === "templates") return state.templatesUI?.sortBy || "favorites";
+    if (tab === "templates")
+      return state.templatesUI?.sortBy || "favorites_first";
     return "date_desc";
   },
 
@@ -264,7 +263,7 @@ export const PlansController = {
       "header-container": HeaderComponent.render,
       "desktop-nav-container": DesktopNavComponent.render,
       "mobile-nav-container": MobileNavComponent.render,
-      "plans-view-container": PlansView.render,
+      "planner-view-container": PlannerView.render,
       "analytics-view-container": AnalyticsView.render,
       "settings-view-container": SettingsViewComponent.render,
       "help-modal-container": InfoModalComponent.render,
@@ -371,15 +370,15 @@ export const PlansController = {
   },
 
   refreshUI() {
-    this.renderLifeAreas();
-
     const allPlans = StateManager.getPlans();
     const filteredData = StateManager.getFilteredDataForActiveTab();
 
-    renderPlanList(filteredData, state.activeTab);
+    renderPlannerList(filteredData, state.activeTab);
     AnalyticsController.dispatchRender(allPlans);
     NavigationController.updateNavigationDOM();
-    PlansFormController.refreshUI();
+    PlannerFormController.refreshUI();
+
+    this.renderLifeAreas();
   },
 
   bindMenuToggle() {
@@ -447,8 +446,8 @@ export const PlansController = {
       });
     }
 
-    const toggleFormBtn = document.getElementById("btn-toggle-plan-form");
-    const formContainer = document.getElementById("plan-form-container");
+    const toggleFormBtn = document.getElementById("btn-toggle-planner-form");
+    const formContainer = document.getElementById("planner-form-container");
     const formChevron = document.getElementById("form-chevron");
     if (toggleFormBtn && formContainer && formChevron) {
       toggleFormBtn.addEventListener("click", () => {
@@ -464,7 +463,7 @@ export const PlansController = {
     }
 
     // 2. Search Handler
-    const searchInput = document.getElementById("search-plans");
+    const searchInput = document.getElementById("search-planner");
     const clearBtn = document.getElementById("clear-search-btn");
     const searchContainer = searchInput?.closest(".group\\/search");
 
@@ -561,7 +560,7 @@ export const PlansController = {
     );
 
     // 4. Navigation Views
-    const navButtons = ["plans", "analytics", "settings"];
+    const navButtons = ["planner", "analytics", "settings"];
     navButtons.forEach((v) => {
       const desktopBtn = document.getElementById(`nav-${v}`);
       const mobileBtn = document.getElementById(`mobile-${v}`);
@@ -724,7 +723,7 @@ export const PlansController = {
 
     openObjectivesState.clear();
 
-    const searchInput = document.getElementById("search-plans");
+    const searchInput = document.getElementById("search-planner");
     if (searchInput) {
       searchInput.value = this.getSearchQueryForTab(tab);
     }

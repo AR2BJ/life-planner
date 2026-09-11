@@ -61,6 +61,14 @@ export function formatNumberWithCommas(val) {
   return parseInt(cleanNum, 10).toLocaleString("en-US");
 }
 
+export function getPlanProgress(plan) {
+  if (!Array.isArray(plan.objectives) || plan.objectives.length === 0) {
+    return 0;
+  }
+  const completedCount = plan.objectives.filter((obj) => obj.completed).length;
+  return (completedCount / plan.objectives.length) * 100;
+}
+
 /**
  * Maps template properties (baseline & optimal) into Plan Objectives matching storage schema
  * @param {Object} template - Target template object

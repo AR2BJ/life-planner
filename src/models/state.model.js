@@ -3,24 +3,17 @@ import {
   loadFromStorage,
   saveToStorage,
 } from "./storage.model.js";
+import { getPlanProgress, todayISO } from "@/utils/helpers.js";
 
 import { LIFE_AREAS } from "@/utils/constants/options-value.constants.js";
 import { eventBus } from "@/services/event-bus.service.js";
-
-function getPlanProgress(plan) {
-  if (!Array.isArray(plan.objectives) || plan.objectives.length === 0) {
-    return 0;
-  }
-  const completedCount = plan.objectives.filter((obj) => obj.completed).length;
-  return (completedCount / plan.objectives.length) * 100;
-}
 
 export const state = {
   plans: [],
   logs: [],
   templates: [],
   activeTab: "plans", // "plans" | "logs" | "templates"
-  currentView: "plans",
+  currentView: "planner",
   plansUI: {
     selectedLifeArea: "all",
     filterBy: "all", // "all" | "active" | "paused" | "completed" | "has_end_date" | "no_end_date" | "has_objectives" | "objectives_pending"
@@ -172,7 +165,7 @@ export const StateManager = {
   },
 
   filterItemsByTab(items, tab, filterValue) {
-    const todayStr = new Date().toISOString().split("T")[0];
+    const todayStr = todayISO();
 
     return items.filter((item) => {
       if (tab === "plans") {

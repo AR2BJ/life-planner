@@ -2,9 +2,9 @@ import { StateManager, state } from "@/models/state.model.js";
 
 import { GlobalLoaderService } from "@/services/loader.service";
 import { NotificationService } from "@/services/notification.service.js";
-import { PlansController } from "../plans.controller.js";
+import { PlannerController } from "../planner.controller.js";
 import { STORAGE_KEY } from "@/models/storage.model.js";
-import { renderPlanList } from "@/views/plans/plan-list.renderer.js";
+import { renderPlannerList } from "@/views/planner/planner-list.renderer.js";
 
 export const SettingsResetController = {
   keydownHandler: null,
@@ -15,7 +15,7 @@ export const SettingsResetController = {
 
   resetSession() {
     StateManager.init();
-    PlansController.refreshUI();
+    PlannerController.refreshUI();
   },
 
   closeResetModal() {
@@ -91,13 +91,13 @@ export const SettingsResetController = {
         state.logs = [];
         state.templates = [];
         state.activeTab = "plans";
-        state.currentView = "plans";
+        state.currentView = "planner";
 
-        renderPlanList([], state.activeTab);
+        renderPlannerList([], state.activeTab);
 
-        PlansController.handleTabSwitch("plans");
+        PlannerController.handleTabSwitch("plans");
 
-        PlansController.refreshUI();
+        PlannerController.refreshUI();
 
         NotificationService.show({
           type: "error",
@@ -127,16 +127,16 @@ export const SettingsResetController = {
                 state.templates = previousTemplates || [];
 
                 state.activeTab = "plans";
-                state.currentView = "plans";
+                state.currentView = "planner";
 
-                PlansController.handleTabSwitch("plans");
+                PlannerController.handleTabSwitch("plans");
 
-                renderPlanList(
-                  StateManager.getFilteredPlans(),
+                renderPlannerList(
+                  StateManager.getFilteredDataForActiveTab(),
                   state.activeTab,
                 );
 
-                PlansController.refreshUI();
+                PlannerController.refreshUI();
               } finally {
                 GlobalLoaderService.hide();
               }

@@ -1,8 +1,8 @@
-import { PlansItemComponent } from "@/components/features/plans/plan-item.component";
+import { PlannerItemComponent } from "@/components/features/planner/planner-item.component";
 
-export function renderPlanList(items, activeTab = "plans") {
-  const container = document.getElementById("plan-list");
-  const countBadge = document.getElementById("plan-count-badge");
+export function renderPlannerList(items, activeTab = "plans") {
+  const container = document.getElementById("planner-list");
+  const countBadge = document.getElementById("planner-count-badge");
 
   if (!container) return;
 
@@ -61,7 +61,7 @@ export function renderPlanList(items, activeTab = "plans") {
     const itemEl = document.createElement("div");
     itemEl.className =
       "bg-surface border border-border/70 hover:border-border/90 rounded-2xl p-5 transition duration-200 shadow-xs hover:shadow-md";
-    itemEl.innerHTML = PlansItemComponent.render(itemData, activeTab);
+    itemEl.innerHTML = PlannerItemComponent.render(itemData, activeTab);
     return itemEl;
   };
 

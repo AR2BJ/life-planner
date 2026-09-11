@@ -10,11 +10,11 @@ export const MobileNavComponent = {
           style="-webkit-overflow-scrolling: touch;"
         >
           <button
-            id="mobile-plans"
+            id="mobile-planner"
             class="mobile-nav-btn snap-center shrink-0 flex flex-col items-center justify-center gap-1.5 text-secondary w-[23vw] max-w-21.25 xs:w-auto xs:max-w-none xs:flex-1 py-1"
           >
             <i class="fa-regular fa-clipboard-list text-xl xs:text-2xl"></i>
-            <span class="text-[10px] xs:text-xs font-medium tracking-wide whitespace-nowrap">Plans</span>
+            <span class="text-[10px] xs:text-xs font-medium tracking-wide whitespace-nowrap">Planner</span>
           </button>
 
           <button

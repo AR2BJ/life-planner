@@ -19,43 +19,43 @@ export const NotificationService = {
         "border border-red-500/20 bg-red-500/10 text-red-800/80 dark:text-red-400",
       warning:
         "border border-amber-500/20 bg-amber-500/10 text-amber-800/80 dark:text-amber-400",
-      info: "border border-brand/20 bg-brand/10 text-brand/80 dark:text-brand",
+      info: "border border-sky-500/20 bg-sky-500/10 text-sky-800/80 dark:text-sky-400",
     };
     const typeTimerMap = {
       success: "bg-emerald-400/20 text-emerald-800/80 dark:text-emerald-400",
       error: "bg-red-400/20 text-red-800/80 dark:text-red-400",
       warning: "bg-amber-400/20 text-amber-800/80 dark:text-amber-400",
-      info: "bg-brand/20 text-brand/80 dark:text-brand",
+      info: "bg-sky-400/20 text-sky-800/80 dark:text-sky-400",
     };
     const typeUndoMap = {
       success: "bg-emerald-400/20 hover:bg-emerald-500/20",
       error: "bg-red-400/20 hover:bg-red-500/20",
       warning: "bg-amber-400/20 hover:bg-amber-500/20",
-      info: "bg-brand/20 hover:bg-brand/20",
+      info: "bg-sky-400/20 hover:bg-sky-500/20",
     };
     const typeIconColorMap = {
       success: "text-emerald-500",
       error: "text-red-500",
       warning: "text-amber-500",
-      info: "text-brand/80",
+      info: "text-sky-500/80",
     };
     const typeTextColorMap = {
       success: "text-emerald-800/80 dark:text-emerald-500",
       error: "text-red-800/80 dark:text-red-500",
       warning: "text-amber-800/80 dark:text-amber-500",
-      info: "text-brand/80 dark:text-brand",
+      info: "text-sky-800/80 dark:text-sky-500",
     };
     const typeCloseBgMap = {
       success: "bg-emerald-600/60",
       error: "bg-red-600/60",
       warning: "bg-amber-600/60",
-      info: "bg-brand/60",
+      info: "bg-sky-600/60",
     };
     const typeCloseBorderMap = {
       success: "border-emerald-600/60",
       error: "border-red-600/60",
       warning: "border-amber-600/60",
-      info: "border-brand/60",
+      info: "border-sky-600/60",
     };
     const typeCloseTextMap = {
       success: "text-white",

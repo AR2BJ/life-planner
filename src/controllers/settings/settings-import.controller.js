@@ -1,10 +1,15 @@
 import { StateManager, state } from "@/models/state.model.js";
 import { generateId, todayISO } from "@/utils/helpers";
+import {
+  normalizeLog,
+  normalizePlan,
+  normalizeTemplate,
+  saveToStorage,
+} from "@/models/storage.model.js";
 
 import { GlobalLoaderService } from "@/services/loader.service";
 import { NotificationService } from "@/services/notification.service.js";
-import { PlansController } from "../plans.controller.js";
-import { renderPlanList } from "@/views/plans/plan-list.renderer.js";
+import { PlannerController } from "../planner.controller.js";
 
 export const SettingsImportController = {
   init() {
@@ -71,39 +76,54 @@ export const SettingsImportController = {
         try {
           const rawContent = event.target.result;
           let importedPlans = [];
-          let importedTags = [];
+          let importedLogs = [];
+          let importedTemplates = [];
 
           if (format === "json") {
             const parsedJson = JSON.parse(rawContent);
-            importedPlans = Array.isArray(parsedJson)
-              ? parsedJson
-              : parsedJson.plans || [];
-            importedTags = parsedJson.tags || [];
+            importedPlans = parsedJson.plans || [];
+            importedLogs = parsedJson.logs || [];
+            importedTemplates = parsedJson.templates || [];
           } else if (format === "markdown") {
-            const parsedMd = this.parseMarkdownToPlans(rawContent);
-            importedPlans = parsedMd.plans || [];
-            importedTags = parsedMd.tags || [];
+            const parsedMd = this.parseMarkdownToData(rawContent);
+            importedPlans = parsedMd.plans;
+            importedLogs = parsedMd.logs;
+            importedTemplates = parsedMd.templates;
           } else if (format === "csv") {
-            const parsedCsv = this.parseCsvToPlans(rawContent);
-            importedPlans = parsedCsv.plans || [];
-            importedTags = parsedCsv.tags || [];
+            const parsedCsv = this.parseCsvToData(rawContent);
+            importedPlans = parsedCsv.plans;
+            importedLogs = parsedCsv.logs;
+            importedTemplates = parsedCsv.templates;
           }
 
           if (
-            !Array.isArray(importedPlans) ||
-            (importedPlans.length === 0 && importedTags.length === 0)
+            importedPlans.length === 0 &&
+            importedLogs.length === 0 &&
+            importedTemplates.length === 0
           ) {
             throw new Error("No structured data could be extracted");
           }
 
-          StateManager.save(importedPlans, importedTags);
+          const normalizedPlans = importedPlans.map(normalizePlan);
+          const normalizedLogs = importedLogs.map(normalizeLog);
+          const normalizedTemplates = importedTemplates.map(normalizeTemplate);
 
-          state.activeTab = "active";
-          state.currentView = "plans";
+          saveToStorage({
+            plans: normalizedPlans,
+            logs: normalizedLogs,
+            templates: normalizedTemplates,
+          });
 
-          renderPlanList(StateManager.getFilteredPlans(), state.activeTab);
+          if (typeof StateManager.load === "function") {
+            StateManager.load();
+          }
 
-          PlansController.refreshUI();
+          state.activeTab = "plans";
+          state.currentView = "planner";
+
+          if (typeof PlannerController.refreshUI === "function") {
+            PlannerController.refreshUI();
+          }
 
           NotificationService.show({
             type: "success",
@@ -130,122 +150,152 @@ export const SettingsImportController = {
     reader.readAsText(file);
   },
 
-  parseMarkdownToPlans(mdContent) {
-    const importedTags = [];
+  parseMarkdownToData(mdContent) {
+    const templates = [];
     const plans = [];
+    const logs = [];
 
-    const tagSectionMatch = mdContent.match(
-      /## 🏷️ TAG REGISTRY([\s\S]*?)(?=---|## 📝 TASKS LIST|$)/,
-    );
-    if (tagSectionMatch) {
-      const tagLines = tagSectionMatch[1].match(
-        /- Tag:\s*(.+)\s*\(ID:\s*(.+)\)/g,
-      );
-      if (tagLines) {
-        tagLines.forEach((line) => {
-          const match = line.match(/- Tag:\s*(.+)\s*\(ID:\s*(.+)\)/);
-          if (match) {
-            importedTags.push({
-              id: match[2].trim(),
-              name: match[1].trim(),
-            });
-          }
-        });
-      }
+    // 1. PARSE TEMPLATES
+    const tplSection = mdContent
+      .split(/## 📋 TEMPLATES REGISTRY/)[1]
+      ?.split(/## 🎯 PLANS LIST/)[0];
+    if (tplSection) {
+      const tplBlocks = tplSection.split(/### 📄 /).slice(1);
+      tplBlocks.forEach((block) => {
+        const titleIdMatch = block.match(/(.+)\s*\(ID:\s*(.+)\)/);
+        const areaMatch = block.match(/- \*\*Life Area:\*\*\s*(.+)/);
+        const favMatch = block.match(/- \*\*Favorite:\*\*\s*(.+)/);
+        const usageMatch = block.match(/- \*\*Usage Count:\*\*\s*(\d+)/);
+        const descMatch = block.match(/- \*\*Description:\*\*\s*(.+)/);
+        const baselineMatch = block.match(/- \*\*Baseline:\*\*\s*(.+)/);
+        const optimalMatch = block.match(/- \*\*Optimal:\*\*\s*(.+)/);
+
+        if (titleIdMatch) {
+          templates.push({
+            id: titleIdMatch[2].trim(),
+            title: titleIdMatch[1].trim(),
+            lifeAreaId: areaMatch ? areaMatch[1].trim() : "productivity",
+            isFavorite: favMatch ? favMatch[1].includes("Yes") : false,
+            usageCount: usageMatch ? parseInt(usageMatch[1], 10) : 0,
+            description:
+              descMatch && descMatch[1] !== "N/A" ? descMatch[1].trim() : "",
+            baseline:
+              baselineMatch && baselineMatch[1] !== "N/A"
+                ? baselineMatch[1].trim()
+                : "",
+            optimal:
+              optimalMatch && optimalMatch[1] !== "N/A"
+                ? optimalMatch[1].trim()
+                : "",
+          });
+        }
+      });
     }
 
-    const planBlocks = mdContent
-      .split(/---\s*\n/)
-      .filter((block) => block.includes("## #️⃣"));
+    // 2. PARSE PLANS
+    const planSection = mdContent
+      .split(/## 🎯 PLANS LIST/)[1]
+      ?.split(/## 📝 LOGS REGISTRY/)[0];
+    if (planSection) {
+      const planBlocks = planSection.split(/### 📌 /).slice(1);
+      planBlocks.forEach((block) => {
+        const titleIdMatch = block.match(/(.+)\s*\(ID:\s*(.+)\)/);
+        const areaMatch = block.match(/- \*\*Life Area:\*\*\s*(.+)/);
+        const stateMatch = block.match(/- \*\*State:\*\*\s*(.+)/);
+        const startMatch = block.match(/- \*\*Start Date:\*\*\s*📅\s*(.+)/);
+        const endMatch = block.match(/- \*\*End Date:\*\*\s*📅\s*(.+)/);
+        const descMatch = block.match(/- \*\*Description:\*\*\s*(.+)/);
 
-    planBlocks.forEach((block) => {
-      const idMatch = block.match(/## #️⃣\s*(.+)/);
-      const titleMatch = block.match(/### 🎯\s*(.+)/);
-      const descMatch = block.match(
-        /- \*\*Description:\*\*\s*([\s\S]*?)(?=\n- \*\*Status:\*\*|$)/,
-      );
-      const statusMatch = block.match(/- \*\*Status:\*\*\s*(.+)/);
-      const priorityMatch = block.match(/- \*\*Priority:\*\*\s*(.+)/);
-      const dueDateMatch = block.match(/- \*\*Due Date:\*\*\s*📅\s*(.+)/);
-      const estMinutesMatch = block.match(
-        /- \*\*Estimated Time:\*\*\s*⏱️\s*(\d+)/,
-      );
-      const tagsMatch = block.match(/- \*\*Tags:\*\*\s*🏷️\s*(.+)/);
-      const createdAtMatch = block.match(/- \*\*Created At:\*\*\s*⏰\s*(.+)/);
-      const updatedAtMatch = block.match(/- \*\*Updated At:\*\*\s*🔄\s*(.+)/);
-      const completedAtMatch = block.match(
-        /- \*\*Completed At:\*\*\s*✅\s*(.+)/,
-      );
-      const archivedMatch = block.match(/- \*\*Archived:\*\*\s*(.+)/);
+        const objectives = [];
+        const objLines = block.match(
+          /- \[(x| )\] (.+)\(ID: (.+)\) \| Type: (.+) \| Target: (\d+) (.+) \| Current: (\d+)/g,
+        );
+        if (objLines) {
+          objLines.forEach((line) => {
+            const m = line.match(
+              /- \[(x| )\] (.+)\(ID: (.+)\) \| Type: (.+) \| Target: (\d+) (.+) \| Current: (\d+)/,
+            );
+            if (m) {
+              objectives.push({
+                completed: m[1] === "x",
+                title: m[2].trim(),
+                id: m[3].trim(),
+                type: m[4].trim(),
+                targetValue: Number(m[5]),
+                unit: m[6].trim(),
+                currentValue: Number(m[7]),
+              });
+            }
+          });
+        }
 
-      const subplans = [];
-      const subplanLines = block.match(/- \[(x| )\] (.+)\(ID: (.+)\)/g);
-      if (subplanLines) {
-        subplanLines.forEach((line) => {
-          const match = line.match(/- \[(x| )\] (.+)\(ID: (.+)\)/);
-          if (match) {
-            subplans.push({
-              id: match[3].trim(),
-              title: match[2].trim(),
-              completed: match[1] === "x",
-            });
-          }
-        });
-      }
+        if (titleIdMatch) {
+          plans.push({
+            id: titleIdMatch[2].trim(),
+            title: titleIdMatch[1].trim(),
+            lifeAreaId: areaMatch ? areaMatch[1].trim() : "productivity",
+            state: stateMatch ? stateMatch[1].trim() : "active",
+            period: {
+              startDate:
+                startMatch && startMatch[1] !== "N/A"
+                  ? startMatch[1].trim()
+                  : todayISO(),
+              endDate:
+                endMatch && endMatch[1] !== "None" ? endMatch[1].trim() : null,
+            },
+            description:
+              descMatch && descMatch[1] !== "N/A" ? descMatch[1].trim() : "",
+            objectives,
+          });
+        }
+      });
+    }
 
-      if (idMatch && titleMatch) {
-        let rawDesc = descMatch ? descMatch[1].trim() : "";
-        if (rawDesc === "N/A") rawDesc = "";
+    // 3. PARSE LOGS
+    const logSection = mdContent.split(/## 📝 LOGS REGISTRY/)[1];
+    if (logSection) {
+      const logBlocks = logSection.split(/### 📔 /).slice(1);
+      logBlocks.forEach((block) => {
+        const titleIdMatch = block.match(/(.+)\s*\(ID:\s*(.+)\)/);
+        const dateMatch = block.match(/- \*\*Date:\*\*\s*📅\s*(.+)/);
+        const planIdMatch = block.match(/- \*\*Plan ID:\*\*\s*(.+)/);
+        const energyMatch = block.match(/- \*\*Energy Level:\*\*\s*⚡\s*(\d+)/);
+        const moodMatch = block.match(/- \*\*Mood:\*\*\s*🎭\s*(.+)/);
+        const descMatch = block.match(/- \*\*Description:\*\*\s*(.+)/);
+        const metricsMatch = block.match(/- \*\*Metrics:\*\*\s*(.+)/);
 
-        const rawDueDate = dueDateMatch ? dueDateMatch[1].trim() : "";
-        const cleanDueDate =
-          rawDueDate && rawDueDate !== "None" && rawDueDate !== "null"
-            ? rawDueDate
-            : null;
+        if (titleIdMatch) {
+          let parsedMetrics = {};
+          try {
+            if (metricsMatch)
+              parsedMetrics = JSON.parse(metricsMatch[1].trim());
+          } catch (e) {}
 
-        const rawTags = tagsMatch ? tagsMatch[1].trim() : "";
-        const tagIds =
-          rawTags !== "None" && rawTags
-            ? rawTags
-                .split(",")
-                .map((t) => t.trim())
-                .filter(Boolean)
-            : [];
+          logs.push({
+            id: titleIdMatch[2].trim(),
+            title: titleIdMatch[1].trim(),
+            date: dateMatch ? dateMatch[1].trim() : todayISO(),
+            planId:
+              planIdMatch && planIdMatch[1] !== "None"
+                ? planIdMatch[1].trim()
+                : null,
+            energy: energyMatch ? parseInt(energyMatch[1], 10) : 3,
+            mood: moodMatch ? moodMatch[1].trim() : "stable",
+            description:
+              descMatch && descMatch[1] !== "N/A" ? descMatch[1].trim() : "",
+            metrics: parsedMetrics,
+          });
+        }
+      });
+    }
 
-        plans.push({
-          id: idMatch[1].trim(),
-          title: titleMatch[1].trim(),
-          description: rawDesc,
-          status: statusMatch ? statusMatch[1].trim().toLowerCase() : "todo",
-          priority: priorityMatch
-            ? priorityMatch[1].trim().toLowerCase()
-            : "low",
-          dueDate: cleanDueDate,
-          estimatedMinutes: estMinutesMatch
-            ? parseInt(estMinutesMatch[1], 10)
-            : 0,
-          tags: tagIds,
-          createdAt: createdAtMatch ? createdAtMatch[1].trim() : todayISO(),
-          updatedAt:
-            updatedAtMatch && !updatedAtMatch[1].includes("null")
-              ? updatedAtMatch[1].trim()
-              : null,
-          completedAt:
-            completedAtMatch && !completedAtMatch[1].includes("N/A")
-              ? completedAtMatch[1].trim()
-              : null,
-          archived: archivedMatch ? archivedMatch[1].includes("Yes") : false,
-          subplans,
-        });
-      }
-    });
-
-    return { plans, tags: importedTags };
+    return { plans, logs, templates };
   },
 
-  parseCsvToPlans(csvContent) {
-    const importedTags = [];
+  parseCsvToData(csvContent) {
+    const templates = [];
     const plans = [];
+    const logs = [];
 
     const parseCsvLine = (text) => {
       const result = [];
@@ -273,124 +323,130 @@ export const SettingsImportController = {
     };
 
     const lines = csvContent.split(/\r?\n/);
-    let currentSection = "TASKS";
+    let currentSection = "PLANS";
 
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i].trim();
       if (!line || line.startsWith("#")) continue;
 
-      if (line === "[TAGS]") {
-        currentSection = "TAGS";
+      if (line === "[TEMPLATES]") {
+        currentSection = "TEMPLATES";
         continue;
-      } else if (line === "[TASKS]") {
-        currentSection = "TASKS";
+      } else if (line === "[PLANS]") {
+        currentSection = "PLANS";
+        continue;
+      } else if (line === "[LOGS]") {
+        currentSection = "LOGS";
         continue;
       }
 
       const cols = parseCsvLine(line);
 
-      if (currentSection === "TAGS") {
-        if (cols[0] === "Id" && cols[1] === "Name") continue;
-        if (cols.length >= 2 && cols[0] && cols[1]) {
-          importedTags.push({ id: cols[0].trim(), name: cols[1].trim() });
-        }
-      } else if (currentSection === "TASKS") {
+      if (currentSection === "TEMPLATES") {
         if (cols[0] === "Id" && cols[1] === "Title") continue;
-        if (cols.length < 2) continue;
-
-        const [
-          id,
-          title,
-          description,
-          status,
-          priority,
-          dueDate,
-          estimatedMinutes,
-          tagsRaw,
-          createdAt,
-          updatedAt,
-          completedAt,
-          archivedStr,
-          subplansRaw,
-        ] = cols;
-
-        const subplans = [];
-        if (subplansRaw && subplansRaw.trim()) {
-          const stItems = subplansRaw.split(" | ");
-
-          stItems.forEach((item, idx) => {
-            const cleanItem = item.trim();
-
-            const match = cleanItem.match(
-              /^\[([X ])\]\s*([^(]+?)\s*\(ID:\s*([^)]+)\)\s*$/,
-            );
-
-            if (match) {
-              subplans.push({
-                id: match[3].trim(),
-                title: match[2].trim(),
-                completed: match[1] === "X",
-              });
-            } else {
-              const statusMatch = cleanItem.match(/^\[([X ])\]/);
-              const idMatch = cleanItem.match(/\(ID:\s*([^)]+)\)/);
-
-              let title = cleanItem
-                .replace(/^\[[X ]\]\s*/, "")
-                .replace(/\s*\(ID:\s*[^)]+\)\s*$/, "")
-                .trim();
-
-              if (statusMatch) {
-                subplans.push({
-                  id: idMatch
-                    ? idMatch[1].trim()
-                    : `subplan-${Date.now()}-${idx}`,
-                  title: title || "Untitled Subplan",
-                  completed: statusMatch[1] === "X",
-                });
-              }
-            }
+        if (cols.length >= 2 && cols[0]) {
+          templates.push({
+            id: cols[0],
+            title: cols[1],
+            description: cols[2] || "",
+            lifeAreaId: cols[3] || "productivity",
+            baseline: cols[4] || "",
+            optimal: cols[5] || "",
+            isFavorite: cols[6] === "Yes",
+            usageCount: Number(cols[7]) || 0,
+            createdAt: cols[8] || todayISO(),
+            updatedAt: cols[9] || todayISO(),
           });
         }
+      } else if (currentSection === "PLANS") {
+        if (cols[0] === "Id" && cols[1] === "Title") continue;
+        if (cols.length >= 2 && cols[0]) {
+          const [
+            id,
+            title,
+            description,
+            lifeAreaId,
+            state,
+            startDate,
+            endDate,
+            createdAt,
+            updatedAt,
+            objsRaw,
+          ] = cols;
 
-        const cleanDueDate =
-          dueDate && dueDate.trim() !== "null" && dueDate.trim() !== ""
-            ? dueDate.trim()
-            : null;
-        const tagIds = tagsRaw
-          ? tagsRaw
-              .split(";")
-              .map((t) => t.trim())
-              .filter(Boolean)
-          : [];
+          const objectives = [];
+          if (objsRaw) {
+            const items = objsRaw.split(" | ");
+            items.forEach((item) => {
+              const m = item.match(
+                /^\[([X ])\]\s*([^(]+?)\s*\(ID:\s*([^)]+)\)\s*\{type:(.+),\s*target:(.+),\s*current:(.+),\s*unit:(.+)\}$/,
+              );
+              if (m) {
+                objectives.push({
+                  completed: m[1] === "X",
+                  title: m[2].trim(),
+                  id: m[3].trim(),
+                  type: m[4].trim(),
+                  targetValue: Number(m[5]),
+                  currentValue: Number(m[6]),
+                  unit: m[7].trim(),
+                });
+              }
+            });
+          }
 
-        plans.push({
-          id: id ? id.trim() : generateId(),
-          title: title ? title.trim() : "Untitled Plan",
-          description: description ? description.trim() : "",
-          status: status ? status.trim().toLowerCase() : "todo",
-          priority: priority ? priority.trim().toLowerCase() : "medium",
-          dueDate: cleanDueDate,
-          estimatedMinutes: estimatedMinutes
-            ? parseInt(estimatedMinutes, 10)
-            : 0,
-          tags: tagIds,
-          createdAt:
-            createdAt && createdAt.trim() !== "null"
-              ? createdAt.trim()
-              : todayISO(),
-          updatedAt:
-            updatedAt && updatedAt.trim() !== "null" ? updatedAt.trim() : null,
-          completedAt:
-            completedAt && completedAt.trim() !== "null"
-              ? completedAt.trim()
-              : null,
-          archived: archivedStr ? archivedStr.trim() === "Yes" : false,
-          subplans,
-        });
+          plans.push({
+            id: id || generateId(),
+            title: title || "Untitled Plan",
+            description: description || "",
+            lifeAreaId: lifeAreaId || "productivity",
+            state: state || "active",
+            period: {
+              startDate: startDate || todayISO(),
+              endDate: endDate || null,
+            },
+            createdAt: createdAt || todayISO(),
+            updatedAt: updatedAt || todayISO(),
+            objectives,
+          });
+        }
+      } else if (currentSection === "LOGS") {
+        if (cols[0] === "Id" && cols[1] === "Title") continue;
+        if (cols.length >= 2 && cols[0]) {
+          const [
+            id,
+            title,
+            description,
+            date,
+            planId,
+            energy,
+            mood,
+            metricsRaw,
+            createdAt,
+            updatedAt,
+          ] = cols;
+
+          let metrics = {};
+          try {
+            if (metricsRaw) metrics = JSON.parse(metricsRaw);
+          } catch (e) {}
+
+          logs.push({
+            id: id || generateId(),
+            title: title || "Untitled Log",
+            description: description || "",
+            date: date || todayISO(),
+            planId: planId || null,
+            energy: Number(energy) || 3,
+            mood: mood || "stable",
+            metrics,
+            createdAt: createdAt || todayISO(),
+            updatedAt: updatedAt || todayISO(),
+          });
+        }
       }
     }
 
-    return { plans, tags: importedTags };
+    return { plans, logs, templates };
   },
 };

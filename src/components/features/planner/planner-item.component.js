@@ -8,7 +8,7 @@ import {
 import { StateManager } from "@/models/state.model.js";
 import { openObjectivesState } from "@/utils/helpers";
 
-export const PlansItemComponent = {
+export const PlannerItemComponent = {
   // --- HELPERS ---
   _normalizeIconClass(iconString) {
     if (!iconString) return "fa-regular fa-folder";

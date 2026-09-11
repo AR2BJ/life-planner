@@ -2,7 +2,7 @@ import "@/vendor/fontawesome/js/all";
 
 import { GlobalLoaderService } from "@/services/loader.service";
 import { NavigationController } from "@/controllers/navigation.controller.js";
-import { PlansController } from "@/controllers/plans.controller.js";
+import { PlannerController } from "@/controllers/planner.controller.js";
 import { SettingsController } from "@/controllers/settings.controller";
 import { ThemeController } from "@/controllers/theme.controller.js";
 import { TooltipController } from "@/controllers/tooltip.controller";
@@ -20,7 +20,7 @@ document.addEventListener("DOMContentLoaded", () => {
     GlobalLoaderService.init();
 
     NavigationController.init();
-    PlansController.init();
+    PlannerController.init();
     SettingsController.init();
 
     TooltipController.init();
@@ -31,7 +31,7 @@ document.addEventListener("DOMContentLoaded", () => {
       setTimeout(() => {
         loader.remove();
         app.classList.remove("hidden");
-        PlansController.updateTabStyles(state.activeTab);
+        PlannerController.updateTabStyles(state.activeTab);
       }, 120);
     });
   }, 0);

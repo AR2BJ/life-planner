@@ -21,9 +21,9 @@ export const DesktopNavComponent = {
           <div class="separator w-3/4 h-px border-b border-border"></div>
 
           <button
-            id="nav-plans"
+            id="nav-planner"
             class="nav-item justify-center shadow-brand/10"
-            title="Plans"
+            title="Planner"
           >
             <i class="fa-regular fa-clipboard-list text-xl"></i>
           </button>
