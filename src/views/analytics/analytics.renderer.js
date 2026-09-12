@@ -5,19 +5,21 @@ import { DashboardComponent } from "@/components/features/analytics/dashboard.co
 
 let heatmapChartInstance = null;
 let barChartInstance = null;
-let priorityChartInstance = null;
-let statusChartInstance = null;
-let tagChartInstance = null;
+let lifeAreaChartInstance = null;
+let moodChartInstance = null;
+let energyChartInstance = null;
+
 let resizeListenerAttached = false;
 let activeHeatmapTab = "weekly";
 
 const weekdayNames = ["Sat", "Sun", "Mon", "Tue", "Wed", "Thu", "Fri"];
 
-/**
- * Calculates and returns ApexCharts configuration options for Heatmap
- */
-function getHeatmapOptions(plans, view) {
-  const heatmapSeries = AnalyticsAdapter.generateHeatmapSeries(plans, view);
+function getHeatmapOptions(plans, logs, view) {
+  const heatmapSeries = AnalyticsAdapter.generateHeatmapSeries(
+    plans,
+    logs,
+    view,
+  );
   const isDark =
     document.documentElement.classList.contains("dark") ||
     localStorage.getItem("theme") === "dark";
@@ -89,19 +91,13 @@ function getHeatmapOptions(plans, view) {
   };
 }
 
-/**
- * Updates heatmap chart instance safely with new view settings
- */
-export function updateHeatmapChart(plans, view) {
+export function updateHeatmapChart(plans, logs, view) {
   if (!heatmapChartInstance) return;
 
-  const newOptions = getHeatmapOptions(plans, view);
+  const newOptions = getHeatmapOptions(plans, logs, view);
   heatmapChartInstance.updateOptions(newOptions, true, true);
 }
 
-/**
- * Updates UI active tab indicator sliding animation & active states
- */
 export function updateTabStyles(tab) {
   activeHeatmapTab = tab;
 
@@ -150,10 +146,7 @@ function syncMobileMenuSelection(view) {
   });
 }
 
-/**
- * Binds desktop and mobile view tab click handlers
- */
-function bindAnalyticsControls(plans) {
+function bindAnalyticsControls(plans, logs) {
   const switcher = document.getElementById("chart-view-switcher");
   if (switcher) {
     switcher.querySelectorAll("[data-view]").forEach((btn) => {
@@ -162,7 +155,7 @@ function bindAnalyticsControls(plans) {
         const view = e.currentTarget.dataset.view;
         if (view && view !== activeHeatmapTab) {
           updateTabStyles(view);
-          updateHeatmapChart(plans, view);
+          updateHeatmapChart(plans, logs, view);
         }
       });
     });
@@ -191,7 +184,7 @@ function bindAnalyticsControls(plans) {
         const view = event.currentTarget.dataset.view;
         if (view && view !== activeHeatmapTab) {
           updateTabStyles(view);
-          updateHeatmapChart(plans, view);
+          updateHeatmapChart(plans, logs, view);
         }
         mobileMenu.classList.add("hidden");
       });
@@ -207,14 +200,10 @@ function renderChartEmptyState(chartEl, title, icon, subtitle) {
   if (!chartEl) return;
 
   chartEl.innerHTML = `
-    <div
-      class="empty-state-box flex w-full h-full min-h-60 items-center justify-center rounded-2xl border border-dashed border-border/80 bg-surface p-6 text-center"
-    >
+    <div class="empty-state-box flex w-full h-full min-h-60 items-center justify-center rounded-2xl border border-dashed border-border/80 bg-surface p-6 text-center">
       <div class="max-w-xs">
         <i class="text-4xl mb-3 fa-regular ${icon} text-brand/60"></i>
-        <div
-          class="mb-2 text-lg font-semibold text-color"
-        >
+        <div class="mb-2 text-lg font-semibold text-color">
           ${title}
         </div>
         <p class="text-sm leading-6 text-secondary">
@@ -232,38 +221,31 @@ function renderNoDataState() {
       title: "Activity Heatmap",
       icon: "fa-table-cells",
       subtitle:
-        "Add plans to see your weekly, monthly, and yearly activity trend.",
+        "Add plans or logs to see your weekly, monthly, and yearly activity trend.",
     },
     {
       id: "apex-weekday-chart",
       title: "Weekly Activity",
       icon: "fa-calendar-days",
-      subtitle:
-        "Your plan activity by weekday will appear here once data exists.",
+      subtitle: "Your activity by weekday will appear here once data exists.",
     },
     {
-      id: "apex-priority-chart",
-      title: "Priority Breakdown",
-      icon: "fa-chart-pie-simple",
-      subtitle: "Add plans with priorities to view the distribution.",
+      id: "apex-lifearea-chart",
+      title: "Life Area Distribution",
+      icon: "fa-compass",
+      subtitle: "Assign life areas to your plans to see domain distribution.",
     },
     {
-      id: "apex-status-chart",
-      title: "Status Overview",
-      icon: "fa-chart-pie",
-      subtitle: "Plan status analytics will appear here after you add plans.",
+      id: "apex-mood-chart",
+      title: "Mood Spectrum",
+      icon: "fa-face-smile",
+      subtitle: "Log your mood state entries to track emotional spectrum.",
     },
     {
-      id: "apex-tag-chart",
-      title: "Tag Performance",
-      icon: "fa-chart-column",
-      subtitle: "Tag-based analytics will be shown once you have tagged plans.",
-    },
-    {
-      id: "apex-tag-chart-desktop",
-      title: "Tag Performance",
-      icon: "fa-chart-column",
-      subtitle: "Tag-based analytics will be shown once you have tagged plans.",
+      id: "apex-energy-chart",
+      title: "Energy Distribution",
+      icon: "fa-battery-three-quarters",
+      subtitle: "Log your energy metrics to view battery level trends.",
     },
   ];
 
@@ -273,17 +255,16 @@ function renderNoDataState() {
   });
 }
 
-/**
- * Main entry point to render all analytics components and charts
- */
 export function renderAnalyticsCharts(
   plans = [],
+  logs = [],
+  templates = [],
   currentHeatmapView = "weekly",
 ) {
   const dashboard = document.getElementById("dashboard");
   if (!dashboard) return;
 
-  // Cleanup existing chart instances before re-rendering DOM
+  // Cleanup existing chart instances
   if (heatmapChartInstance) {
     heatmapChartInstance.destroy();
     heatmapChartInstance = null;
@@ -292,25 +273,26 @@ export function renderAnalyticsCharts(
     barChartInstance.destroy();
     barChartInstance = null;
   }
-  if (priorityChartInstance) {
-    priorityChartInstance.destroy();
-    priorityChartInstance = null;
+  if (lifeAreaChartInstance) {
+    lifeAreaChartInstance.destroy();
+    lifeAreaChartInstance = null;
   }
-  if (statusChartInstance) {
-    statusChartInstance.destroy();
-    statusChartInstance = null;
+  if (moodChartInstance) {
+    moodChartInstance.destroy();
+    moodChartInstance = null;
   }
-  if (tagChartInstance) {
-    tagChartInstance.destroy();
-    tagChartInstance = null;
+  if (energyChartInstance) {
+    energyChartInstance.destroy();
+    energyChartInstance = null;
   }
 
-  // Inject HTML Dashboard template
-  dashboard.innerHTML = DashboardComponent.render(plans);
+  dashboard.innerHTML = DashboardComponent.render(plans, logs, templates);
 
-  const hasPlans = Array.isArray(plans) && plans.length > 0;
+  const hasData =
+    (Array.isArray(plans) && plans.length > 0) ||
+    (Array.isArray(logs) && logs.length > 0);
 
-  if (hasPlans) {
+  if (hasData) {
     const chartBox = document.querySelectorAll('[id^="apex"]');
     const HeatmapSwitcher = document.getElementById("chart-view-switcher");
     const mobileHeatmapSwitcher = document.getElementById(
@@ -323,21 +305,25 @@ export function renderAnalyticsCharts(
       );
     });
 
-    HeatmapSwitcher.classList.replace("sm:hidden", "sm:flex");
-    mobileHeatmapSwitcher.classList.replace("hidden", "inline-flex");
+    if (HeatmapSwitcher)
+      HeatmapSwitcher.classList.replace("sm:hidden", "sm:flex");
+    if (mobileHeatmapSwitcher)
+      mobileHeatmapSwitcher.classList.replace("hidden", "inline-flex");
   }
 
   AnalyticsController.init();
-  bindAnalyticsControls(plans);
+  bindAnalyticsControls(plans, logs);
 
-  if (!hasPlans) {
+  if (!hasData) {
     const HeatmapSwitcher = document.getElementById("chart-view-switcher");
     const mobileHeatmapSwitcher = document.getElementById(
       "heatmap-mobile-menu-toggle",
     );
 
-    HeatmapSwitcher.classList.replace("sm:flex", "sm:hidden");
-    mobileHeatmapSwitcher.classList.replace("inline-flex", "hidden");
+    if (HeatmapSwitcher)
+      HeatmapSwitcher.classList.replace("sm:flex", "sm:hidden");
+    if (mobileHeatmapSwitcher)
+      mobileHeatmapSwitcher.classList.replace("inline-flex", "hidden");
 
     renderNoDataState();
     requestAnimationFrame(() => {
@@ -356,17 +342,17 @@ export function renderAnalyticsCharts(
     localStorage.getItem("theme") === "dark";
   const axisTextColor = isDark ? "#e2e8f0" : "#222f47";
 
-  // Build Heatmap Options
-  const heatmapOptions = getHeatmapOptions(plans, currentHeatmapView);
+  // 1. Heatmap Options
+  const heatmapOptions = getHeatmapOptions(plans, logs, currentHeatmapView);
 
-  // Build Bar Chart Options
-  const weekdayCounts = AnalyticsAdapter.generateWeekdayCounts(plans);
+  // 2. Weekday Bar Chart Options
+  const weekdayCounts = AnalyticsAdapter.generateWeekdayCounts(plans, logs);
   const barChartOptions = {
-    series: [{ name: "Plans Activity", data: weekdayCounts }],
+    series: [{ name: "Activity Volume", data: weekdayCounts }],
     chart: {
       id: "weekday-bar",
       type: "bar",
-      height: 400,
+      height: 380,
       toolbar: { show: false },
       fontFamily: "inherit",
     },
@@ -382,13 +368,9 @@ export function renderAnalyticsCharts(
     dataLabels: {
       enabled: true,
       textAnchor: "end",
-      colors: [isDark ? "#e2e8f0" : "#222f47"],
-      style: {
-        fontSize: "12px",
-        fontWeight: "bold",
-        colors: [axisTextColor],
-      },
-      formatter: (val) => val + " checked",
+      colors: [axisTextColor],
+      style: { fontSize: "12px", fontWeight: "bold" },
+      formatter: (val) => val + " items",
     },
     xaxis: {
       categories: weekdayNames,
@@ -403,203 +385,111 @@ export function renderAnalyticsCharts(
     },
     grid: {
       show: true,
-      borderColor: isDark ? "#e5e7eb" : "#bfcbd9",
+      borderColor: isDark ? "#334155" : "#e2e8f0",
       strokeDashArray: 4,
     },
     tooltip: { theme: isDark ? "dark" : "light" },
   };
 
-  const priorityCounts = AnalyticsAdapter.generatePriorityCounts(plans);
-  const priorityChartOptions = {
-    series: priorityCounts,
-    labels: ["Low", "Medium", "High"],
+  // 3. Life Area Options
+  const lifeData = AnalyticsAdapter.generateLifeAreaAnalytics(plans);
+  const lifeAreaChartOptions = {
+    series: lifeData.series,
+    labels: lifeData.labels,
     chart: {
-      id: "priority-donut",
-      type: "donut",
-      height: 400,
+      id: "lifearea-polar",
+      type: "polarArea",
+      height: 380,
       fontFamily: "inherit",
     },
-    colors: ["#9ae600da", "#ffb900da", "#ff6467da"],
-    stroke: {
-      colors: [isDark ? "#1e293b" : "#ffffff"],
-      width: 2,
-    },
-    plotOptions: {
-      pie: {
-        donut: {
-          size: "0%",
-          labels: {
-            show: false,
-            value: {
-              show: false,
-            },
-          },
-        },
-      },
-    },
+    colors: ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899"],
+    stroke: { colors: [isDark ? "#1e293b" : "#ffffff"] },
+    fill: { opacity: 0.85 },
     legend: {
       position: "bottom",
-      horizontalAlign: "center",
-      labels: {
-        colors: axisTextColor,
-      },
-      itemMargin: {
-        horizontal: 10,
-        vertical: 5,
-      },
+      labels: { colors: axisTextColor },
     },
-    dataLabels: {
-      enabled: true,
-      formatter: function (val) {
-        return Math.round(val) + "%";
-      },
-    },
-    tooltip: {
-      theme: isDark ? "dark" : "light",
-      y: {
-        formatter: (val) => `${val} plans`,
-      },
-    },
+    tooltip: { theme: isDark ? "dark" : "light" },
   };
 
-  const statusCounts = AnalyticsAdapter.generateStatusCounts(plans);
-  const statusChartOptions = {
-    series: statusCounts,
-    labels: ["To Do", "In Progress", "Done", "Blocked"],
+  // 4. Standalone Mood Chart Options
+  const moodData = AnalyticsAdapter.generateMoodAnalytics(logs);
+  const moodChartOptions = {
+    series: moodData.series,
     chart: {
-      id: "status-donut",
-      type: "donut",
-      height: 400,
-      fontFamily: "inherit",
-    },
-    colors: ["#00bcffda", "#ff8904da", "#00d492da", "#fb64b6da"],
-    stroke: {
-      colors: [isDark ? "#1e293b" : "#ffffff"],
-      width: 2,
-    },
-    plotOptions: {
-      pie: {
-        donut: {
-          size: "0%",
-          labels: {
-            show: false,
-            value: {
-              show: false,
-            },
-          },
-        },
-      },
-    },
-    legend: {
-      position: "bottom",
-      horizontalAlign: "center",
-      labels: {
-        colors: axisTextColor,
-      },
-      itemMargin: {
-        horizontal: 10,
-        vertical: 5,
-      },
-    },
-    dataLabels: {
-      enabled: true,
-      formatter: function (val) {
-        return Math.round(val) + "%";
-      },
-    },
-    tooltip: {
-      theme: isDark ? "dark" : "light",
-      y: {
-        formatter: (val) => `${val} plans`,
-      },
-    },
-  };
-
-  const tagData = AnalyticsAdapter.generateTagAnalytics(plans);
-
-  const tagChartOptions = {
-    series: [
-      {
-        name: "Total Plans",
-        data: tagData.totalSeries,
-      },
-      {
-        name: "Completed Plans",
-        data: tagData.completedSeries,
-      },
-    ],
-    chart: {
-      id: "tag-performance-bar",
+      id: "mood-bar",
       type: "bar",
-      height: 400,
-      fontFamily: "inherit",
+      height: 350,
       toolbar: { show: false },
+      fontFamily: "inherit",
     },
-    colors: ["#00bcff", "#10b981"],
+    colors: ["#8b5cf6"],
     plotOptions: {
       bar: {
         horizontal: false,
-        columnWidth: "60%",
-        borderRadius: 4,
+        columnWidth: "45%",
+        borderRadius: 6,
+        dataLabels: { position: "top" },
       },
     },
     dataLabels: {
-      enabled: false,
-    },
-    stroke: {
-      show: true,
-      width: 2,
-      colors: ["transparent"],
+      enabled: true,
+      offsetY: -18,
+      style: { colors: [axisTextColor], fontSize: "11px", fontWeight: "bold" },
     },
     xaxis: {
-      categories:
-        tagData.categories.length > 0 ? tagData.categories : ["No Tags"],
+      categories: moodData.categories,
       labels: {
-        style: {
-          colors: axisTextColor,
-          fontSize: "12px",
-          fontWeight: 600,
-        },
-        rotateAlways: true,
+        style: { colors: axisTextColor, fontSize: "11px", fontWeight: 600 },
       },
-      axisBorder: { show: false },
-      axisTicks: { show: false },
     },
-    yaxis: {
+    yaxis: { labels: { style: { colors: axisTextColor, fontSize: "11px" } } },
+    grid: { borderColor: isDark ? "#334155" : "#e2e8f0", strokeDashArray: 4 },
+    tooltip: { theme: isDark ? "dark" : "light" },
+  };
+
+  // 5. Standalone Energy Chart Options
+  const energyData = AnalyticsAdapter.generateEnergyAnalytics(logs);
+  const energyChartOptions = {
+    series: energyData.series,
+    chart: {
+      id: "energy-bar",
+      type: "bar",
+      height: 350,
+      toolbar: { show: false },
+      fontFamily: "inherit",
+    },
+    colors: ["#f59e0b"],
+    plotOptions: {
+      bar: {
+        horizontal: false,
+        columnWidth: "45%",
+        borderRadius: 6,
+        dataLabels: { position: "top" },
+      },
+    },
+    dataLabels: {
+      enabled: true,
+      offsetY: -18,
+      style: { colors: [axisTextColor], fontSize: "11px", fontWeight: "bold" },
+    },
+    xaxis: {
+      categories: energyData.categories,
       labels: {
-        style: { colors: axisTextColor, fontSize: "11px" },
+        style: { colors: axisTextColor, fontSize: "11px", fontWeight: 600 },
       },
     },
-    legend: {
-      position: "top",
-      horizontalAlign: "center",
-      labels: { colors: axisTextColor },
-    },
-    grid: {
-      borderColor: isDark ? "#334155" : "#e2e8f0",
-      strokeDashArray: 4,
-    },
-    tooltip: {
-      theme: isDark ? "dark" : "light",
-      y: {
-        formatter: (val, { seriesIndex, dataPointIndex }) => {
-          if (seriesIndex === 1) {
-            const rate = tagData.progressRates[dataPointIndex] || 0;
-            return `${val} completed (${rate}% rate)`;
-          }
-          return `${val} plans`;
-        },
-      },
-    },
+    yaxis: { labels: { style: { colors: axisTextColor, fontSize: "11px" } } },
+    grid: { borderColor: isDark ? "#334155" : "#e2e8f0", strokeDashArray: 4 },
+    tooltip: { theme: isDark ? "dark" : "light" },
   };
 
   // Mount ApexCharts
   const heatmapEl = document.getElementById("apex-heatmap-chart");
   const barEl = document.getElementById("apex-weekday-chart");
-  const priorityEl = document.getElementById("apex-priority-chart");
-  const statusEl = document.getElementById("apex-status-chart");
-  const tagEl = document.getElementById("apex-tag-chart");
-  const tagDeskEl = document.getElementById("apex-tag-chart-desktop");
+  const lifeAreaEl = document.getElementById("apex-lifearea-chart");
+  const moodEl = document.getElementById("apex-mood-chart");
+  const energyEl = document.getElementById("apex-energy-chart");
 
   if (heatmapEl) {
     heatmapChartInstance = new ApexCharts(heatmapEl, heatmapOptions);
@@ -611,27 +501,21 @@ export function renderAnalyticsCharts(
     barChartInstance.render();
   }
 
-  if (priorityEl) {
-    priorityChartInstance = new ApexCharts(priorityEl, priorityChartOptions);
-    priorityChartInstance.render();
+  if (lifeAreaEl) {
+    lifeAreaChartInstance = new ApexCharts(lifeAreaEl, lifeAreaChartOptions);
+    lifeAreaChartInstance.render();
   }
 
-  if (statusEl) {
-    statusChartInstance = new ApexCharts(statusEl, statusChartOptions);
-    statusChartInstance.render();
+  if (moodEl) {
+    moodChartInstance = new ApexCharts(moodEl, moodChartOptions);
+    moodChartInstance.render();
   }
 
-  if (tagEl) {
-    tagChartInstance = new ApexCharts(tagEl, tagChartOptions);
-    tagChartInstance.render();
+  if (energyEl) {
+    energyChartInstance = new ApexCharts(energyEl, energyChartOptions);
+    energyChartInstance.render();
   }
 
-  if (tagDeskEl) {
-    tagChartInstance = new ApexCharts(tagDeskEl, tagChartOptions);
-    tagChartInstance.render();
-  }
-
-  // Sync tab slider position in next frame after DOM calculation
   requestAnimationFrame(() => {
     updateTabStyles(currentHeatmapView);
   });

@@ -441,7 +441,9 @@ export const PlannerItemComponent = {
           <div class="flex items-start justify-between gap-3">
             <div class="flex flex-col min-w-0 w-full gap-1.5 pe-12">
               <div class="flex items-center gap-2 flex-wrap">
-                ${stateBadge} ${lifeAreaBadge}
+                ${stateBadge} 
+                
+                ${lifeAreaBadge}
               </div>
 
               <h2
@@ -693,7 +695,9 @@ export const PlannerItemComponent = {
         <div class="flex items-start justify-between gap-4 w-full">
           <div class="flex flex-col min-w-0 w-full gap-1.5">
             <div class="flex items-center gap-2 flex-wrap">
-              ${moodBadge} ${energyBadge}
+              ${moodBadge} 
+              
+              ${energyBadge}
 
               <span
                 class="inline-flex items-center gap-1 rounded-md border border-secondary/30 bg-secondary/10 px-2 py-0.5 text-[10px] font-medium text-secondary/80"

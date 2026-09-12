@@ -4,13 +4,15 @@ import {
   updateTabStyles,
 } from "@/views/analytics/analytics.renderer.js";
 
+import { DashboardComponent } from "@/components/features/analytics/dashboard.component";
 import { StateManager } from "@/models/state.model.js";
 
 let currentHeatmapView = "weekly";
 
 export const AnalyticsController = {
   init() {
-    // this.bindStaticEvents();
+    DashboardComponent.initTabSwitcher();
+    this.bindStaticEvents();
   },
 
   bindStaticEvents() {
@@ -30,16 +32,23 @@ export const AnalyticsController = {
   },
 
   handleTabSwitch(tab) {
-    // if (tab === currentHeatmapView) return;
-    // currentHeatmapView = tab;
+    if (tab === currentHeatmapView) return;
+    currentHeatmapView = tab;
 
-    // updateTabStyles(tab);
+    updateTabStyles(tab);
 
-    // const plans = StateManager.getPlans();
-    // updateHeatmapChart(plans, tab);
+    const plans = StateManager.getPlans ? StateManager.getPlans() : [];
+    const logs = StateManager.getLogs ? StateManager.getLogs() : [];
+    updateHeatmapChart(plans, logs, tab);
   },
 
-  dispatchRender(plans) {
-    // renderAnalyticsCharts(plans, currentHeatmapView);
+  dispatchRender() {
+    const plans = StateManager.getPlans ? StateManager.getPlans() : [];
+    const logs = StateManager.getLogs ? StateManager.getLogs() : [];
+    const templates = StateManager.getTemplates
+      ? StateManager.getTemplates()
+      : [];
+
+    renderAnalyticsCharts(plans, logs, templates, currentHeatmapView);
   },
 };

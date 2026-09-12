@@ -1,828 +1,850 @@
-import { state } from "@/models/state.model";
+import {
+  ENERGY_LEVEL_OPTIONS,
+  LIFE_AREAS,
+  MOOD_OPTIONS,
+  PLAN_STATES,
+} from "@/utils/constants/options-value.constants";
+
+import { StateManager } from "@/models/state.model";
 
 export const DashboardComponent = {
-  render(plans = []) {
-    // const activePlans = plans.filter((t) => !t.archived);
-    // const archivedPlans = plans.filter((t) => t.archived);
-    // const totalPlansCount = plans.length;
-    // const activeCount = activePlans.length;
-    // const archivedCount = archivedPlans.length;
-    // // Plan Status Breakdown
-    // const completedPlans = activePlans.filter((t) => t.status === "done");
-    // const completedCount = completedPlans.length;
-    // const BlockedCount = activePlans.filter(
-    //   (t) => t.status === "blocked",
-    // ).length;
-    // const overdueCount = activePlans.filter((t) =>
-    //   isOverdue(t.dueDate, t.status),
-    // ).length;
-    // // Subplans Aggregation
-    // let totalSubplans = 0;
-    // let completedSubplans = 0;
-    // activePlans.forEach((t) => {
-    //   if (Array.isArray(t.subplans) && t.subplans.length > 0) {
-    //     totalSubplans += t.subplans.length;
-    //     completedSubplans += t.subplans.filter((st) => st.completed).length;
-    //   }
-    // });
-    // const subplanRate =
-    //   totalSubplans > 0
-    //     ? Math.round((completedSubplans / totalSubplans) * 100)
-    //     : 0;
-    // const overallCompletionRate =
-    //   activeCount > 0 ? Math.round((completedCount / activeCount) * 100) : 0;
-    // // Extract Top Tags Count for Analytic Insight
-    // const tagCounts = {};
-    // activePlans.forEach((plan) => {
-    //   (state.tags.filter((t) => plan.tags.includes(t.id)) || []).forEach(
-    //     (tag) => {
-    //       tagCounts[tag.name] = (tagCounts[tag.name] || 0) + 1;
-    //     },
-    //   );
-    // });
-    // const sortedTags = Object.entries(tagCounts)
-    //   .sort((a, b) => b[1] - a[1])
-    //   .slice(0, 5);
-    // const topTag = sortedTags.length > 0 ? sortedTags[0] : ["None", 0];
-    // const topTagPercentage =
-    //   activeCount > 0 ? Math.round((topTag[1] / activeCount) * 100) : 0;
-    // const criticalPlans = activePlans.filter(
-    //   (t) => t.status !== "done" && t.priority === "high",
-    // );
-    // const criticalCount = criticalPlans.length;
-    // const nearDeadlineCritical = criticalPlans.filter((t) => {
-    //   if (!t.dueDate) return false;
-    //   const days = getDaysRemaining(t.dueDate);
-    //   return days >= 0 && days <= 2;
-    // }).length;
-    // const unscheduledCount = activePlans.filter(
-    //   (t) => t.status !== "done" && !t.dueDate,
-    // ).length;
-    // const unscheduledRate =
-    //   activeCount > 0 ? Math.round((unscheduledCount / activeCount) * 100) : 0;
-    // const blockedRatio =
-    //   activeCount > 0 ? Math.round((BlockedCount / activeCount) * 100) : 0;
-    // return `
-    //   <div
-    //     class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 w-full col-span-full"
-    //   >
-    //     <div
-    //       class="col-span-2 md:col-span-1 relative overflow-hidden bg-surface-2 border border-border/70 hover:-translate-y-1 hover:border-yellow-500/30 rounded-2xl p-6 transition-all duration-300 flex flex-col justify-between min-h-36 group"
-    //     >
-    //       <i
-    //         class="fa-solid fa-triangle-exclamation absolute -right-4 -bottom-6 text-[10rem] text-yellow-500 opacity-[0.04] dark:opacity-[0.06] rotate-15 pointer-events-none group-hover:scale-110 group-hover:rotate-5 transition-transform duration-500"
-    //       ></i>
-    //       <div class="flex items-center justify-between z-10">
-    //         <span
-    //           class="text-xs font-bold text-secondary uppercase tracking-wider"
-    //         >
-    //           Priority Risk
-    //         </span>
-    //         <span
-    //           class="text-[10px] font-semibold px-2 py-0.5 rounded-md ${
-    //             criticalCount > 0
-    //               ? "bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 animate-pulse"
-    //               : "bg-surface text-secondary"
-    //           }"
-    //         >
-    //           ${
-    //             nearDeadlineCritical > 0
-    //               ? `${nearDeadlineCritical} Due Soon`
-    //               : "At Risk"
-    //           }
-    //         </span>
-    //       </div>
-    //       <div class="z-10 mt-3">
-    //         <div
-    //           class="text-3xl font-black ${
-    //             criticalCount > 0 ? "text-yellow-400" : "text-color"
-    //           } tracking-tight"
-    //         >
-    //           ${criticalCount}
-    //         </div>
-    //         <p class="text-[11px] text-secondary/80 font-medium mt-1">
-    //           High/Critical active items
-    //         </p>
-    //       </div>
-    //     </div>
-    //     <div
-    //       class="col-span-2 md:col-span-1 relative overflow-hidden bg-surface-2 border border-border/70 hover:-translate-y-1 hover:border-purple-500/30 rounded-2xl p-6 transition-all duration-300 flex flex-col justify-between min-h-36 group"
-    //     >
-    //       <i
-    //         class="fa-solid fa-layer-group absolute -right-4 -bottom-6 text-[10rem] text-purple-500 opacity-[0.04] dark:opacity-[0.06] rotate-20 pointer-events-none group-hover:scale-110 group-hover:rotate-10 transition-transform duration-500"
-    //       ></i>
-    //       <div class="flex items-center justify-between z-10">
-    //         <span
-    //           class="text-xs font-bold text-secondary uppercase tracking-wider"
-    //           >Total Plans</span
-    //         >
-    //         <span
-    //           class="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-400 border border-purple-500/20"
-    //           >${activeCount} Active</span
-    //         >
-    //       </div>
-    //       <div class="z-10 mt-3">
-    //         <div class="text-3xl font-black text-color tracking-tight">
-    //           ${totalPlansCount}
-    //         </div>
-    //         <p class="text-[11px] text-secondary/80 font-medium mt-1">
-    //           Total execution units across all states
-    //         </p>
-    //       </div>
-    //     </div>
-    //     <div
-    //       class="col-span-2 md:col-span-1 relative overflow-hidden bg-surface-2 border border-border/70 hover:-translate-y-1 hover:border-emerald-500/30 rounded-2xl p-6 transition-all duration-300 flex flex-col justify-between min-h-36 group"
-    //     >
-    //       <i
-    //         class="fa-solid fa-circle-check absolute -right-4 -bottom-6 text-[10rem] text-emerald-500 opacity-[0.04] dark:opacity-[0.06] rotate-15 pointer-events-none group-hover:scale-110 group-hover:rotate-5 transition-transform duration-500"
-    //       ></i>
-    //       <div class="flex items-center justify-between z-10">
-    //         <span
-    //           class="text-xs font-bold text-secondary uppercase tracking-wider"
-    //           >Completion Rate</span
-    //         >
-    //         <span
-    //           class="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
-    //           >${completedCount}/${activeCount} Done</span
-    //         >
-    //       </div>
-    //       <div class="z-10 mt-3">
-    //         <div class="text-3xl font-black text-color tracking-tight">
-    //           ${overallCompletionRate}%
-    //         </div>
-    //         <div
-    //           class="w-1/4 h-1.5 bg-surface rounded-full overflow-hidden mt-2"
-    //         >
-    //           <div
-    //             class="h-full bg-emerald-500 transition-all duration-500"
-    //             style="width: ${overallCompletionRate}%"
-    //           ></div>
-    //         </div>
-    //       </div>
-    //     </div>
-    //     <div
-    //       class="col-span-2 md:col-span-1 relative overflow-hidden bg-surface-2 border border-border/70 hover:-translate-y-1 hover:border-orange-500/30 rounded-2xl p-6 transition-all duration-300 flex flex-col justify-between min-h-36 group"
-    //     >
-    //       <i
-    //         class="fa-solid fa-alarm-exclamation absolute -right-4 -bottom-6 text-[10rem] text-orange-500 opacity-[0.04] dark:opacity-[0.06] rotate-15 pointer-events-none group-hover:scale-110 group-hover:rotate-5 transition-transform duration-500"
-    //       ></i>
-    //       <div class="flex items-center justify-between z-10">
-    //         <span
-    //           class="text-xs font-bold text-secondary uppercase tracking-wider"
-    //           >Overdue Plans</span
-    //         >
-    //         <span
-    //           class="text-[10px] font-semibold px-2 py-0.5 rounded-md ${
-    //             overdueCount > 0
-    //               ? "bg-orange-500/10 text-orange-400 border border-orange-500/20 animate-pulse"
-    //               : "bg-surface text-secondary"
-    //           }"
-    //         >
-    //           ${overdueCount > 0 ? "Action Needed" : "All Clear"}
-    //         </span>
-    //       </div>
-    //       <div class="z-10 mt-3">
-    //         <div
-    //           class="text-3xl font-black ${
-    //             overdueCount > 0 ? "text-orange-400" : "text-color"
-    //           } tracking-tight"
-    //         >
-    //           ${overdueCount}
-    //         </div>
-    //         <p class="text-[11px] text-secondary/80 font-medium mt-1">
-    //           ${
-    //             overdueCount > 0
-    //               ? "Requires immediate attention"
-    //               : "No overdue deadlines"
-    //           }
-    //         </p>
-    //       </div>
-    //     </div>
-    //     <div
-    //       class="col-span-2 md:col-span-1 relative overflow-hidden bg-surface-2 border border-border/70 hover:-translate-y-1 hover:border-indigo-500/30 rounded-2xl p-6 transition-all duration-300 flex flex-col justify-between min-h-36 group"
-    //     >
-    //       <i
-    //         class="fa-solid fa-list-check absolute -right-4 -bottom-6 text-[10rem] text-indigo-500 opacity-[0.04] dark:opacity-[0.06] rotate-15 pointer-events-none group-hover:scale-110 group-hover:rotate-5 transition-transform duration-500"
-    //       ></i>
-    //       <div class="flex items-center justify-between z-10">
-    //         <span
-    //           class="text-xs font-bold text-secondary uppercase tracking-wider"
-    //           >Subplan Velocity</span
-    //         >
-    //         <span
-    //           class="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-indigo-500/10 text-indigo-400 border border-indigo-500/20"
-    //           >${completedSubplans}/${totalSubplans} Units</span
-    //         >
-    //       </div>
-    //       <div class="z-10 mt-3">
-    //         <div class="text-3xl font-black text-color tracking-tight">
-    //           ${subplanRate}%
-    //         </div>
-    //         <p class="text-[11px] text-secondary/80 font-medium mt-1">
-    //           Micro-execution lifecycle progress
-    //         </p>
-    //       </div>
-    //     </div>
-    //     <div
-    //       class="col-span-2 md:col-span-1 relative overflow-hidden bg-surface-2 border border-border/70 hover:-translate-y-1 hover:border-blue-500/30 rounded-2xl p-6 transition-all duration-300 flex flex-col justify-between min-h-36 group"
-    //     >
-    //       <i
-    //         class="fa-solid fa-calendar-xmark absolute -right-4 -bottom-6 text-[10rem] text-blue-500 opacity-[0.04] dark:opacity-[0.06] rotate-15 pointer-events-none group-hover:scale-110 group-hover:rotate-5 transition-transform duration-500"
-    //       ></i>
-    //       <div class="flex items-center justify-between z-10">
-    //         <span
-    //           class="text-xs font-bold text-secondary uppercase tracking-wider"
-    //           >Unscheduled Rate</span
-    //         >
-    //         <span
-    //           class="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-400 border border-blue-500/20"
-    //           >${unscheduledRate}% Backlog</span
-    //         >
-    //       </div>
-    //       <div class="z-10 mt-3">
-    //         <div class="text-3xl font-black text-color tracking-tight">
-    //           ${unscheduledCount}
-    //         </div>
-    //         <p class="text-[11px] text-secondary/80 font-medium mt-1">
-    //           Active plans without target deadline
-    //         </p>
-    //       </div>
-    //     </div>
-    //     <div
-    //       class="col-span-2 md:col-span-1 relative overflow-hidden bg-surface-2 border border-border/70 hover:-translate-y-1 hover:border-red-500/30 rounded-2xl p-6 transition-all duration-300 flex flex-col justify-between min-h-36 group"
-    //     >
-    //       <i
-    //         class="fa-solid fa-ban absolute -right-4 -bottom-6 text-[10rem] text-red-500 opacity-[0.04] dark:opacity-[0.06] rotate-15 pointer-events-none group-hover:scale-110 group-hover:rotate-5 transition-transform duration-500"
-    //       ></i>
-    //       <div class="flex items-center justify-between z-10">
-    //         <span
-    //           class="text-xs font-bold text-secondary uppercase tracking-wider"
-    //           >Blocked Ratio</span
-    //         >
-    //         <span
-    //           class="text-[10px] font-semibold px-2 py-0.5 rounded-md ${
-    //             BlockedCount > 0
-    //               ? "bg-red-500/10 text-red-400 border border-red-500/20 animate-pulse"
-    //               : "bg-surface text-secondary"
-    //           }"
-    //         >
-    //           ${blockedRatio}% Bottleneck
-    //         </span>
-    //       </div>
-    //       <div class="z-10 mt-3">
-    //         <div
-    //           class="text-3xl font-black ${
-    //             BlockedCount > 0 ? "text-red-400" : "text-color"
-    //           } tracking-tight"
-    //         >
-    //           ${BlockedCount}
-    //         </div>
-    //         <p class="text-[11px] text-secondary/80 font-medium mt-1">
-    //           Impeded plans requiring resolution
-    //         </p>
-    //       </div>
-    //     </div>
-    //     <div
-    //       class="col-span-2 md:col-span-1 relative overflow-hidden bg-surface-2 border border-border/70 hover:-translate-y-1 hover:border-brand/30 rounded-2xl p-6 transition-all duration-300 flex flex-col justify-between min-h-36 group"
-    //     >
-    //       <i
-    //         class="fa-solid fa-tags absolute -right-4 -bottom-6 text-[10rem] text-brand/80 opacity-[0.04] dark:opacity-[0.06] rotate-15 pointer-events-none group-hover:scale-110 group-hover:rotate-5 transition-transform duration-500"
-    //       ></i>
-    //       <div class="flex items-center justify-between z-10">
-    //         <span
-    //           class="text-xs font-bold text-secondary uppercase tracking-wider"
-    //           >Domain Focus</span
-    //         >
-    //         <span
-    //           class="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-brand/10 text-brand/80 border border-brand/20"
-    //           >${topTagPercentage}% Concentration</span
-    //         >
-    //       </div>
-    //       <div class="z-10 mt-3">
-    //         <div
-    //           class="text-2xl font-black text-brand/80 tracking-tight truncate max-w-45"
-    //           title="${topTag[0]}"
-    //         >
-    //           <i class="fa-regular fa-tag text-base me-2"></i>${topTag[0]}
-    //         </div>
-    //         <p class="text-[11px] text-secondary/80 font-medium mt-1">
-    //           Leading focus area (${topTag[1]} plans)
-    //         </p>
-    //       </div>
-    //     </div>
-    //     <div
-    //       class="grid grid-cols-1 lg:grid-cols-3 gap-6 w-full col-span-2 sm:col-span-full mt-4"
-    //     >
-    //       <div
-    //         class="lg:col-span-2 bg-surface-2 border border-border/70 rounded-2xl p-6 flex flex-col justify-between"
-    //       >
-    //         <div
-    //           class="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between"
-    //         >
-    //           <div>
-    //             <h4
-    //               class="text-lg font-bold text-color flex items-center gap-2"
-    //             >
-    //               <i class="fa-regular fa-chart-network text-brand/80 text-xl"></i>
-    //               Sprint & Execution Heatmap
-    //             </h4>
-    //             <p class="text-xs text-secondary mt-1">
-    //               Plan density velocity tracking across defined execution
-    //               windows.
-    //             </p>
-    //           </div>
-    //           <div class="relative flex items-center justify-end">
-    //             <button
-    //               id="heatmap-mobile-menu-toggle"
-    //               class="sm:hidden inline-flex items-center justify-center h-8 w-8 rounded-lg border border-border bg-surface text-secondary hover:text-color transition shadow-sm cursor-pointer"
-    //               aria-label="Open view menu"
-    //             >
-    //               <i class="fa-regular fa-ellipsis-vertical text-lg"></i>
-    //             </button>
-    //             <div
-    //               id="heatmap-mobile-menu"
-    //               class="hidden absolute right-0 top-full mt-2 w-44 rounded-2xl border border-border bg-surface-2 shadow-lg z-20 overflow-hidden"
-    //             >
-    //               <button
-    //                 data-view="weekly"
-    //                 class="w-full px-4 py-2.5 text-left text-xs font-medium text-secondary hover:bg-surface"
-    //               >
-    //                 Weekly
-    //               </button>
-    //               <button
-    //                 data-view="monthly"
-    //                 class="w-full px-4 py-2.5 text-left text-xs font-medium text-secondary hover:bg-surface"
-    //               >
-    //                 Monthly
-    //               </button>
-    //               <button
-    //                 data-view="yearly"
-    //                 class="w-full px-4 py-2.5 text-left text-xs font-medium text-secondary hover:bg-surface"
-    //               >
-    //                 Yearly
-    //               </button>
-    //             </div>
-    //             <div
-    //               id="chart-view-switcher"
-    //               class="hidden sm:flex relative overflow-hidden rounded-xl border border-border/80 bg-surface p-1 isolation-auto"
-    //             >
-    //               <div
-    //                 id="heatmap-tab-indicator"
-    //                 class="absolute top-1 left-1 h-[calc(100%-8px)] w-24 rounded-lg bg-brand/80 transition-all duration-300 ease-out z-0 shadow-sm"
-    //               ></div>
-    //               <button
-    //                 data-view="weekly"
-    //                 id="view-btn-weekly"
-    //                 class="relative z-10 w-24 py-1.5 text-xs font-bold text-secondary transition cursor-pointer text-center"
-    //               >
-    //                 Weekly
-    //               </button>
-    //               <button
-    //                 data-view="monthly"
-    //                 id="view-btn-monthly"
-    //                 class="relative z-10 w-24 py-1.5 text-xs font-bold text-secondary transition cursor-pointer text-center"
-    //               >
-    //                 Monthly
-    //               </button>
-    //               <button
-    //                 data-view="yearly"
-    //                 id="view-btn-yearly"
-    //                 class="relative z-10 w-24 py-1.5 text-xs font-bold text-secondary transition cursor-pointer text-center"
-    //               >
-    //                 Yearly
-    //               </button>
-    //             </div>
-    //           </div>
-    //         </div>
-    //         <div
-    //           class="w-full mt-6 overflow-x-auto scrollbar-thin scrollbar-thumb-surface"
-    //         >
-    //           <div
-    //             id="apex-heatmap-chart"
-    //             class="w-full"
-    //           ></div>
-    //         </div>
-    //       </div>
-    //       <div
-    //         class="bg-surface-2 border border-border/70 rounded-2xl p-6 flex flex-col justify-between"
-    //       >
-    //         <div>
-    //           <h4
-    //             class="text-lg font-bold text-color flex items-center gap-2"
-    //           >
-    //             <i
-    //               class="fa-regular fa-chart-simple text-amber-400 text-xl"
-    //             ></i>
-    //             Distribution Trends
-    //           </h4>
-    //           <p class="text-xs text-secondary mt-1">
-    //             Execution pattern mapped by days of week.
-    //           </p>
-    //         </div>
-    //         <div
-    //           class="w-full mt-6 overflow-x-auto scrollbar-thin scrollbar-thumb-surface"
-    //         >
-    //           <div
-    //             id="apex-weekday-chart"
-    //             class="w-full"
-    //           ></div>
-    //         </div>
-    //       </div>
-    //     </div>
-    //     <div
-    //       class="grid grid-cols-1 lg:grid-cols-4 xl:grid-cols-3 gap-6 w-full col-span-2 sm:col-span-full mt-2"
-    //     >
-    //       <div
-    //         class="col-span-4 lg:col-span-2 xl:col-span-1 bg-surface-2 border border-border/70 rounded-2xl p-6 flex flex-col justify-between"
-    //       >
-    //         <div class="flex items-start justify-between gap-2">
-    //           <div>
-    //             <h4
-    //               class="text-lg font-bold text-color flex items-center gap-2"
-    //             >
-    //               <i
-    //                 class="fa-regular fa-arrow-down-small-big text-amber-400 text-xl"
-    //               ></i>
-    //               Priority Breakdown
-    //             </h4>
-    //             <p class="text-xs text-secondary mt-1">
-    //               Proportional distribution of active plans classified by
-    //               severity tier.
-    //             </p>
-    //           </div>
-    //           <span
-    //             class="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-400 border border-amber-500/20 shrink-0"
-    //           >
-    //             3 Levels
-    //           </span>
-    //         </div>
-    //         <div
-    //           class="w-full mt-6 overflow-x-auto scrollbar-thin scrollbar-thumb-surface"
-    //         >
-    //           <div
-    //             id="apex-priority-chart"
-    //             class="w-full"
-    //           ></div>
-    //         </div>
-    //       </div>
-    //       <div
-    //         class="bg-surface-2 border border-border/70 rounded-2xl p-6 hidden xl:flex flex-col justify-between"
-    //       >
-    //         <div
-    //           class="flex flex-wrap sm:flex-nowrap sm:items-center justify-between gap-4"
-    //         >
-    //           <div>
-    //             <h4
-    //               class="text-lg font-bold text-color flex items-center gap-2"
-    //             >
-    //               <i class="fa-regular fa-tags text-sky-400 text-xl"></i>
-    //               Tag Velocity
-    //             </h4>
-    //             <p class="text-xs text-secondary mt-1">
-    //               Tag usage frequency vs completion rate.
-    //             </p>
-    //           </div>
-    //         </div>
-    //         <div
-    //           class="w-full mt-6 overflow-x-auto scrollbar-thin scrollbar-thumb-surface"
-    //         >
-    //           <div
-    //             id="apex-tag-chart"
-    //             class="w-full"
-    //           ></div>
-    //         </div>
-    //       </div>
-    //       <div
-    //         class="col-span-4 lg:col-span-2 xl:col-span-1 bg-surface-2 border border-border/70 rounded-2xl p-6 flex flex-col justify-between"
-    //       >
-    //         <div class="flex items-start justify-between gap-2">
-    //           <div>
-    //             <h4
-    //               class="text-lg font-bold text-color flex items-center gap-2"
-    //             >
-    //               <i
-    //                 class="fa-regular fa-bar-progress text-emerald-400 text-xl"
-    //               ></i>
-    //               Status Breakdown
-    //             </h4>
-    //             <p class="text-xs text-secondary mt-1">
-    //               Lifecycle stage mapping showing plan allocation across
-    //               execution states.
-    //             </p>
-    //           </div>
-    //           <span
-    //             class="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shrink-0"
-    //           >
-    //             4 States
-    //           </span>
-    //         </div>
-    //         <div
-    //           class="w-full mt-6 overflow-x-auto scrollbar-thin scrollbar-thumb-surface"
-    //         >
-    //           <div
-    //             id="apex-status-chart"
-    //             class="w-full"
-    //           ></div>
-    //         </div>
-    //       </div>
-    //       <div
-    //         class="col-span-4 bg-surface-2 border border-border/70 rounded-2xl p-6 xl:hidden flex flex-col justify-center"
-    //       >
-    //         <div
-    //           class="flex flex-wrap sm:flex-nowrap sm:items-center justify-between gap-4"
-    //         >
-    //           <div>
-    //             <h4
-    //               class="text-lg font-bold text-color flex items-center gap-2"
-    //             >
-    //               <i class="fa-regular fa-tags text-sky-400 text-xl"></i>
-    //               Tag Velocity
-    //             </h4>
-    //             <p class="text-xs text-secondary mt-1">
-    //               Tag usage frequency vs completion rate.
-    //             </p>
-    //           </div>
-    //         </div>
-    //         <div
-    //           class="w-full mt-6 overflow-x-auto scrollbar-thin scrollbar-thumb-surface"
-    //         >
-    //           <div
-    //             id="apex-tag-chart-desktop"
-    //             class="w-full"
-    //           ></div>
-    //         </div>
-    //       </div>
-    //     </div>
-    //     <div
-    //       class="w-full col-span-2 sm:col-span-full mt-4 bg-surface-2 border border-border/70 rounded-2xl"
-    //     >
-    //       <div class="w-full col-span-full bg-surface-2 rounded-2xl p-6">
-    //         <div
-    //           class="flex flex-wrap sm:flex-nowrap sm:items-center justify-between gap-2"
-    //         >
-    //           <div>
-    //             <h4
-    //               class="text-lg font-bold text-color flex items-center gap-2"
-    //             >
-    //               <i class="fa-regular fa-sliders text-brand/80 text-xl"></i>
-    //               Plan-Level Execution & Subplan Progress
-    //             </h4>
-    //             <p class="text-xs text-secondary/80 mt-0.5 font-medium">
-    //               Granular view of active work items, subplan ratios, and
-    //               milestone health.
-    //             </p>
-    //           </div>
-    //           <span
-    //             class="text-xs text-center font-semibold px-2.5 py-1 rounded-lg bg-surface border border-border text-secondary self-center sm:self-auto w-full sm:w-auto"
-    //           >
-    //             ${activeCount} Active Tracked (${archivedCount} Archived)
-    //           </span>
-    //         </div>
-    //         <div class="mt-6 space-y-3">
-    //           ${
-    //             plans.length === 0
-    //               ? `
-    //                   <div
-    //                     class="min-h-80 bg-surface border border-dashed border-border rounded-2xl p-16 text-center"
-    //                   >
-    //                     <div class="text-6xl mb-6">
-    //                       <i
-    //                         class="fa-regular fa-clipboard-list-check text-brand/60"
-    //                       ></i>
-    //                     </div>
-    //                     <h2 class="text-2xl font-bold text-color">
-    //                       No active plans
-    //                     </h2>
-    //                     <p class="mt-3 text-secondary max-w-sm mx-auto">
-    //                       You're all caught up! Create a new plan to get
-    //                       started.
-    //                     </p>
-    //                   </div>
-    //                 `
-    //               : plans
-    //                   .map((plan) => {
-    //                     const subplanInfo = calculateSubplanProgress(
-    //                       plan.subplans,
-    //                     );
-    //                     const daysRemaining = getDaysRemaining(plan.dueDate);
-    //                     const overdue = isOverdue(plan.dueDate, plan.status);
-    //                     const isDone = plan.status === "done";
-    //                     const absDays = Math.abs(daysRemaining);
-    //                     const subplanProgressColor =
-    //                       subplanInfo.percentage === 100
-    //                         ? "bg-emerald-500/80"
-    //                         : subplanInfo.percentage <= 65 &&
-    //                             subplanInfo.percentage >= 35
-    //                           ? "bg-amber-500/80"
-    //                           : subplanInfo.percentage <= 35 &&
-    //                               subplanInfo.percentage > 0
-    //                             ? "bg-red-500/80"
-    //                             : subplanInfo.percentage === 0
-    //                               ? "bg-slate-500/80"
-    //                               : "bg-brand/80";
-    //                     const subplanPercentColor =
-    //                       subplanInfo.percentage === 100
-    //                         ? "text-emerald-500/80"
-    //                         : subplanInfo.percentage <= 65 &&
-    //                             subplanInfo.percentage >= 35
-    //                           ? "text-amber-500/80"
-    //                           : subplanInfo.percentage <= 35 &&
-    //                               subplanInfo.percentage > 0
-    //                             ? "text-red-500/80"
-    //                             : subplanInfo.percentage === 0
-    //                               ? "text-slate-500/80"
-    //                               : "text-brand/80";
-    //                     let dueBadge = `<span class="text-secondary/60"
-    //                       >No due date</span
-    //                     >`;
-    //                     if (plan.dueDate) {
-    //                       if (isDone) {
-    //                         dueBadge = `
-    //                           <span class="text-emerald-400 font-semibold">
-    //                             <i class="fa-regular fa-calendar-check me-1"></i
-    //                             >Completed (${plan.dueDate})
-    //                           </span>
-    //                         `;
-    //                       } else if (overdue || daysRemaining < 0) {
-    //                         dueBadge = `
-    //                           <span class="text-red-400 font-bold">
-    //                             <i class="fa-regular fa-clock me-1"></i>Overdue
-    //                             (${absDays}d ago)
-    //                           </span>
-    //                         `;
-    //                       } else if (daysRemaining === 0) {
-    //                         dueBadge = `
-    //                           <span class="text-amber-400 font-bold">
-    //                             <i class="fa-regular fa-clock me-1"></i>Due
-    //                             Today
-    //                           </span>
-    //                         `;
-    //                       } else {
-    //                         dueBadge = `
-    //                           <span class="text-secondary">
-    //                             <i class="fa-regular fa-calendar me-1"></i
-    //                             >${daysRemaining}d left
-    //                           </span>
-    //                         `;
-    //                       }
-    //                     }
-    //                     const priorityBadgeStyles = {
-    //                       low: "bg-lime-500/10 text-lime-400 border-lime-500/20",
-    //                       medium:
-    //                         "bg-amber-500/10 text-amber-400 border-amber-500/20",
-    //                       high: "bg-red-500/10 text-red-400 border-red-500/20",
-    //                     };
-    //                     const statusBadgeStyles = {
-    //                       todo: "bg-sky-500/10 text-sky-400 border-sky-500/20",
-    //                       in_progress:
-    //                         "bg-orange-500/10 text-orange-400 border-orange-500/20",
-    //                       done: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
-    //                       blocked:
-    //                         "bg-pink-500/10 text-pink-400 border-pink-500/20",
-    //                     };
-    //                     return `
-    //                       <div
-    //                         class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-surface/80 hover:bg-surface p-4 rounded-xl border border-border/40 transition"
-    //                       >
-    //                         <div class="flex flex-col gap-1.5 min-w-0 flex-1">
-    //                           <div class="flex items-center gap-2 flex-wrap">
-    //                             <span
-    //                               class="inline-flex items-center rounded px-2 py-0.5 text-[9px] uppercase font-bold tracking-wider border ${
-    //                                 statusBadgeStyles[plan.status] ||
-    //                                 statusBadgeStyles.todo
-    //                               }"
-    //                             >
-    //                               ${(plan.status || "todo").replace("_", " ")}
-    //                             </span>
-    //                             ${
-    //                               plan.priority
-    //                                 ? `
-    //                                     <span
-    //                                       class="inline-flex items-center rounded px-2 py-0.5 text-[9px] uppercase font-bold tracking-wider border ${
-    //                                         priorityBadgeStyles[
-    //                                           plan.priority
-    //                                         ] || priorityBadgeStyles.low
-    //                                       }"
-    //                                     >
-    //                                       ${plan.priority}
-    //                                     </span>
-    //                                   `
-    //                                 : ""
-    //                             }
-    //                             ${
-    //                               plan.archived
-    //                                 ? `<span
-    //                                     class="inline-flex items-center rounded px-2 py-0.5 text-[9px] uppercase font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20"
-    //                                     >Archived</span
-    //                                   >`
-    //                                 : ""
-    //                             }
-    //                           </div>
-    //                           <h5
-    //                             data-tooltip-title="${plan.title}"
-    //                             class="sm:hidden block text-sm font-bold text-color truncate cursor-pointer"
-    //                           >
-    //                             ${plan.title}
-    //                           </h5>
-    //                           <h5
-    //                             class="hidden sm:flex text-sm font-bold text-color"
-    //                           >
-    //                             ${plan.title}
-    //                           </h5>
-    //                           ${
-    //                             plan.description
-    //                               ? `<p
-    //                                     class="block md:hidden text-[11px] text-tertiary line-clamp-1 font-normal mb-2 truncate leading-tight cursor-pointer"
-    //                                     data-tooltip-title="${plan.description}"
-    //                                   >
-    //                                     ${plan.description}
-    //                                   </p>
-    //                                   <p
-    //                                     class="hidden md:flex text-[11px] text-tertiary line-clamp-1 font-normal mb-2 leading-tight"
-    //                                     title="${plan.description}"
-    //                                   >
-    //                                     ${plan.description}
-    //                                   </p>`
-    //                               : ""
-    //                           }
-    //                           <div
-    //                             class="flex items-center gap-4 text-[11px] text-secondary/80 font-medium flex-wrap"
-    //                           >
-    //                             <span>${dueBadge}</span>
-    //                             ${
-    //                               plan.tags?.length
-    //                                 ? `
-    //                                     <div
-    //                                       class="flex flex-wrap items-center gap-1"
-    //                                     >
-    //                                       ${state.tags
-    //                                         .filter((t) =>
-    //                                           plan.tags.includes(t.id),
-    //                                         )
-    //                                         .map(
-    //                                           (tag) => `
-    //                                             <span
-    //                                               class="text-[9px] bg-surface-3/40 text-secondary px-1.5 py-0.5 rounded border border-border/40 whitespace-nowrap flex flex-row justify-center items-center gap-1"
-    //                                             >
-    //                                               <i
-    //                                                 class="fa-regular fa-tags"
-    //                                               ></i>
-    //                                               ${tag.name}
-    //                                             </span>
-    //                                           `,
-    //                                         )
-    //                                         .join("")}
-    //                                     </div>
-    //                                   `
-    //                                 : ""
-    //                             }
-    //                           </div>
-    //                         </div>
-    //                         <div
-    //                           class="flex flex-wrap sm:flex-nowrap items-center justify-between lg:justify-end gap-6 border-t lg:border-t-0 border-border/40 pt-3 lg:pt-0 shrink-0"
-    //                         >
-    //                           <div class="flex flex-col gap-1 w-full sm:w-48">
-    //                             <div
-    //                               class="flex flex-wrap sm:flex-nowrap justify-between items-center text-[11px]"
-    //                             >
-    //                               <span class="text-secondary font-medium"
-    //                                 >Subplans</span
-    //                               >
-    //                               <span
-    //                                 class="font-bold ${subplanPercentColor}"
-    //                                 >${subplanInfo.completedCount}/${subplanInfo.totalCount}
-    //                                 (${subplanInfo.percentage}%)</span
-    //                               >
-    //                             </div>
-    //                             <div
-    //                               class="w-full h-1.5 bg-surface-2 rounded-full overflow-hidden"
-    //                             >
-    //                               <div
-    //                                 class="h-full ${subplanProgressColor} transition-all duration-300"
-    //                                 style="width: ${subplanInfo.percentage}%"
-    //                               ></div>
-    //                             </div>
-    //                           </div>
-    //                           <div class="text-left sm:text-right">
-    //                             <span
-    //                               class="text-[10px] text-secondary/60 block uppercase font-bold"
-    //                               >Created</span
-    //                             >
-    //                             <span
-    //                               class="text-xs font-medium text-color"
-    //                               >${plan.createdAt || "N/A"}</span
-    //                             >
-    //                           </div>
-    //                         </div>
-    //                       </div>
-    //                     `;
-    //                   })
-    //                   .join("")
-    //           }
-    //         </div>
-    //       </div>
-    //     </div>
-    //   </div>
-    // `;
+  render(plans = [], logs = [], templates = []) {
+    const safePlans = Array.isArray(plans) ? plans : [];
+    const safeLogs = Array.isArray(logs) ? logs : [];
+    const safeTemplates = Array.isArray(templates) ? templates : [];
+
+    const activePlans = safePlans.filter((p) => p.state === "active");
+    const pausedPlans = safePlans.filter((p) => p.state === "paused");
+    const completedPlans = safePlans.filter((p) => p.state === "completed");
+
+    // Calculate metrics across ALL plans, not just active ones
+    let totalObjectives = 0;
+    let completedObjectives = 0;
+
+    safePlans.forEach((plan) => {
+      if (Array.isArray(plan.objectives)) {
+        totalObjectives += plan.objectives.length;
+
+        completedObjectives += plan.objectives.filter((o) => {
+          // Handles boolean true or string/state truthy check
+          return o.completed === true || o.status === "completed";
+        }).length;
+      }
+    });
+
+    const completionRate =
+      totalObjectives > 0
+        ? Math.round((completedObjectives / totalObjectives) * 100)
+        : 0;
+
+    const avgEnergy =
+      safeLogs.length > 0
+        ? (
+            safeLogs.reduce(
+              (acc, curr) => acc + (Number(curr.energy) || 0),
+              0,
+            ) / safeLogs.length
+          ).toFixed(1)
+        : "0";
+
+    const favoriteTemplates = safeTemplates.filter((t) => t.isFavorite).length;
+
+    return `
+      <div
+        class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full col-span-full"
+      >
+        <div
+          class="col-span-2 md:col-span-1 relative overflow-hidden bg-surface-2 border border-border/70 hover:-translate-y-1 hover:border-yellow-500/30 rounded-2xl p-6 transition-all duration-300 flex flex-col justify-between min-h-36 group"
+        >
+          <i
+            class="fa-solid fa-bullseye-arrow absolute -right-4 -bottom-6 text-[10rem] text-yellow-500 opacity-[0.04] dark:opacity-[0.06] rotate-15 pointer-events-none group-hover:scale-110 group-hover:rotate-5 transition-transform duration-500"
+          ></i>
+          <div class="flex items-center justify-between z-10">
+            <span
+              class="text-xs font-bold text-secondary uppercase tracking-wider"
+              >Active Plans</span
+            >
+            <span
+              class="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-yellow-500/10 text-yellow-400 border border-yellow-500/20"
+              >${pausedPlans.length} Paused</span
+            >
+          </div>
+          <div class="z-10 mt-3">
+            <div class="text-3xl font-black text-color tracking-tight">
+              ${activePlans.length}
+            </div>
+            <p class="text-[11px] text-secondary/80 font-medium mt-1">
+              Active execution strategies
+            </p>
+          </div>
+          <div
+            class="mt-4 pt-3 border-t border-border/40 flex items-center justify-between z-10 text-[11px]"
+          >
+            <span class="text-secondary">Total Registered:</span>
+            <span class="font-bold text-color"
+              >${safePlans.length} (${completedPlans.length} Done)</span
+            >
+          </div>
+        </div>
+
+        <div
+          class="col-span-2 md:col-span-1 relative overflow-hidden bg-surface-2 border border-border/70 hover:-translate-y-1 hover:border-purple-500/30 rounded-2xl p-6 transition-all duration-300 flex flex-col justify-between min-h-36 group"
+        >
+          <i
+            class="fa-solid fa-circle-check absolute -right-4 -bottom-6 text-[10rem] text-purple-500 opacity-[0.04] dark:opacity-[0.06] rotate-20 pointer-events-none group-hover:scale-110 group-hover:rotate-10 transition-transform duration-500"
+          ></i>
+          <div class="flex items-center justify-between z-10">
+            <span
+              class="text-xs font-bold text-secondary uppercase tracking-wider"
+              >Objective Rate</span
+            >
+            <span
+              class="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-400 border border-purple-500/20"
+              >${completedObjectives}/${totalObjectives} Done</span
+            >
+          </div>
+          <div class="z-10 mt-3">
+            <div class="text-3xl font-black text-color tracking-tight">
+              ${completionRate}%
+            </div>
+            <div
+              class="w-1/4 h-1.5 bg-surface rounded-full overflow-hidden mt-2"
+            >
+              <div
+                class="h-full bg-purple-500 transition-all duration-500 rounded-full"
+                style="width: ${completionRate}%"
+              ></div>
+            </div>
+          </div>
+          <div
+            class="mt-4 pt-3 border-t border-border/40 flex items-center justify-between z-10 text-[11px]"
+          >
+            <span class="text-secondary">Efficiency Status:</span>
+            <span class="font-bold text-purple-500"
+              >${completionRate > 50 ? "Optimal" : "Needs Focus"}</span
+            >
+          </div>
+        </div>
+
+        <div
+          class="col-span-2 md:col-span-1 relative overflow-hidden bg-surface-2 border border-border/70 hover:-translate-y-1 hover:border-emerald-500/30 rounded-2xl p-6 transition-all duration-300 flex flex-col justify-between min-h-36 group"
+        >
+          <i
+            class="fa-solid fa-bolt absolute -right-4 -bottom-6 text-[10rem] text-emerald-500 opacity-[0.04] dark:opacity-[0.06] rotate-15 pointer-events-none group-hover:scale-110 group-hover:rotate-5 transition-transform duration-500"
+          ></i>
+          <div class="flex items-center justify-between z-10">
+            <span
+              class="text-xs font-bold text-secondary uppercase tracking-wider"
+              >Logged Entries</span
+            >
+            <span
+              class="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+              >Avg Energy: ${avgEnergy}/5</span
+            >
+          </div>
+          <div class="z-10 mt-3">
+            <div class="text-3xl font-black text-color tracking-tight">
+              ${safeLogs.length}
+            </div>
+            <p class="text-[11px] text-secondary/80 font-medium mt-1">
+              Reflections and logs
+            </p>
+          </div>
+          <div
+            class="mt-4 pt-3 border-t border-border/40 flex items-center justify-between z-10 text-[11px]"
+          >
+            <span class="text-secondary">Sync Status:</span>
+            <span class="font-bold text-emerald-500">Synced Local</span>
+          </div>
+        </div>
+
+        <div
+          class="col-span-2 md:col-span-1 relative overflow-hidden bg-surface-2 border border-border/70 hover:-translate-y-1 hover:border-sky-500/30 rounded-2xl p-6 transition-all duration-300 flex flex-col justify-between min-h-36 group"
+        >
+          <i
+            class="fa-solid fa-layer-group absolute -right-4 -bottom-6 text-[10rem] text-sky-500 opacity-[0.04] dark:opacity-[0.06] rotate-15 pointer-events-none group-hover:scale-110 group-hover:rotate-5 transition-transform duration-500"
+          ></i>
+          <div class="flex items-center justify-between z-10">
+            <span
+              class="text-xs font-bold text-secondary uppercase tracking-wider"
+              >Templates</span
+            >
+            <span
+              class="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-sky-500/10 text-sky-400 border border-sky-500/20"
+              >${favoriteTemplates} Starred</span
+            >
+          </div>
+          <div class="z-10 mt-3">
+            <div class="text-3xl font-black text-color tracking-tight">
+              ${safeTemplates.length}
+            </div>
+            <p class="text-[11px] text-secondary/80 font-medium mt-1">
+              Reusable plan baselines
+            </p>
+          </div>
+          <div
+            class="mt-4 pt-3 border-t border-border/40 flex items-center justify-between z-10 text-[11px]"
+          >
+            <span class="text-secondary">Blueprint Index:</span>
+            <span class="font-bold text-sky-500">Ready</span>
+          </div>
+        </div>
+      </div>
+
+      <div
+        class="grid grid-cols-1 lg:grid-cols-3 gap-6 w-full col-span-2 sm:col-span-full mt-4"
+      >
+        <div
+          class="lg:col-span-2 bg-surface-2 border border-border/70 rounded-2xl p-6 flex flex-col justify-between"
+        >
+          <div
+            class="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between"
+          >
+            <div>
+              <h4 class="text-lg font-bold text-color flex items-center gap-2">
+                <i class="fa-regular fa-chart-network text-brand text-xl"></i>
+                Execution Velocity & Heatmap
+              </h4>
+              <p class="text-xs text-secondary mt-1">
+                Volume of logged entries and active execution trends across
+                periods.
+              </p>
+            </div>
+
+            <div class="relative flex items-center justify-end">
+              <button
+                id="heatmap-mobile-menu-toggle"
+                class="sm:hidden inline-flex items-center justify-center h-8 w-8 rounded-lg border border-border bg-surface text-secondary hover:text-color transition shadow-sm cursor-pointer"
+                aria-label="Open view menu"
+              >
+                <i class="fa-regular fa-ellipsis-vertical text-lg"></i>
+              </button>
+
+              <div
+                id="heatmap-mobile-menu"
+                class="hidden absolute right-0 top-full mt-2 w-44 rounded-2xl border border-border bg-surface-2 shadow-lg z-20 overflow-hidden"
+              >
+                <button
+                  data-view="weekly"
+                  class="w-full px-4 py-2.5 text-left text-xs font-medium text-secondary hover:bg-surface"
+                >
+                  Weekly
+                </button>
+                <button
+                  data-view="monthly"
+                  class="w-full px-4 py-2.5 text-left text-xs font-medium text-secondary hover:bg-surface"
+                >
+                  Monthly
+                </button>
+                <button
+                  data-view="yearly"
+                  class="w-full px-4 py-2.5 text-left text-xs font-medium text-secondary hover:bg-surface"
+                >
+                  Yearly
+                </button>
+              </div>
+
+              <div
+                id="chart-view-switcher"
+                class="hidden sm:flex relative overflow-hidden rounded-xl border border-border/80 bg-surface p-1 isolation-auto"
+              >
+                <div
+                  id="heatmap-tab-indicator"
+                  class="absolute top-1 left-1 h-[calc(100%-8px)] w-24 rounded-lg bg-brand/80 transition-all duration-300 ease-out z-0 shadow-sm"
+                ></div>
+
+                <button
+                  data-view="weekly"
+                  id="view-btn-weekly"
+                  class="relative z-10 w-24 py-1.5 text-xs font-bold text-secondary transition cursor-pointer text-center"
+                >
+                  Weekly
+                </button>
+                <button
+                  data-view="monthly"
+                  id="view-btn-monthly"
+                  class="relative z-10 w-24 py-1.5 text-xs font-bold text-secondary transition cursor-pointer text-center"
+                >
+                  Monthly
+                </button>
+                <button
+                  data-view="yearly"
+                  id="view-btn-yearly"
+                  class="relative z-10 w-24 py-1.5 text-xs font-bold text-secondary transition cursor-pointer text-center"
+                >
+                  Yearly
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div
+            class="w-full mt-6 overflow-x-auto min-h-70 flex items-center justify-center"
+          >
+            <div
+              id="apex-heatmap-chart"
+              class="w-full"
+            ></div>
+          </div>
+        </div>
+
+        <div
+          class="bg-surface-2 border border-border/70 rounded-2xl p-6 flex flex-col justify-between"
+        >
+          <div>
+            <h4 class="text-lg font-bold text-color flex items-center gap-2">
+              <i class="fa-regular fa-chart-simple text-brand text-xl"></i>
+              Weekday Distribution
+            </h4>
+            <p class="text-xs text-secondary mt-1">
+              Density of logs created per weekday.
+            </p>
+          </div>
+
+          <div
+            class="w-full mt-6 overflow-x-auto scrollbar-thin scrollbar-thumb-surface"
+          >
+            <div
+              id="apex-weekday-chart"
+              class="w-full"
+            ></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 w-full col-span-full mt-6">
+        <div class="bg-surface-2 border border-border/70 rounded-2xl p-6 flex flex-col justify-between shadow-sm">
+          <div>
+            <h4 class="text-lg font-bold text-color flex items-center gap-2">
+              <i class="fa-regular fa-compass text-brand text-xl"></i>
+              Life Area Distribution
+            </h4>
+            <p class="text-xs text-secondary mt-1">
+              Distribution of execution plans across core life domain categories.
+            </p>
+          </div>
+          <div class="w-full mt-6 overflow-x-auto flex items-center justify-center">
+            <div id="apex-lifearea-chart" class="w-full"></div>
+          </div>
+        </div>
+
+        <div class="bg-surface-2 border border-border/70 rounded-2xl p-6 flex flex-col justify-between shadow-sm">
+          <div>
+            <h4 class="text-lg font-bold text-color flex items-center gap-2">
+              <i class="fa-regular fa-face-smile text-brand text-xl"></i>
+              Mood Spectrum
+            </h4>
+            <p class="text-xs text-secondary mt-1">
+              Logged emotional state spectrum and distributions.
+            </p>
+          </div>
+          <div class="w-full mt-6 overflow-x-auto flex items-center justify-center">
+            <div id="apex-mood-chart" class="w-full"></div>
+          </div>
+        </div>
+  
+        <div class="bg-surface-2 border border-border/70 rounded-2xl p-6 flex flex-col justify-between shadow-sm">
+          <div>
+            <h4 class="text-lg font-bold text-color flex items-center gap-2">
+              <i class="fa-regular fa-battery-three-quarters text-brand text-xl"></i>
+              Energy Level Distribution
+            </h4>
+            <p class="text-xs text-secondary mt-1">
+              Logged energy level frequencies (1 to 5).
+            </p>
+          </div>
+          <div class="w-full mt-6 overflow-x-auto flex items-center justify-center">
+            <div id="apex-energy-chart" class="w-full"></div>
+          </div>
+        </div>
+      </div>
+
+      <div
+        class="w-full col-span-full mt-6 bg-surface-2 border border-border/75 rounded-2xl p-6 shadow-sm"
+      >
+        <div
+          class="flex flex-wrap sm:flex-nowrap items-center justify-between gap-4 pb-4 border-b border-border/40"
+        >
+          <div>
+            <h4 class="text-lg font-bold text-color flex items-center gap-2">
+              <i class="fa-regular fa-layer-group text-brand text-xl"></i>
+              Entities Detailed Breakdown
+            </h4>
+            <p class="text-xs text-secondary mt-0.5">
+              Switch tabs to review underlying data structures and logs.
+            </p>
+          </div>
+
+          <div
+            id="entity-tab-switcher"
+            class="relative flex items-center p-1 bg-surface rounded-xl border border-border/80 shadow-inner"
+          >
+            <div
+              id="entity-tab-indicator"
+              class="absolute h-[calc(100%-8px)] top-1 left-1 bg-brand rounded-lg transition-all duration-300 ease-out shadow-xs pointer-events-none"
+            ></div>
+
+            <button
+              data-entity-tab="plans"
+              class="entity-tab-btn relative z-10 px-3.5 py-1.5 text-xs font-bold text-white transition cursor-pointer"
+            >
+              Plans (${safePlans.length})
+            </button>
+            <button
+              data-entity-tab="logs"
+              class="entity-tab-btn relative z-10 px-3.5 py-1.5 text-xs font-bold text-secondary transition cursor-pointer"
+            >
+              Logs (${safeLogs.length})
+            </button>
+            <button
+              data-entity-tab="templates"
+              class="entity-tab-btn relative z-10 px-3.5 py-1.5 text-xs font-bold text-secondary transition cursor-pointer"
+            >
+              Templates (${safeTemplates.length})
+            </button>
+          </div>
+        </div>
+
+        <div class="mt-6">
+          <div
+            id="tab-panel-plans"
+            class="entity-panel space-y-3"
+          >
+            ${this.renderPlansList(safePlans)}
+          </div>
+          <div
+            id="tab-panel-logs"
+            class="entity-panel hidden space-y-3"
+          >
+            ${this.renderLogsList(safeLogs)}
+          </div>
+          <div
+            id="tab-panel-templates"
+            class="entity-panel hidden space-y-3"
+          >
+            ${this.renderTemplatesList(safeTemplates)}
+          </div>
+        </div>
+      </div>
+    `;
+  },
+
+  _normalizeIconClass(iconString) {
+    if (!iconString) return "fa-regular fa-folder";
+    return iconString.includes("fa-solid")
+      ? iconString.replace("fa-solid", "fa-regular")
+      : iconString;
+  },
+
+  _getLifeAreaBadgeHtml(lifeAreaId) {
+    const matched = LIFE_AREAS.find(
+      (area) => String(area.id) === String(lifeAreaId),
+    );
+    const areaData = matched || {
+      name: lifeAreaId || "General",
+      icon: "fa-regular fa-folder text-secondary",
+      class: "bg-surface text-secondary border-border/60",
+    };
+
+    const iconClass = this._normalizeIconClass(areaData.icon);
+
+    return `
+        <span
+          class="inline-flex items-center gap-1 rounded-md border ${areaData.class} px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider"
+        >
+          <i class="${iconClass} text-[9px]"></i>
+          <span>${areaData.name}</span>
+        </span>
+      `;
+  },
+
+  _getStateBadgeHtml(stateKey, planId) {
+    const matched = PLAN_STATES.find((s) => s.id === stateKey);
+    const stateData = matched || {
+      name: stateKey || "active",
+      icon: "fa-regular fa-circle text-secondary",
+      class: "bg-surface text-secondary border-border/60",
+    };
+
+    const iconClass = this._normalizeIconClass(stateData.icon);
+
+    return `
+      <div
+        data-plan-id="${planId}"
+        data-current-state="${stateData.id}"
+        class="state-cycle-btn inline-flex items-center gap-1.5 rounded-md border ${stateData.class} px-2 py-0.5 text-[10px] uppercase font-bold tracking-wider transition-all"
+        title="Click to cycle status"
+      >
+        <i
+          class="${iconClass} text-[10px] transition-transform duration-300"
+        ></i>
+        <span>${stateData.name}</span>
+      </div>
+    `;
+  },
+
+  _getMoodBadgeHtml(moodValue, logId) {
+    const matched = MOOD_OPTIONS.find(
+      (m) => String(m.value) === String(moodValue),
+    );
+    const moodData = matched || {
+      label: moodValue || "Neutral",
+      icon: "fa-regular fa-face-meh text-secondary",
+      class: "bg-surface text-secondary border-border/60",
+    };
+
+    const iconClass = this._normalizeIconClass(moodData.icon);
+
+    return `
+      <div
+        data-log-id="${logId}"
+        data-current-mood="${moodData.value || moodValue}"
+        class="mood-cycle inline-flex items-center gap-1 rounded-md border ${moodData.class} px-2 py-0.5 text-[10px] uppercase font-semibold transition-all"
+      >
+        <i
+          class="${iconClass} text-[9px] transition-transform duration-300"
+        ></i>
+        <span>${moodData.label}</span>
+      </div>
+    `;
+  },
+
+  _getEnergyBadgeHtml(energyValue, logId) {
+    const matched = ENERGY_LEVEL_OPTIONS.find(
+      (e) => Number(e.value) === Number(energyValue),
+    );
+    const energyData = matched || {
+      label: `Energy: ${energyValue}/5`,
+      icon: "fa-regular fa-bolt text-secondary",
+      class: "bg-surface text-secondary border-border/60",
+    };
+
+    const iconClass = this._normalizeIconClass(energyData.icon);
+
+    return `
+      <div
+        data-log-id="${logId}"
+        data-current-energy="${energyValue}"
+        class="energy-cycle inline-flex items-center gap-1 rounded-md border ${energyData.class} px-2 py-0.5 text-[10px] uppercase font-semibold transition-all"
+      >
+        <i
+          class="${iconClass} text-[9px] transition-transform duration-300"
+        ></i>
+        <span>${energyData.label}</span>
+      </div>
+    `;
+  },
+
+  _calculateObjectiveProgress(obj) {
+    if (obj.completed) return 100;
+    const type = obj.type || "boolean";
+    if (type === "numeric") {
+      const target = Number(obj.targetValue) || 1;
+      const current = Number(obj.currentValue) || 0;
+      return Math.min(100, Math.max(0, Math.round((current / target) * 100)));
+    }
+    return obj.completed ? 100 : 0;
+  },
+
+  initTabSwitcher() {
+    const switcher = document.getElementById("entity-tab-switcher");
+    if (!switcher) return;
+
+    const buttons = switcher.querySelectorAll(".entity-tab-btn");
+    const indicator = document.getElementById("entity-tab-indicator");
+
+    const updateTabState = (activeBtn) => {
+      if (!activeBtn) return;
+
+      // Update indicator position and width dynamically
+      if (indicator) {
+        indicator.style.left = `${activeBtn.offsetLeft}px`;
+        indicator.style.width = `${activeBtn.offsetWidth}px`;
+      }
+
+      // Update button text color states
+      buttons.forEach((btn) => {
+        if (btn === activeBtn) {
+          btn.classList.remove("text-secondary");
+          btn.classList.add("text-white");
+        } else {
+          btn.classList.remove("text-white");
+          btn.classList.add("text-secondary");
+        }
+      });
+
+      // Show target panel and hide others
+      const targetTab = activeBtn.dataset.entityTab;
+      document.querySelectorAll(".entity-panel").forEach((panel) => {
+        if (panel.id === `tab-panel-${targetTab}`) {
+          panel.classList.remove("hidden");
+        } else {
+          panel.classList.add("hidden");
+        }
+      });
+    };
+
+    // Attach click handlers
+    buttons.forEach((btn) => {
+      btn.addEventListener("click", () => updateTabState(btn));
+    });
+
+    // Initialize position for active tab on render
+    const initialActiveBtn = switcher.querySelector(
+      '.entity-tab-btn[data-entity-tab="plans"]',
+    );
+    if (initialActiveBtn) {
+      updateTabState(initialActiveBtn);
+    }
+  },
+
+  renderPlansList(plans) {
+    if (!Array.isArray(plans) || plans.length === 0) {
+      return `<div
+        class="p-12 text-center text-secondary text-sm border border-dashed border-border/80 rounded-2xl bg-surface/30"
+      >
+        No execution plans registered in current state repository.
+      </div>`;
+    }
+    return plans
+      .map((plan) => {
+        const lifeAreaBadge = this._getLifeAreaBadgeHtml(plan.lifeAreaId);
+        const stateBadge = this._getStateBadgeHtml(plan.state, plan.id);
+
+        const objectives = Array.isArray(plan.objectives)
+          ? plan.objectives
+          : [];
+        const totalObjectives = objectives.length;
+        const hasObjectives = totalObjectives > 0;
+
+        let progressHtml = "";
+
+        if (hasObjectives) {
+          const completedObjs = objectives.filter((o) => o.completed).length;
+          const totalProgressAcc = objectives.reduce((sum, obj) => {
+            return sum + this._calculateObjectiveProgress(obj);
+          }, 0);
+
+          const progressPercentage = Math.round(
+            totalProgressAcc / totalObjectives,
+          );
+
+          const objectiveProgressColor =
+            progressPercentage === 100
+              ? "bg-emerald-500/80"
+              : progressPercentage <= 65 && progressPercentage >= 35
+                ? "bg-yellow-500/80"
+                : progressPercentage <= 35 && progressPercentage > 0
+                  ? "bg-red-500/80"
+                  : "bg-slate-500/80";
+
+          const objectivePercentColor =
+            progressPercentage === 100
+              ? "text-emerald-500/80"
+              : progressPercentage <= 65 && progressPercentage >= 35
+                ? "text-yellow-500/80"
+                : progressPercentage <= 35 && progressPercentage > 0
+                  ? "text-red-500/80"
+                  : "text-slate-500/80";
+
+          progressHtml = `
+            <div class="w-full sm:w-56 shrink-0 flex flex-col justify-center">
+              <div class="flex justify-between text-xs mb-1">
+                <span class="text-secondary font-medium font-sans"
+                  >Objectives Progress</span
+                >
+                <span class="font-bold font-sans ${objectivePercentColor}"
+                  >${completedObjs}/${totalObjectives}
+                  (${progressPercentage}%)</span
+                >
+              </div>
+              <div
+                class="w-full h-1.5 bg-surface-2 rounded-full overflow-hidden border border-border/30"
+              >
+                <div
+                  class="h-full ${objectiveProgressColor} transition-all duration-300 rounded-full"
+                  style="width: ${progressPercentage}%"
+                ></div>
+              </div>
+            </div>
+          `;
+        } else {
+          progressHtml = `
+            <div class="shrink-0 flex items-center">
+              <span
+                class="inline-flex items-center gap-1 rounded-md border border-border/40 bg-surface px-2.5 py-1 text-[11px] font-medium text-secondary/60"
+              >
+                <i class="fa-regular fa-square text-[10px] pb-1"></i> No
+                Objectives
+              </span>
+            </div>
+          `;
+        }
+
+        return `
+          <div
+            class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 rounded-xl bg-surface/70 border border-border/50 hover:bg-surface transition group shadow-2xs"
+          >
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center gap-2 mb-1.5">
+                ${stateBadge} ${lifeAreaBadge}
+                <span class="text-[11px] text-secondary/70"
+                  >ID: ${plan.id || "N/A"}</span
+                >
+              </div>
+              <h5
+                class="text-sm font-bold text-color group-hover:text-brand transition-colors truncate"
+              >
+                ${plan.title}
+              </h5>
+              <p
+                class="text-xs text-secondary/90 line-clamp-1 mt-0.5 font-normal"
+              >
+                ${plan.description || "No execution description provided."}
+              </p>
+            </div>
+
+            ${progressHtml}
+          </div>
+        `;
+      })
+      .join("");
+  },
+
+  renderLogsList(logs) {
+    if (!Array.isArray(logs) || logs.length === 0) {
+      return `<div
+        class="p-12 text-center text-secondary text-sm border border-dashed border-border/80 rounded-2xl bg-surface/30"
+      >
+        No execution logs or reflections recorded yet.
+      </div>`;
+    }
+    return logs
+      .map((log) => {
+        const moodBadge = this._getMoodBadgeHtml(log.mood, log.id);
+        const energyBadge = this._getEnergyBadgeHtml(log.energy, log.id);
+
+        let linkedPlanBadgeHtml = "";
+        let lifeAreaBadgeHtml = "";
+
+        if (log.planId) {
+          const plans = StateManager.getPlans() || [];
+          const linkedPlan = plans.find(
+            (p) => String(p.id) === String(log.planId),
+          );
+
+          if (linkedPlan) {
+            linkedPlanBadgeHtml = `
+                  <span
+                    class="inline-flex items-center gap-1 rounded-md border border-brand/30 bg-brand/10 px-2 py-0.5 text-[10px] font-semibold text-brand/90"
+                  >
+                    <i class="fa-regular fa-bullseye text-[9px]"></i>
+                    <span>${linkedPlan.title}</span>
+                  </span>
+                `;
+
+            if (linkedPlan.lifeAreaId) {
+              lifeAreaBadgeHtml = this._getLifeAreaBadgeHtml(
+                linkedPlan.lifeAreaId,
+              );
+            }
+          }
+        }
+
+        return `
+          <div
+            class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 rounded-xl bg-surface/70 border border-border/50 hover:bg-surface transition group shadow-2xs"
+          >
+            <div class="min-w-0 flex-1">
+              <div class="flex flex-wrap items-center gap-2 mb-1.5">
+                ${moodBadge} 
+                
+                ${energyBadge}
+
+                <span
+                  class="inline-flex items-center gap-1 rounded-md border border-secondary/30 bg-secondary/10 px-2 py-0.5 text-[10px] font-medium text-secondary/80"
+                >
+                  <i class="fa-regular fa-calendar"></i> ${
+                    log.date || log.createdAt
+                  }
+                </span>
+
+                ${linkedPlanBadgeHtml}
+                ${lifeAreaBadgeHtml}
+              </div>
+              <h5
+                class="text-sm font-bold text-color group-hover:text-sky-500 transition-colors truncate"
+              >
+                ${log.title || "Untitled Log"}
+              </h5>
+              <p
+                class="text-xs text-secondary/90 line-clamp-1 mt-0.5 font-normal"
+              >
+                ${log.description || "No specific reflections added."}
+              </p>
+            </div>
+            <div class="text-right shrink-0 text-xs text-secondary font-medium">
+              <span
+                class="bg-surface px-2.5 py-1 rounded-lg border border-border/40 inline-block font-sans"
+                >ID: ${log.id || "N/A"}</span
+              >
+            </div>
+          </div>
+        `;
+      })
+      .join("");
+  },
+
+  renderTemplatesList(templates) {
+    if (!Array.isArray(templates) || templates.length === 0) {
+      return `<div
+        class="p-12 text-center text-secondary text-sm border border-dashed border-border/80 rounded-2xl bg-surface/30"
+      >
+        No execution templates/blueprints configured.
+      </div>`;
+    }
+
+    return templates
+      .map((tpl) => {
+        const lifeAreaBadge = this._getLifeAreaBadgeHtml(tpl.lifeAreaId);
+
+        return `
+          <div
+            class="flex items-center justify-between gap-4 p-4 rounded-xl bg-surface/70 border border-border/50 hover:bg-surface transition group shadow-2xs"
+          >
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center gap-2 mb-1.5">
+                ${lifeAreaBadge}
+                ${
+                  tpl.isFavorite
+                    ? `<span
+                        class="inline-flex items-center gap-1 rounded-md border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold text-amber-400 uppercase tracking-wider"
+                      >
+                        <i class="fa-solid fa-star text-[9px]"></i> Favorite
+                      </span>`
+                    : ""
+                }
+              </div>
+              <h5
+                class="text-sm font-bold text-color group-hover:text-violet-500 transition-colors truncate"
+              >
+                ${tpl.title}
+              </h5>
+              <p
+                class="text-xs text-secondary/90 line-clamp-1 mt-0.5 font-normal"
+              >
+                ${tpl.description || "No baseline configuration details."}
+              </p>
+            </div>
+            <div class="text-right shrink-0">
+              <span
+                class="text-xs text-secondary bg-surface px-2.5 py-1 rounded-lg border border-border/40 font-medium block font-sans"
+                >Used ${tpl.usageCount || 0} times</span
+              >
+            </div>
+          </div>
+        `;
+      })
+      .join("");
   },
 };

@@ -1,5 +1,5 @@
+import { LIFE_AREAS } from "@/utils/constants/options-value.constants";
 import { formatDate } from "./helpers.js";
-import { state } from "@/models/state.model.js";
 
 const weekdayNames = ["Sat", "Sun", "Mon", "Tue", "Wed", "Thu", "Fri"];
 const monthNames = [
@@ -23,24 +23,22 @@ function getDaysInMonth(year, month) {
 
 /**
  * Extracts daily activity counters mapped by ISO date strings (YYYY-MM-DD)
- * using plan creation dates and completed subplans/statuses.
+ * using Plans (createdAt, objectives) and Logs.
  */
-function getActivityMap(plans) {
+function getActivityMap(plans = [], logs = []) {
   const map = {};
 
   plans.forEach((plan) => {
-    // Increment activity for creation date
     if (plan.createdAt) {
       const createdIso = plan.createdAt.split("T")[0];
       map[createdIso] = (map[createdIso] || 0) + 1;
     }
 
-    // Increment activity for completed subplans if timestamp exists or default to createdAt
-    if (Array.isArray(plan.subplans)) {
-      plan.subplans.forEach((st) => {
-        if (st.completed) {
-          const dateKey = st.completedAt
-            ? st.completedAt.split("T")[0]
+    if (Array.isArray(plan.objectives)) {
+      plan.objectives.forEach((obj) => {
+        if (obj.completed) {
+          const dateKey = obj.completedAt
+            ? obj.completedAt.split("T")[0]
             : plan.createdAt
               ? plan.createdAt.split("T")[0]
               : null;
@@ -52,15 +50,29 @@ function getActivityMap(plans) {
     }
   });
 
+  logs.forEach((log) => {
+    if (log.date) {
+      const logIso = log.date.split("T")[0];
+      map[logIso] = (map[logIso] || 0) + 1;
+    }
+  });
+
   return map;
 }
 
 export const AnalyticsAdapter = {
-  generateHeatmapSeries(plans = [], view = "weekly") {
+  // 1. Heatmap Data Generation
+  generateHeatmapSeries(plans = [], logs = [], view = "weekly") {
     let startDate = new Date();
-    if (plans.length > 0) {
-      const validDates = plans
-        .map((t) => (t.createdAt ? new Date(t.createdAt).getTime() : null))
+    const allEntities = [...plans, ...logs];
+
+    if (allEntities.length > 0) {
+      const validDates = allEntities
+        .map((item) =>
+          item.createdAt || item.date
+            ? new Date(item.createdAt || item.date).getTime()
+            : null,
+        )
         .filter((time) => time && !isNaN(time));
 
       if (validDates.length > 0) {
@@ -76,9 +88,8 @@ export const AnalyticsAdapter = {
     const today = new Date();
     today.setHours(23, 59, 59, 999);
 
-    const globalActivityMap = getActivityMap(plans);
+    const globalActivityMap = getActivityMap(plans, logs);
 
-    // WEEKLY VIEW
     if (view === "weekly") {
       const startSaturday = new Date(startDate);
       const dayOfWeek = startSaturday.getDay();
@@ -109,7 +120,6 @@ export const AnalyticsAdapter = {
       });
     }
 
-    // MONTHLY VIEW
     if (view === "monthly") {
       const startMonth = startDate.getMonth();
       const startYear = startDate.getFullYear();
@@ -177,7 +187,6 @@ export const AnalyticsAdapter = {
       });
     }
 
-    // YEARLY VIEW
     if (view === "yearly") {
       const startYear = startDate.getFullYear();
       const endYear = today.getFullYear();
@@ -211,13 +220,14 @@ export const AnalyticsAdapter = {
     return [];
   },
 
-  generateWeekdayCounts(plans = []) {
+  // 2. Weekday Distribution Data
+  generateWeekdayCounts(plans = [], logs = []) {
     const weekdayCounts = Array(7).fill(0);
 
-    plans.forEach((plan) => {
-      if (plan.createdAt) {
-        const dayIndex = new Date(plan.createdAt).getDay();
-
+    [...plans, ...logs].forEach((item) => {
+      const dateStr = item.createdAt || item.date;
+      if (dateStr) {
+        const dayIndex = new Date(dateStr).getDay();
         const shiftedIndex = (dayIndex + 1) % 7;
 
         if (shiftedIndex >= 0 && shiftedIndex <= 6) {
@@ -229,90 +239,90 @@ export const AnalyticsAdapter = {
     return weekdayCounts;
   },
 
-  generatePriorityCounts(plans = []) {
-    const counts = {
-      low: 0,
-      medium: 0,
-      high: 0,
-    };
-
-    const activePlans = plans.filter((t) => !t.archived);
-
-    activePlans.forEach((plan) => {
-      const priority = (plan.priority || "low").toLowerCase();
-      if (priority === "high") {
-        counts.high++;
-      } else if (priority === "medium") {
-        counts.medium++;
-      } else {
-        counts.low++;
-      }
+  // 3. Life Area Distribution Data
+  generateLifeAreaAnalytics(plans = []) {
+    const areaCounts = {};
+    LIFE_AREAS.forEach((area) => {
+      areaCounts[area.name] = 0;
     });
 
-    return [counts.low, counts.medium, counts.high];
+    plans.forEach((plan) => {
+      const matched = LIFE_AREAS.find(
+        (a) => String(a.id) === String(plan.lifeAreaId),
+      );
+      const name = matched ? matched.name : "General";
+      areaCounts[name] = (areaCounts[name] || 0) + 1;
+    });
+
+    return {
+      labels: Object.keys(areaCounts),
+      series: Object.values(areaCounts),
+    };
   },
 
-  generateStatusCounts(plans = []) {
-    const counts = {
-      todo: 0,
-      in_progress: 0,
-      done: 0,
-      blocked: 0,
-    };
+  // Mood Spectrum Analytics
+  generateMoodAnalytics(logs = []) {
+    const categories = ["Terrible", "Bad", "Neutral", "Good", "Excellent"];
+    const counts = { terrible: 0, bad: 0, neutral: 0, good: 0, excellent: 0 };
 
-    const activePlans = plans.filter((t) => !t.archived);
-
-    activePlans.forEach((plan) => {
-      const status = plan.status || "todo";
-      if (counts.hasOwnProperty(status)) {
-        counts[status]++;
-      } else {
-        counts.todo++;
+    logs.forEach((log) => {
+      if (log.mood) {
+        const key = String(log.mood).toLowerCase();
+        if (counts[key] !== undefined) {
+          counts[key]++;
+        }
       }
     });
-
-    return [counts.todo, counts.in_progress, counts.done, counts.blocked];
-  },
-
-  generateTagAnalytics(plans = []) {
-    const activePlans = plans.filter((t) => !t.archived);
-    const tagStats = {};
-
-    activePlans.forEach((plan) => {
-      const tags = state.tags.filter((t) => plan.tags.includes(t.id)) || [];
-      const isDone = plan.status === "done";
-
-      tags.forEach((tag) => {
-        if (!tagStats[tag.name]) {
-          tagStats[tag.name] = { total: 0, completed: 0 };
-        }
-        tagStats[tag.name].total += 1;
-        if (isDone) {
-          tagStats[tag.name].completed += 1;
-        }
-      });
-    });
-
-    const sorted = Object.entries(tagStats)
-      .sort((a, b) => b[1].total - a[1].total)
-      .slice(0, 6);
-
-    const categories = sorted.map(([tag]) => tag);
-    const totalSeries = sorted.map(([, stats]) => stats.total);
-    const completedSeries = sorted.map(([, stats]) => stats.completed);
-    const progressRates = sorted.map(([, stats]) =>
-      stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0,
-    );
 
     return {
       categories,
-      totalSeries,
-      completedSeries,
-      progressRates,
-      hasTags: categories.length > 0,
+      series: [
+        {
+          name: "Mood Count",
+          data: [
+            counts.terrible,
+            counts.bad,
+            counts.neutral,
+            counts.good,
+            counts.excellent,
+          ],
+        },
+      ],
     };
   },
 
+  // Energy Levels Analytics
+  generateEnergyAnalytics(logs = []) {
+    const categories = [
+      "1 - Low",
+      "2 - Moderate",
+      "3 - Normal",
+      "4 - High",
+      "5 - Peak",
+    ];
+    const counts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+
+    logs.forEach((log) => {
+      if (log.energy !== undefined && log.energy !== null) {
+        const val = Number(log.energy);
+        if (counts[val] !== undefined) {
+          counts[val]++;
+        }
+      }
+    });
+
+    return {
+      categories,
+      series: [
+        {
+          name: "Energy Count",
+          data: [counts[1], counts[2], counts[3], counts[4], counts[5]],
+        },
+      ],
+    };
+  },
+
+  // 5. Heatmap Color Ranges Calculation
   getColorRanges(view, maxVal = 10, isDark = false) {
     const safeMax = Math.max(maxVal, 1);
 
