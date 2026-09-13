@@ -402,7 +402,7 @@ export function renderAnalyticsCharts(
       height: 380,
       fontFamily: "inherit",
     },
-    colors: ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899"],
+    colors: lifeData.colors,
     stroke: { colors: [isDark ? "#1e293b" : "#ffffff"] },
     fill: { opacity: 0.85 },
     legend: {

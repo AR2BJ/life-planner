@@ -240,10 +240,27 @@ export const AnalyticsAdapter = {
   },
 
   // 3. Life Area Distribution Data
+  // 3. Life Area Distribution Data
   generateLifeAreaAnalytics(plans = []) {
+    const areaColorMap = {
+      productivity: "#f0b100",
+      health: "#00bc7d",
+      personal: "#7ccf00",
+      career: "#00b8db",
+      creativity: "#2b7fff",
+      finance: "#8e51ff",
+      lifestyle: "#f6339a",
+      mindset: "#e12afb",
+      relationships: "#ff6900",
+      environment: "#fb2c36",
+    };
+
     const areaCounts = {};
+    const colors = [];
+
     LIFE_AREAS.forEach((area) => {
       areaCounts[area.name] = 0;
+      colors.push(areaColorMap[area.id] || "#62748e");
     });
 
     plans.forEach((plan) => {
@@ -257,6 +274,7 @@ export const AnalyticsAdapter = {
     return {
       labels: Object.keys(areaCounts),
       series: Object.values(areaCounts),
+      colors: colors,
     };
   },
 
