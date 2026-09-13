@@ -122,6 +122,11 @@ export const OBJECTIVE_UNITS = [
     icon: "fa-solid fa-pen-nib text-amber-500/80",
   },
   {
+    id: "currency",
+    name: "Currency",
+    icon: "fa-solid fa-dollar-sign text-red-600/80",
+  },
+  {
     id: "points",
     name: "Story Points",
     icon: "fa-solid fa-chart-line text-fuchsia-500/80",
@@ -175,11 +180,6 @@ export const OBJECTIVE_UNITS = [
     id: "km",
     name: "Kilometers (km)",
     icon: "fa-solid fa-route text-teal-500/80",
-  },
-  {
-    id: "usd",
-    name: "Currency ($ / USD)",
-    icon: "fa-solid fa-dollar-sign text-red-600/80",
   },
   {
     id: "reps",
@@ -267,6 +267,13 @@ export const MOOD_OPTIONS = [
     icon: "fa-solid fa-face-laugh-beam text-emerald-500/80",
     class: "bg-emerald-500/10 text-emerald-500/80 border-emerald-500/20",
   },
+];
+
+export const CURRENCY_OPTIONS = [
+  { value: "USD", title: "USD ($)", symbol: "$" },
+  { value: "EUR", title: "EUR (€)", symbol: "€" },
+  { value: "IRR", title: "IRR (﷼)", symbol: "﷼" },
+  { value: "GBP", title: "GBP (£)", symbol: "£" },
 ];
 
 export const FILTER_OPTIONS_BY_TAB = {

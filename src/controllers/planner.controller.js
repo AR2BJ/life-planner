@@ -94,7 +94,7 @@ export const PlannerController = {
                 if (ui) {
                   ui.filterBy = selectedVal;
                 }
-                
+
                 StateManager.notifyActiveTabChanged();
                 this.refreshUI();
               } finally {
@@ -716,6 +716,21 @@ export const PlannerController = {
       AnalyticsController.dispatchRender(allPlans);
     };
     document.addEventListener("themeChanged", window.currentThemeListener);
+
+    // 8. Currency Listener
+    if (window.currentCurrencyListener) {
+      document.removeEventListener(
+        "currencyChanged",
+        window.currentCurrencyListener,
+      );
+    }
+    window.currentCurrencyListener = () => {
+      this.refreshUI();
+    };
+    document.addEventListener(
+      "currencyChanged",
+      window.currentCurrencyListener,
+    );
   },
 
   handleTabSwitch(tab) {
@@ -839,9 +854,15 @@ export const PlannerController = {
 
     buttons.forEach((btn, idx) => {
       if (idx === activeIndex) {
-        btn.classList.replace("text-secondary", "text-white");
+        btn.classList.replace(
+          "text-secondary",
+          "text-(--color-btn-primary-text)",
+        );
       } else {
-        btn.classList.replace("text-white", "text-secondary");
+        btn.classList.replace(
+          "text-(--color-btn-primary-text)",
+          "text-secondary",
+        );
       }
     });
   },

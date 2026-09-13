@@ -1,12 +1,17 @@
+import { AutocompleteComponent } from "@/components/ui/autocomplete.component.js";
+import { CURRENCY_OPTIONS } from "@/utils/constants/options-value.constants.js";
 import { SettingsExportController } from "./settings/settings-export.controller.js";
 import { SettingsImportController } from "./settings/settings-import.controller.js";
 import { SettingsResetController } from "./settings/settings-reset.controller.js";
 import { getTheme } from "@/services/theme.service.js";
 
 export const SettingsController = {
+  currencyAutocomplete: null,
+
   init() {
     this.bindThemeEvents();
     this.bindSettingsEvents();
+    this.bindCurrencyEvents();
 
     // Initialize sub-controllers
     SettingsImportController.init();
@@ -26,6 +31,40 @@ export const SettingsController = {
     });
 
     this.syncThemeControls(getTheme());
+  },
+
+  bindCurrencyEvents() {
+    const container = document.getElementById(
+      "currency-autocomplete-container",
+    );
+    if (!container) return;
+
+    const currentCurrency = localStorage.getItem("preferred_currency") || "USD";
+
+    this.currencyAutocomplete = new AutocompleteComponent(
+      container,
+      CURRENCY_OPTIONS,
+      {
+        label: "Default Workspace Currency",
+        placeholder: "Search currency...",
+        itemTitle: "title",
+        itemValue: "value",
+        iconClass: "fa-regular fa-coins text-blue-500/80",
+        clearable: false,
+        onChange: (value) => {
+          if (!value) return;
+          localStorage.setItem("preferred_currency", value);
+
+          document.dispatchEvent(
+            new CustomEvent("currencyChanged", {
+              detail: { currency: value },
+            }),
+          );
+        },
+      },
+    );
+
+    this.currencyAutocomplete.setValue(currentCurrency);
   },
 
   bindSettingsEvents() {

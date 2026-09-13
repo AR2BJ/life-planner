@@ -75,6 +75,32 @@ export const SettingsViewComponent = {
           </div>
 
           <div
+            class="bg-surface rounded-2xl p-4 sm:p-6 flex flex-col gap-4 shadow-sm border border-border"
+          >
+            <div class="flex items-center gap-3 border-b border-border pb-3">
+              <div
+                class="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-500/80 flex items-center justify-center shrink-0"
+              >
+                <i class="fa-regular fa-coins text-sm"></i>
+              </div>
+              <div class="min-w-0">
+                <h3
+                  class="text-sm sm:text-base font-semibold text-color truncate"
+                >
+                  Currency Preference
+                </h3>
+                <p class="text-[11px] sm:text-xs text-secondary truncate">
+                  Select default currency unit for plan metrics and financial objectives.
+                </p>
+              </div>
+            </div>
+
+            <div class="mt-1">
+              <div id="currency-autocomplete-container"></div>
+            </div>
+          </div>
+
+          <div
             class="bg-surface rounded-2xl p-4 sm:p-6 flex flex-col gap-6 shadow-sm border border-border"
           >
             <div class="flex items-center gap-3 border-b border-border pb-3">

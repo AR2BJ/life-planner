@@ -1,3 +1,6 @@
+import { CURRENCY_OPTIONS } from "@/utils/constants/options-value.constants";
+import { formatNumberWithCommas } from "@/utils/helpers";
+
 export const EditModalsComponent = {
   renderEmptyState(message, iconClass = "fa-regular fa-list-check") {
     return `
@@ -17,12 +20,18 @@ export const EditModalsComponent = {
   renderObjectiveItem(obj) {
     const type = obj.type || "boolean";
     const target = obj.targetValue || 1;
-    const unit = obj.unit || "";
+
+    const currentCurrency = localStorage.getItem("preferred_currency") || "USD";
+    const currencySymbol = CURRENCY_OPTIONS.find(
+      (c) => c.value === currentCurrency,
+    ).symbol;
+
+    const unit = obj.unit === "currency" ? currencySymbol : obj.unit;
 
     return `
       <div
         data-objective-id="${obj.id}"
-        class="subtask-item flex items-center justify-between gap-3 rounded-xl border border-border/70 bg-surface-2 p-2.5 shadow-xs transition hover:border-border"
+        class="objective-item flex items-center justify-between gap-3 rounded-xl border border-border/70 bg-surface-2 p-2.5 shadow-xs transition hover:border-border"
       >
         <div class="flex items-center flex-1 min-w-0">
           <span class="ps-2 text-xs lg:text-sm font-medium text-color truncate">
@@ -48,11 +57,28 @@ export const EditModalsComponent = {
           ${
             type === "numeric"
               ? `
-            <div class="h-7 sm:h-9 flex items-center gap-1.5 px-4 rounded-xl bg-surface border border-border/80 text-sm font-semibold text-color">
-              <span class="text-emerald-400/80 font-bold">${target}</span>
-              ${unit ? `<span class="text-secondary">${unit}</span>` : ""}
-            </div>
-          `
+                  <div
+                    class="h-7 sm:h-9 flex items-center gap-1.5 px-4 rounded-xl bg-surface border border-border/80 text-sm font-semibold text-color"
+                  >
+                    ${
+                      unit && currentCurrency === "IRR"
+                        ? `<span class="text-secondary">${unit}</span>`
+                        : ""
+                    }
+                    <span class="text-emerald-400/80 font-bold"
+                      >${
+                        obj.unit === "currency"
+                          ? formatNumberWithCommas(target)
+                          : target
+                      }</span
+                    >
+                    ${
+                      unit && currentCurrency !== "IRR"
+                        ? `<span class="text-secondary">${unit}</span>`
+                        : ""
+                    }
+                  </div>
+                `
               : ""
           }
 
@@ -88,7 +114,7 @@ export const EditModalsComponent = {
     return `
       <div
         data-metric-key="${key}"
-        class="subtask-item flex items-center justify-between gap-3 rounded-xl border border-border/70 bg-surface-2 p-2.5 shadow-xs transition hover:border-border"
+        class="objective-item flex items-center justify-between gap-3 rounded-xl border border-border/70 bg-surface-2 p-2.5 shadow-xs transition hover:border-border"
       >
         <div class="flex items-center flex-1 min-w-0">
           <span class="ps-2 text-xs lg:text-sm font-semibold text-color truncate">
