@@ -116,11 +116,11 @@ export const SettingsResetController = {
                   localStorage.removeItem(STORAGE_KEY);
                 }
 
-                StateManager.save(
-                  previousPlans || [],
-                  previousLogs || [],
-                  previousTemplates || [],
-                );
+                StateManager.save({
+                  plans: previousPlans || [],
+                  logs: previousLogs || [],
+                  templates: previousTemplates || [],
+                });
 
                 state.plans = previousPlans || [];
                 state.logs = previousLogs || [];
