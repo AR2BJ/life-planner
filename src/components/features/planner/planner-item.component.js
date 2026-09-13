@@ -1,12 +1,13 @@
 import {
+  CURRENCY_OPTIONS,
   ENERGY_LEVEL_OPTIONS,
   LIFE_AREAS,
   MOOD_OPTIONS,
   PLAN_STATES,
 } from "@/utils/constants/options-value.constants.js";
+import { formatNumberWithCommas, openObjectivesState } from "@/utils/helpers";
 
 import { StateManager } from "@/models/state.model.js";
-import { openObjectivesState } from "@/utils/helpers";
 
 export const PlannerItemComponent = {
   // --- HELPERS ---
@@ -211,29 +212,121 @@ export const PlannerItemComponent = {
     `;
   },
 
-  _renderActionButtons(id) {
+  _renderActionButtons(data, tab) {
     return `
-      <div class="flex items-center gap-1.5 shrink-0 z-20">
-        <button
-          type="button"
-          data-id="${id}"
-          class="edit-btn w-8 h-8 md:w-9 md:h-9 rounded-lg bg-surface-2 hover:bg-blue-600/10 border border-border flex items-center justify-center cursor-pointer transition"
-          aria-label="Edit item"
-        >
-          <i
-            class="fa-regular fa-pen-to-square text-blue-500/80 text-sm md:text-base pointer-events-none"
-          ></i>
-        </button>
-        <button
-          type="button"
-          data-id="${id}"
-          class="delete-btn w-8 h-8 md:w-9 md:h-9 rounded-lg bg-surface-2 hover:bg-red-600/10 border border-border flex items-center justify-center cursor-pointer transition"
-          aria-label="Delete item"
-        >
-          <i
-            class="fa-regular fa-trash-can text-red-500/80 text-sm md:text-base pointer-events-none"
-          ></i>
-        </button>
+      <div class="shrink-0">
+        <div class="hidden md:flex items-center gap-2">
+          ${
+            tab === "templates"
+              ? `
+                    <div class="relative">
+                      <button
+                        type="button"
+                        data-id="${data.id}"
+                        class="favorite-btn w-8 h-8 md:w-9 md:h-9 rounded-lg bg-surface-2 hover:bg-amber-600/10 border border-border flex items-center justify-center cursor-pointer transition group"
+                        title="Toggle Favorite"
+                      >
+                        <i
+                          class="${
+                            data.isFavorite ? "fa-solid" : "fa-regular"
+                          } fa-star text-amber-400/80 text-sm md:text-base pointer-events-none transition-all group-hover:text-amber-400/80"
+                        ></i>
+                      </button>
+                      <div
+                        class="absolute top-full left-1/2 -translate-x-1/2 mt-1 px-2 py-1 rounded bg-surface-2 text-xs text-color opacity-0 cursor-default peer-hover:opacity-100 transition z-10 whitespace-nowrap pointer-events-none border border-border/60"
+                      >
+                        Favorite
+                      </div>
+                    </div>
+                  `
+              : ""
+          }
+
+          <div class="relative">
+            <button
+              data-id="${data.id}"
+              class="edit-btn w-9 h-9 rounded-lg bg-surface-2 hover:bg-blue-600/10 border border-border flex items-center justify-center hover:cursor-pointer peer transition"
+            >
+              <i
+                class="fa-regular fa-pen-to-square text-blue-500/80 text-base"
+              ></i>
+            </button>
+            <div
+              class="absolute top-full left-1/2 -translate-x-1/2 mt-1 px-2 py-1 rounded bg-surface-2 text-xs text-color opacity-0 cursor-default peer-hover:opacity-100 transition z-10 whitespace-nowrap pointer-events-none border border-border/60"
+            >
+              Edit
+            </div>
+          </div>
+
+          <div class="relative">
+            <button
+              data-id="${data.id}"
+              class="delete-btn w-9 h-9 rounded-lg bg-surface-2 hover:bg-red-600/10 border border-border flex items-center justify-center hover:cursor-pointer peer transition"
+            >
+              <i class="fa-regular fa-trash-can text-red-500/80 text-base"></i>
+            </button>
+            <div
+              class="absolute top-full left-1/2 -translate-x-1/2 mt-1 px-2 py-1 rounded bg-surface-2 text-xs text-color opacity-0 cursor-default peer-hover:opacity-100 transition z-10 whitespace-nowrap pointer-events-none border border-border/60"
+            >
+              Delete
+            </div>
+          </div>
+        </div>
+
+        <div class="flex md:hidden relative dropdown-container">
+          <button
+            data-id="${data.id}"
+            class="dropdown-toggle-btn h-8 w-8 rounded-lg border border-border text-secondary hover:text-color hover:bg-surface flex items-center justify-center transition shadow-sm cursor-pointer"
+          >
+            <i class="fa-regular fa-ellipsis-vertical text-base"></i>
+          </button>
+
+          <div
+            data-id="${data.id}"
+            class="dropdown-menu absolute right-0 mt-1.5 w-45 rounded-xl border border-border bg-surface p-1 shadow-xl hidden z-30 flex-col gap-0.5"
+          >
+            ${
+              tab === "templates"
+                ? `
+                  <button
+                    data-id="${data.id}"
+                    class="favorite-btn flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-xs font-medium border-0 bg-transparent text-secondary hover:text-color hover:bg-surface-2 transition cursor-pointer"
+                  >
+                    <i
+                      class="${
+                        data.isFavorite ? "fa-solid" : "fa-regular"
+                      } fa-star text-xs text-amber-400/80"
+                    ></i>
+                    <span
+                      >${data.isFavorite ? "Remove from" : "Add to"}
+                      Favorites</span
+                    >
+                  </button>
+                `
+                : ""
+            }
+
+            <button
+              data-id="${data.id}"
+              class="edit-btn flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-xs font-medium border-0 bg-transparent text-secondary hover:text-color hover:bg-surface-2 transition cursor-pointer"
+            >
+              <i
+                class="fa-regular fa-pen-to-square text-xs text-blue-500/80"
+              ></i>
+              <span>Edit Title</span>
+            </button>
+
+            <div class="my-0.5 border-t border-border/40"></div>
+
+            <button
+              data-id="${data.id}"
+              class="delete-btn flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-xs font-medium border-0 bg-transparent text-red-500/80 hover:bg-red-500/5 transition cursor-pointer"
+            >
+              <i class="fa-regular fa-trash-can text-xs"></i>
+              <span>Delete Permanently</span>
+            </button>
+          </div>
+        </div>
       </div>
     `;
   },
@@ -490,11 +583,7 @@ export const PlannerItemComponent = {
               </div>
             </div>
 
-            <div
-              class="absolute top-3 right-3 md:static flex self-start md:top-auto md:right-auto z-20 shrink-0"
-            >
-              ${this._renderActionButtons(plan.id)}
-            </div>
+            ${this._renderActionButtons(plan, "plans")}
           </div>
 
           ${
@@ -561,7 +650,15 @@ export const PlannerItemComponent = {
 
                           const target = Number(obj.targetValue) || 1;
                           const current = Number(obj.currentValue) || 0;
-                          const unit = obj.unit || "";
+
+                          const currentCurrency =
+                            localStorage.getItem("preferred_currency") || "USD";
+                          const currencySymbol = CURRENCY_OPTIONS.find(
+                            (c) => c.value === currentCurrency,
+                          ).symbol;
+
+                          const unit =
+                            obj.unit === "currency" ? currencySymbol : obj.unit;
 
                           return `
                             <div
@@ -595,6 +692,12 @@ export const PlannerItemComponent = {
                                         <div
                                           class="inline-flex items-center rounded-lg border border-emerald-500/20 bg-emerald-500/10 p-0.75 overflow-hidden shadow-xs"
                                         >
+                                          ${
+                                            obj.unit === "currency" &&
+                                            currentCurrency === "IRR"
+                                              ? `<span class="text-emerald-500/80 font-bold mx-1 text-[10px]">${unit}</span>`
+                                              : ""
+                                          }
                                           <input
                                             class="objective-progress-input w-15 h-6 rounded-md bg-surface text-[11px] font-bold text-center text-emerald-400/80 focus:outline-none focus:ring-1 focus:ring-emerald-500/50 transition"
                                             type="text"
@@ -603,21 +706,48 @@ export const PlannerItemComponent = {
                                             data-plan-id="${plan.id}"
                                             data-objective-id="${obj.id}"
                                             data-target="${target}"
-                                            value="${current}"
+                                            value="${
+                                              obj.unit === "currency"
+                                                ? formatNumberWithCommas(
+                                                    current,
+                                                  )
+                                                : current
+                                            }"
                                             placeholder="Value"
                                             maxlength="7"
                                             min="1"
                                             pattern="^[0-9]*.?[0-9]*$"
                                           />
+                                          ${
+                                            obj.unit === "currency" &&
+                                            currentCurrency !== "IRR"
+                                              ? `<span class="text-emerald-500/80 font-bold ms-1 text-[10px]">${unit}</span>`
+                                              : ""
+                                          }
                                           <div
                                             class="flex items-center gap-2 px-2 text-[10px] font-semibold text-emerald-400/80"
                                           >
                                             <span class="opacity-40">of</span>
-                                            <div>
-                                              <span>${target}</span>
+                                            <div class="flex items-center">
                                               ${
-                                                unit
-                                                  ? `<span class="text-emerald-500/80 font-bold ml-0.5">${unit}</span>`
+                                                unit &&
+                                                currentCurrency === "IRR"
+                                                  ? `<span class="text-emerald-500/80 font-bold me-1">${unit}</span>`
+                                                  : ""
+                                              }
+                                              <span
+                                                >${
+                                                  obj.unit === "currency"
+                                                    ? formatNumberWithCommas(
+                                                        target,
+                                                      )
+                                                    : target
+                                                }</span
+                                              >
+                                              ${
+                                                unit &&
+                                                currentCurrency !== "IRR"
+                                                  ? `<span class="text-emerald-500/80 font-bold ms-1">${unit}</span>`
                                                   : ""
                                               }
                                             </div>
@@ -695,9 +825,7 @@ export const PlannerItemComponent = {
         <div class="flex items-start justify-between gap-4 w-full">
           <div class="flex flex-col min-w-0 w-full gap-1.5">
             <div class="flex items-center gap-2 flex-wrap">
-              ${moodBadge} 
-              
-              ${energyBadge}
+              ${moodBadge} ${energyBadge}
 
               <span
                 class="inline-flex items-center gap-1 rounded-md border border-secondary/30 bg-secondary/10 px-2 py-0.5 text-[10px] font-medium text-secondary/80"
@@ -721,7 +849,7 @@ export const PlannerItemComponent = {
             }
           </div>
 
-          ${this._renderActionButtons(log.id)}
+          ${this._renderActionButtons(log, "logs")}
         </div>
 
         ${metricsHtml}
@@ -737,8 +865,8 @@ export const PlannerItemComponent = {
         data-id="${template.id}"
         class="template-item relative flex flex-col justify-between gap-4 p-3 md:p-4 rounded-2xl bg-surface-2/30 transition-all duration-300 border border-dashed border-border/80 shadow-xs"
       >
-        <div class="flex items-start justify-between gap-4">
-          <div class="flex flex-col min-w-0 w-full gap-1.5 pe-12">
+        <div class="flex items-start justify-between gap-4 w-full">
+          <div class="flex flex-col min-w-0 w-full gap-1.5">
             <div class="flex items-center gap-2 flex-wrap">
               <span
                 class="inline-flex items-center gap-1.5 rounded-md border border-violet-500/30 bg-violet-500/10 px-2.5 py-0.5 text-[10px] uppercase font-semibold tracking-wider text-violet-400"
@@ -757,9 +885,7 @@ export const PlannerItemComponent = {
                   : ""
               }
             </div>
-            <h2
-              class="text-base font-bold mt-1 text-color wrap-break-word"
-            >
+            <h2 class="text-base font-bold mt-1 text-color wrap-break-word">
               ${template.title || "Untitled Template"}
             </h2>
 
@@ -772,26 +898,9 @@ export const PlannerItemComponent = {
             }
           </div>
 
-          <div
-            class="absolute top-3 right-3 md:static flex self-start md:top-auto md:right-auto z-20 shrink-0 items-center gap-1.5"
-          >
-            <button
-              type="button"
-              data-id="${template.id}"
-              class="favorite-btn w-8 h-8 md:w-9 md:h-9 rounded-lg bg-surface-2 hover:bg-amber-600/10 border border-border flex items-center justify-center cursor-pointer transition group"
-              title="Toggle Favorite"
-            >
-              <i
-                class="${
-                  template.isFavorite
-                    ? "fa-solid text-amber-400/80"
-                    : "fa-regular text-secondary/80"
-                } fa-star text-sm md:text-base pointer-events-none transition-all group-hover:text-amber-400/80"
-              ></i>
-            </button>
-            ${this._renderActionButtons(template.id)}
-          </div>
+          ${this._renderActionButtons(template, "templates")}
         </div>
+
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mt-1">
           ${
             template.baseline

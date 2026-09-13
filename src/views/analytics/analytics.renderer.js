@@ -352,7 +352,7 @@ export function renderAnalyticsCharts(
     chart: {
       id: "weekday-bar",
       type: "bar",
-      height: 380,
+      height: 400,
       toolbar: { show: false },
       fontFamily: "inherit",
     },
@@ -368,8 +368,12 @@ export function renderAnalyticsCharts(
     dataLabels: {
       enabled: true,
       textAnchor: "end",
-      colors: [axisTextColor],
-      style: { fontSize: "12px", fontWeight: "bold" },
+      colors: [isDark ? "#e2e8f0" : "#222f47"],
+      style: {
+        fontSize: "12px",
+        fontWeight: "bold",
+        colors: [axisTextColor],
+      },
       formatter: (val) => val + " items",
     },
     xaxis: {
@@ -385,7 +389,7 @@ export function renderAnalyticsCharts(
     },
     grid: {
       show: true,
-      borderColor: isDark ? "#334155" : "#e2e8f0",
+      borderColor: isDark ? "#e5e7eb" : "#bfcbd9",
       strokeDashArray: 4,
     },
     tooltip: { theme: isDark ? "dark" : "light" },
@@ -399,7 +403,9 @@ export function renderAnalyticsCharts(
     chart: {
       id: "lifearea-polar",
       type: "polarArea",
-      height: 380,
+      width: "100%",
+      height: 400,
+      toolbar: { show: false },
       fontFamily: "inherit",
     },
     colors: lifeData.colors,
@@ -408,8 +414,26 @@ export function renderAnalyticsCharts(
     legend: {
       position: "bottom",
       labels: { colors: axisTextColor },
+      horizontalAlign: "center",
     },
     tooltip: { theme: isDark ? "dark" : "light" },
+    responsive: [
+      {
+        breakpoint: 768,
+        options: {
+          chart: {
+            height: 200,
+          },
+          legend: {
+            fontSize: "11px",
+            itemMargin: {
+              horizontal: 5,
+              vertical: 2,
+            },
+          },
+        },
+      },
+    ],
   };
 
   // 4. Standalone Mood Chart Options
@@ -419,7 +443,7 @@ export function renderAnalyticsCharts(
     chart: {
       id: "mood-bar",
       type: "bar",
-      height: 350,
+      height: 400,
       toolbar: { show: false },
       fontFamily: "inherit",
     },
@@ -428,7 +452,7 @@ export function renderAnalyticsCharts(
       bar: {
         horizontal: false,
         columnWidth: "45%",
-        borderRadius: 6,
+        borderRadius: 5,
         dataLabels: { position: "top" },
       },
     },
@@ -455,7 +479,7 @@ export function renderAnalyticsCharts(
     chart: {
       id: "energy-bar",
       type: "bar",
-      height: 350,
+      height: 400,
       toolbar: { show: false },
       fontFamily: "inherit",
     },
@@ -464,7 +488,7 @@ export function renderAnalyticsCharts(
       bar: {
         horizontal: false,
         columnWidth: "45%",
-        borderRadius: 6,
+        borderRadius: 5,
         dataLabels: { position: "top" },
       },
     },

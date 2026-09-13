@@ -279,7 +279,7 @@ export const DashboardComponent = {
           </div>
 
           <div
-            class="w-full mt-6 overflow-x-auto min-h-70 flex items-center justify-center"
+            class="w-full mt-6 overflow-x-auto scrollbar-thin scrollbar-thumb-surface"
           >
             <div
               id="apex-heatmap-chart"
@@ -312,23 +312,39 @@ export const DashboardComponent = {
         </div>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 w-full col-span-full mt-6">
-        <div class="bg-surface-2 border border-border/70 rounded-2xl p-6 flex flex-col justify-between shadow-sm">
+      <div
+        class="grid grid-cols-1 gap-6 w-full col-span-full mt-6"
+      >
+        <div
+          class="bg-surface-2 border border-border/70 rounded-2xl p-6 flex flex-col justify-between shadow-sm"
+        >
           <div>
             <h4 class="text-lg font-bold text-color flex items-center gap-2">
               <i class="fa-regular fa-compass text-brand text-xl"></i>
               Life Area Distribution
             </h4>
             <p class="text-xs text-secondary mt-1">
-              Distribution of execution plans across core life domain categories.
+              Distribution of execution plans across core life domain
+              categories.
             </p>
           </div>
-          <div class="w-full mt-6 overflow-x-auto flex items-center justify-center">
-            <div id="apex-lifearea-chart" class="w-full"></div>
+          <div
+            class="w-full mt-6 overflow-x-auto scrollbar-thin scrollbar-thumb-surface"
+          >
+            <div
+              id="apex-lifearea-chart"
+              class="w-full"
+            ></div>
           </div>
         </div>
+      </div>
 
-        <div class="bg-surface-2 border border-border/70 rounded-2xl p-6 flex flex-col justify-between shadow-sm">
+      <div
+        class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full col-span-full mt-6"
+      >
+        <div
+          class="bg-surface-2 border border-border/70 rounded-2xl p-6 flex flex-col justify-between shadow-sm"
+        >
           <div>
             <h4 class="text-lg font-bold text-color flex items-center gap-2">
               <i class="fa-regular fa-face-smile text-brand text-xl"></i>
@@ -338,23 +354,37 @@ export const DashboardComponent = {
               Logged emotional state spectrum and distributions.
             </p>
           </div>
-          <div class="w-full mt-6 overflow-x-auto flex items-center justify-center">
-            <div id="apex-mood-chart" class="w-full"></div>
+          <div
+            class="w-full mt-6 overflow-x-auto scrollbar-thin scrollbar-thumb-surface"
+          >
+            <div
+              id="apex-mood-chart"
+              class="w-full"
+            ></div>
           </div>
         </div>
-  
-        <div class="bg-surface-2 border border-border/70 rounded-2xl p-6 flex flex-col justify-between shadow-sm">
+
+        <div
+          class="bg-surface-2 border border-border/70 rounded-2xl p-6 flex flex-col justify-between shadow-sm"
+        >
           <div>
             <h4 class="text-lg font-bold text-color flex items-center gap-2">
-              <i class="fa-regular fa-battery-three-quarters text-brand text-xl"></i>
+              <i
+                class="fa-regular fa-battery-three-quarters text-brand text-xl"
+              ></i>
               Energy Level Distribution
             </h4>
             <p class="text-xs text-secondary mt-1">
               Logged energy level frequencies (1 to 5).
             </p>
           </div>
-          <div class="w-full mt-6 overflow-x-auto flex items-center justify-center">
-            <div id="apex-energy-chart" class="w-full"></div>
+          <div
+            class="w-full mt-6 overflow-x-auto scrollbar-thin scrollbar-thumb-surface"
+          >
+            <div
+              id="apex-energy-chart"
+              class="w-full"
+            ></div>
           </div>
         </div>
       </div>
@@ -363,7 +393,7 @@ export const DashboardComponent = {
         class="w-full col-span-full mt-6 bg-surface-2 border border-border/75 rounded-2xl p-6 shadow-sm"
       >
         <div
-          class="flex flex-wrap sm:flex-nowrap items-center justify-between gap-4 pb-4 border-b border-border/40"
+          class="flex flex-wrap sm:flex-nowrap items-center justify-center sm:justify-between gap-4 pb-4 border-b border-border/40"
         >
           <div>
             <h4 class="text-lg font-bold text-color flex items-center gap-2">
@@ -649,7 +679,7 @@ export const DashboardComponent = {
 
           progressHtml = `
             <div class="w-full sm:w-56 shrink-0 flex flex-col justify-center">
-              <div class="flex justify-between text-xs mb-1">
+              <div class="flex justify-between text-[10px] sm:text-xs mb-1">
                 <span class="text-secondary font-medium font-sans"
                   >Objectives Progress</span
                 >
@@ -686,7 +716,7 @@ export const DashboardComponent = {
             class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 rounded-xl bg-surface/70 border border-border/50 hover:bg-surface transition group shadow-2xs"
           >
             <div class="min-w-0 flex-1">
-              <div class="flex items-center gap-2 mb-1.5">
+              <div class="flex flex-wrap items-center gap-2 mb-1.5">
                 ${stateBadge} ${lifeAreaBadge}
                 <span class="text-[11px] text-secondary/70"
                   >ID: ${plan.id || "N/A"}</span
@@ -703,6 +733,8 @@ export const DashboardComponent = {
                 ${plan.description || "No execution description provided."}
               </p>
             </div>
+
+            <div class="divider flex sm:hidden bg-surface-2 w-full h-px mt-2"></div>
 
             ${progressHtml}
           </div>
@@ -778,14 +810,20 @@ export const DashboardComponent = {
                 ${log.title || "Untitled Log"}
               </h5>
               <p
-                class="text-xs text-secondary/90 line-clamp-1 mt-0.5 font-normal"
+                class="block lg:hidden w-45 sm:w-65 md:w-85 text-xs text-secondary/90 truncate mt-0.5 font-normal cursor-pointer"
+                data-tooltip-title="${log.description}"
+              >
+                ${log.description || "No specific reflections added."}
+              </p>
+              <p
+                class="hidden lg:block text-xs text-secondary/90 mt-0.5 font-normal"
               >
                 ${log.description || "No specific reflections added."}
               </p>
             </div>
-            <div class="text-right shrink-0 text-xs text-secondary font-medium">
+            <div class="text-left shrink-0 text-[8px] xs:text-[9px] sm:text-xs text-secondary font-medium">
               <span
-                class="bg-surface px-2.5 py-1 rounded-lg border border-border/40 inline-block font-sans"
+                class="bg-surface px-2.5 py-1 rounded-lg border border-border/40 flex font-sans"
                 >ID: ${log.id || "N/A"}</span
               >
             </div>
@@ -810,10 +848,10 @@ export const DashboardComponent = {
 
         return `
           <div
-            class="flex items-center justify-between gap-4 p-4 rounded-xl bg-surface/70 border border-border/50 hover:bg-surface transition group shadow-2xs"
+            class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 rounded-xl bg-surface/70 border border-border/50 hover:bg-surface transition group shadow-2xs"
           >
             <div class="min-w-0 flex-1">
-              <div class="flex items-center gap-2 mb-1.5">
+              <div class="flex flex-wrap items-center gap-2 mb-1.5">
                 ${lifeAreaBadge}
                 ${
                   tpl.isFavorite
