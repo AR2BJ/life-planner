@@ -270,10 +270,53 @@ export const MOOD_OPTIONS = [
 ];
 
 export const CURRENCY_OPTIONS = [
+  // Major Fiat Currencies & Regional Options
   { value: "USD", title: "USD ($)", symbol: "$" },
   { value: "EUR", title: "EUR (€)", symbol: "€" },
-  { value: "IRR", title: "IRR (﷼)", symbol: "﷼" },
+  { value: "IRT", title: "IRT (تومان)", symbol: "تومان" },
   { value: "GBP", title: "GBP (£)", symbol: "£" },
+  { value: "JPY", title: "JPY (¥)", symbol: "¥" },
+  { value: "CHF", title: "CHF (Fr)", symbol: "Fr" },
+  { value: "CAD", title: "CAD ($)", symbol: "$" },
+  { value: "AUD", title: "AUD ($)", symbol: "$" },
+  { value: "CNY", title: "CNY (¥)", symbol: "¥" },
+
+  // Middle East & Asia Pacific
+  { value: "AED", title: "AED (درهم امارات)", symbol: "درهم" },
+  { value: "SAR", title: "SAR (رئال سعودی)", symbol: "رئال" },
+  { value: "QAR", title: "QAR (رئال قطر)", symbol: "رئال" },
+  { value: "KWD", title: "KWD (دینار کویت)", symbol: "دینار" },
+  { value: "JOD", title: "JOD (دینار اردن)", symbol: "دینار" },
+  { value: "AZN", title: "AZN (₼)", symbol: "₼" },
+  { value: "GEL", title: "GEL (₾)", symbol: "₾" },
+  { value: "PHP", title: "PHP (₱)", symbol: "₱" },
+  { value: "VND", title: "VND (₫)", symbol: "₫" },
+  { value: "TRY", title: "TRY (₺)", symbol: "₺" },
+  { value: "INR", title: "INR (₹)", symbol: "₹" },
+  { value: "SGD", title: "SGD ($)", symbol: "$" },
+  { value: "HKD", title: "HKD ($)", symbol: "$" },
+  { value: "KRW", title: "KRW (₩)", symbol: "₩" },
+  { value: "RUB", title: "RUB (₽)", symbol: "₽" },
+  { value: "THB", title: "THB (฿)", symbol: "฿" },
+  { value: "MYR", title: "MYR (RM)", symbol: "RM" },
+  { value: "IDR", title: "IDR (Rp)", symbol: "Rp" },
+
+  // Americas & Europe
+  { value: "BRL", title: "BRL (R$)", symbol: "R$" },
+  { value: "MXN", title: "MXN ($)", symbol: "$" },
+  { value: "SEK", title: "SEK (kr)", symbol: "kr" },
+  { value: "NOK", title: "NOK (kr)", symbol: "kr" },
+  { value: "DKK", title: "DKK (kr)", symbol: "kr" },
+  { value: "PLN", title: "PLN (zł)", symbol: "zł" },
+  { value: "NZD", title: "NZD ($)", symbol: "$" },
+  { value: "EGP", title: "EGP (E£)", symbol: "E£" },
+  { value: "ZAR", title: "ZAR (R)", symbol: "R" },
+
+  // Crypto / Digital Assets
+  { value: "BTC", title: "BTC (₿)", symbol: "₿" },
+  { value: "ETH", title: "ETH (Ξ)", symbol: "Ξ" },
+  { value: "USDT", title: "USDT (₮)", symbol: "₮" },
+  { value: "USDC", title: "USDC ($)", symbol: "$" },
 ];
 
 export const FILTER_OPTIONS_BY_TAB = {

@@ -137,6 +137,17 @@ export const PlannerItemComponent = {
       const val = typeof item === "object" ? item.value : item;
       const unit = typeof item === "object" ? item.unit || "" : "";
 
+      const currentCurrency =
+        localStorage.getItem("preferred_currency") || "USD";
+      const currencySymbol =
+        CURRENCY_OPTIONS.find((c) => c.value === currentCurrency)?.symbol ||
+        "$";
+
+      const formattedVal =
+        unit === "currency" ? formatNumberWithCommas(val) : val;
+
+      const displayUnit = unit === "currency" ? currencySymbol : unit;
+
       return `
         <div
           class="group/metric relative flex flex-col justify-between p-2.5 rounded-xl bg-surface/50 hover:bg-surface border border-border/40 hover:border-brand/40 transition-all duration-200 shadow-xs"
@@ -152,13 +163,30 @@ export const PlannerItemComponent = {
             ></div>
           </div>
           <div class="flex items-baseline gap-1 min-w-0">
+            ${
+              unit === "currency" &&
+              (currentCurrency === "IRT" ||
+                currentCurrency === "AED" ||
+                currentCurrency === "SAR" ||
+                currentCurrency === "KWD" ||
+                currentCurrency === "JOD" ||
+                currentCurrency === "QAR")
+                ? `<span class="text-[10px] font-semibold text-secondary/80 truncate">${displayUnit}</span>`
+                : ""
+            }
             <span
               class="text-sm font-extrabold text-color tracking-tight truncate"
-              >${val}</span
+              >${formattedVal}</span
             >
             ${
-              unit
-                ? `<span class="text-[10px] font-semibold text-secondary/80 truncate">${unit}</span>`
+              unit !== "currency" ||
+              (currentCurrency !== "IRT" &&
+                currentCurrency !== "AED" &&
+                currentCurrency !== "SAR" &&
+                currentCurrency !== "KWD" &&
+                currentCurrency !== "JOD" &&
+                currentCurrency !== "QAR")
+                ? `<span class="text-[10px] font-semibold text-secondary/80 truncate">${displayUnit}</span>`
                 : ""
             }
           </div>
@@ -694,18 +722,30 @@ export const PlannerItemComponent = {
                                         >
                                           ${
                                             obj.unit === "currency" &&
-                                            currentCurrency === "IRR"
+                                            (currentCurrency === "IRT" ||
+                                              currentCurrency === "AED" ||
+                                              currentCurrency === "SAR" ||
+                                              currentCurrency === "KWD" ||
+                                              currentCurrency === "JOD" ||
+                                              currentCurrency === "QAR")
                                               ? `<span class="text-emerald-500/80 font-bold mx-1 text-[10px]">${unit}</span>`
                                               : ""
                                           }
                                           <input
-                                            class="objective-progress-input w-15 h-6 rounded-md bg-surface text-[11px] font-bold text-center text-emerald-400/80 focus:outline-none focus:ring-1 focus:ring-emerald-500/50 transition"
+                                            class="objective-progress-input ${
+                                              obj.unit === "currency"
+                                                ? "w-24"
+                                                : "w-15"
+                                            } h-6 rounded-md bg-surface text-[11px] font-bold text-center text-emerald-400/80 focus:outline-none focus:ring-1 focus:ring-emerald-500/50 transition-all"
                                             type="text"
-                                            inputmode="decimal"
+                                            inputmode="numeric"
                                             id="unit-${obj.unit}-${plan.id}"
                                             data-plan-id="${plan.id}"
                                             data-objective-id="${obj.id}"
                                             data-target="${target}"
+                                            data-is-currency="${
+                                              obj.unit === "currency"
+                                            }"
                                             value="${
                                               obj.unit === "currency"
                                                 ? formatNumberWithCommas(
@@ -714,13 +754,22 @@ export const PlannerItemComponent = {
                                                 : current
                                             }"
                                             placeholder="Value"
-                                            maxlength="7"
+                                            maxlength="${
+                                              obj.unit === "currency"
+                                                ? "15"
+                                                : "7"
+                                            }"
                                             min="1"
                                             pattern="^[0-9]*.?[0-9]*$"
                                           />
                                           ${
-                                            obj.unit === "currency" &&
-                                            currentCurrency !== "IRR"
+                                            obj.unit !== "currency" ||
+                                            (currentCurrency !== "IRT" &&
+                                              currentCurrency !== "AED" &&
+                                              currentCurrency !== "SAR" &&
+                                              currentCurrency !== "KWD" &&
+                                              currentCurrency !== "JOD" &&
+                                              currentCurrency !== "QAR")
                                               ? `<span class="text-emerald-500/80 font-bold ms-1 text-[10px]">${unit}</span>`
                                               : ""
                                           }
@@ -730,8 +779,13 @@ export const PlannerItemComponent = {
                                             <span class="opacity-40">of</span>
                                             <div class="flex items-center">
                                               ${
-                                                unit &&
-                                                currentCurrency === "IRR"
+                                                obj.unit === "currency" &&
+                                                (currentCurrency === "IRT" ||
+                                                  currentCurrency === "AED" ||
+                                                  currentCurrency === "SAR" ||
+                                                  currentCurrency === "KWD" ||
+                                                  currentCurrency === "JOD" ||
+                                                  currentCurrency === "QAR")
                                                   ? `<span class="text-emerald-500/80 font-bold me-1">${unit}</span>`
                                                   : ""
                                               }
@@ -745,8 +799,13 @@ export const PlannerItemComponent = {
                                                 }</span
                                               >
                                               ${
-                                                unit &&
-                                                currentCurrency !== "IRR"
+                                                obj.unit !== "currency" ||
+                                                (currentCurrency !== "IRT" &&
+                                                  currentCurrency !== "AED" &&
+                                                  currentCurrency !== "SAR" &&
+                                                  currentCurrency !== "KWD" &&
+                                                  currentCurrency !== "JOD" &&
+                                                  currentCurrency !== "QAR")
                                                   ? `<span class="text-emerald-500/80 font-bold ms-1">${unit}</span>`
                                                   : ""
                                               }

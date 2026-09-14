@@ -22,9 +22,10 @@ export const EditModalsComponent = {
     const target = obj.targetValue || 1;
 
     const currentCurrency = localStorage.getItem("preferred_currency") || "USD";
-    const currencySymbol = CURRENCY_OPTIONS.find(
+    const currencyObj = CURRENCY_OPTIONS.find(
       (c) => c.value === currentCurrency,
-    ).symbol;
+    );
+    const currencySymbol = currencyObj ? currencyObj.symbol : "$";
 
     const unit = obj.unit === "currency" ? currencySymbol : obj.unit;
 
@@ -61,7 +62,13 @@ export const EditModalsComponent = {
                     class="h-7 sm:h-9 flex items-center gap-1.5 px-4 rounded-xl bg-surface border border-border/80 text-sm font-semibold text-color"
                   >
                     ${
-                      unit && currentCurrency === "IRR"
+                      obj.unit === "currency" &&
+                      (currentCurrency === "IRT" ||
+                        currentCurrency === "AED" ||
+                        currentCurrency === "SAR" ||
+                        currentCurrency === "KWD" ||
+                        currentCurrency === "JOD" ||
+                        currentCurrency === "QAR")
                         ? `<span class="text-secondary">${unit}</span>`
                         : ""
                     }
@@ -73,7 +80,13 @@ export const EditModalsComponent = {
                       }</span
                     >
                     ${
-                      unit && currentCurrency !== "IRR"
+                      obj.unit !== "currency" ||
+                      (currentCurrency !== "IRT" &&
+                        currentCurrency !== "AED" &&
+                        currentCurrency !== "SAR" &&
+                        currentCurrency !== "KWD" &&
+                        currentCurrency !== "JOD" &&
+                        currentCurrency !== "QAR")
                         ? `<span class="text-secondary">${unit}</span>`
                         : ""
                     }
@@ -107,9 +120,19 @@ export const EditModalsComponent = {
   },
 
   renderMetricItem(key, metricData) {
-    const value =
+    const rawValue =
       typeof metricData === "object" ? metricData.value : metricData;
     const unit = typeof metricData === "object" ? metricData.unit || "" : "";
+
+    const currentCurrency = localStorage.getItem("preferred_currency") || "USD";
+    const currencyObj = CURRENCY_OPTIONS.find(
+      (c) => c.value === currentCurrency,
+    );
+    const currencySymbol = currencyObj ? currencyObj.symbol : "$";
+
+    const displayUnit = unit === "currency" ? currencySymbol : unit;
+    const formattedValue =
+      unit === "currency" ? formatNumberWithCommas(rawValue) : rawValue;
 
     return `
       <div
@@ -124,8 +147,29 @@ export const EditModalsComponent = {
 
         <div class="flex items-center gap-1.5 shrink-0">
           <div class="h-7 sm:h-9 flex items-center gap-1.5 px-4 rounded-xl bg-surface border border-border/80 text-sm font-semibold text-color">
-            <span class="text-brand/90 font-bold">${value}</span>
-            ${unit ? `<span class="text-secondary text-xs">${unit}</span>` : ""}
+            ${
+              unit === "currency" &&
+              (currentCurrency === "IRT" ||
+                currentCurrency === "AED" ||
+                currentCurrency === "SAR" ||
+                currentCurrency === "KWD" ||
+                currentCurrency === "JOD" ||
+                currentCurrency === "QAR")
+                ? `<span class="text-secondary text-xs">${displayUnit}</span>`
+                : ""
+            }
+            <span class="text-brand/90 font-bold">${formattedValue}</span>
+            ${
+              unit !== "currency" ||
+              (currentCurrency !== "IRT" &&
+                currentCurrency !== "AED" &&
+                currentCurrency !== "SAR" &&
+                currentCurrency !== "KWD" &&
+                currentCurrency !== "JOD" &&
+                currentCurrency !== "QAR")
+                ? `<span class="text-secondary text-xs">${displayUnit}</span>`
+                : ""
+            }
           </div>
 
           <button
@@ -441,7 +485,7 @@ export const EditModalsComponent = {
                     maxlength="7"
                     min="1"
                     pattern="^[0-9]*.?[0-9]*$"
-                    class="w-20 shrink-0 h-10 lg:h-11 rounded-xl border border-border bg-surface px-3 text-xs lg:text-sm text-center text-color placeholder:text-secondary/70 focus:border-brand/80 focus:outline-none"
+                    class="w-20 shrink-0 h-10 lg:h-11 rounded-xl border border-border bg-surface px-3 text-xs lg:text-sm text-center text-color placeholder:text-secondary/70 focus:border-brand/80 focus:outline-none transition-all duration-200"
                   />
                 </div>
 
@@ -571,7 +615,7 @@ export const EditModalsComponent = {
                     maxlength="7"
                     min="1"
                     pattern="^[0-9]*.?[0-9]*$"
-                    class="w-26 shrink-0 h-10 lg:h-11 rounded-xl border border-border bg-surface px-3 text-xs lg:text-sm text-center text-color placeholder:text-secondary/70 focus:border-brand/80 focus:outline-none field-sizing-content"
+                    class="w-20 shrink-0 h-10 lg:h-11 rounded-xl border border-border bg-surface px-3 text-xs lg:text-sm text-center text-color placeholder:text-secondary/70 focus:border-brand/80 focus:outline-none field-sizing-content transition-all duration-200"
                   />
 
                   <div class="flex-1 min-w-0">

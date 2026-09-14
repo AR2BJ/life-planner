@@ -3,6 +3,7 @@ import {
   MOOD_OPTIONS,
 } from "@/utils/constants/options-value.constants.js";
 import {
+  formatNumberWithCommas,
   mapTemplateToObjectives,
   openObjectivesState,
   todayISO,
@@ -29,10 +30,12 @@ export const PlannerActionController = {
     inputValue,
     targetValue = 1,
     enforceMinimum = false,
+    isCurrency = false,
   ) {
     const MIN_VALUE = 0;
-    const MAX_VALUE = Number(targetValue) > 0 ? Number(targetValue) : 9999999;
-    const MAX_LENGTH = 7;
+    const MAX_VALUE =
+      Number(targetValue) > 0 ? Number(targetValue) : 999999999999;
+    const MAX_LENGTH = isCurrency ? 12 : 7;
 
     let val = String(inputValue || "").replace(/[^0-9.]/g, "");
 
@@ -287,48 +290,71 @@ export const PlannerActionController = {
     const listContainer = document.getElementById("planner-list");
     if (!listContainer) return;
 
+    // 1. REAL-TIME INPUT EVENT
     listContainer.addEventListener("input", (e) => {
       const target = e.target;
-      if (target.classList.contains("objective-progress-input")) {
-        const targetVal = target.dataset.target || 9999999;
-        target.value = this.sanitizeObjectiveProgressValue(
-          target.value,
-          targetVal,
-          false,
-        );
+      if (!target.classList.contains("objective-progress-input")) return;
+
+      const targetVal = target.dataset.target || 999999999999;
+      const isCurrency = target.getAttribute("data-is-currency") === "true";
+
+      const selectionStart = target.selectionStart;
+      const oldLength = target.value.length;
+
+      const sanitized = this.sanitizeObjectiveProgressValue(
+        target.value,
+        targetVal,
+        false,
+        isCurrency,
+      );
+
+      if (isCurrency && sanitized !== "") {
+        const formatted = formatNumberWithCommas(sanitized);
+        target.value = formatted;
+
+        const newLength = formatted.length;
+        const cursorPosition = selectionStart + (newLength - oldLength);
+        target.setSelectionRange(cursorPosition, cursorPosition);
+      } else {
+        target.value = sanitized;
       }
     });
 
+    // 2. CHANGE EVENT
     listContainer.addEventListener("change", (e) => {
       const target = e.target;
-      if (target.classList.contains("objective-progress-input")) {
-        const planId = target.dataset.planId;
-        const objectiveId = target.dataset.objectiveId;
-        const targetVal = target.dataset.target || 9999999;
+      if (!target.classList.contains("objective-progress-input")) return;
 
-        const sanitizedVal = this.sanitizeObjectiveProgressValue(
-          target.value,
-          targetVal,
-          true,
+      const planId = target.dataset.planId;
+      const objectiveId = target.dataset.objectiveId;
+      const targetVal = target.dataset.target || 999999999999;
+      const isCurrency = target.getAttribute("data-is-currency") === "true";
+
+      const sanitizedVal = this.sanitizeObjectiveProgressValue(
+        target.value,
+        targetVal,
+        true,
+        isCurrency,
+      );
+
+      const rawNumericValue = Number(sanitizedVal.replace(/,/g, "")) || 0;
+
+      if (planId && objectiveId) {
+        openObjectivesState.expandedPlanIds.add(planId);
+        this.handleObjectiveProgressChange(
+          planId,
+          objectiveId,
+          rawNumericValue,
         );
-        target.value = sanitizedVal;
-
-        if (planId && objectiveId) {
-          openObjectivesState.expandedPlanIds.add(planId);
-          this.handleObjectiveProgressChange(
-            planId,
-            objectiveId,
-            Number(sanitizedVal),
-          );
-        }
       }
     });
 
+    // 3. CLICK EVENTS
     listContainer.addEventListener("click", (e) => {
       const target = e.target;
       const activeTab = StateManager.getActiveTab() || "plans";
 
-      // 1. IN-CARD MODAL ACTIONS (YES / NO)
+      // IN-CARD MODAL ACTIONS (YES / NO)
       const confirmBtn = target.closest(
         '[data-action="confirm-plan-completion"]',
       );
@@ -349,7 +375,7 @@ export const PlannerActionController = {
         return;
       }
 
-      // 2. TOGGLE OBJECTIVES ACCORDION
+      // TOGGLE OBJECTIVES ACCORDION
       const toggleObjectivesBtn = target.closest(".toggle-objectives-btn");
       if (toggleObjectivesBtn) {
         e.stopPropagation();
@@ -373,7 +399,7 @@ export const PlannerActionController = {
         return;
       }
 
-      // 3. TOGGLE LOG METRICS DROPDOWN
+      // TOGGLE LOG METRICS DROPDOWN
       const toggleMetricsBtn = target.closest(".toggle-metrics-btn");
       if (toggleMetricsBtn) {
         e.stopPropagation();
@@ -407,7 +433,7 @@ export const PlannerActionController = {
         return;
       }
 
-      // 4. TOGGLE INDIVIDUAL OBJECTIVE
+      // TOGGLE INDIVIDUAL OBJECTIVE
       const objectiveToggle = target.closest(".objective-toggle");
       if (objectiveToggle) {
         e.stopPropagation();
@@ -421,7 +447,7 @@ export const PlannerActionController = {
         return;
       }
 
-      // 5. CYCLE PLAN STATE BUTTON
+      // CYCLE PLAN STATE BUTTON
       const stateCycleBtn = target.closest(".state-cycle-btn");
       if (stateCycleBtn) {
         e.stopPropagation();
@@ -432,7 +458,7 @@ export const PlannerActionController = {
         return;
       }
 
-      // 6. CYCLE MOOD BUTTON
+      // CYCLE MOOD BUTTON
       const moodCycleBtn = target.closest(".mood-cycle-btn");
       if (moodCycleBtn) {
         e.stopPropagation();
@@ -443,7 +469,7 @@ export const PlannerActionController = {
         return;
       }
 
-      // 7. CYCLE ENERGY BUTTON
+      // CYCLE ENERGY BUTTON
       const energyCycleBtn = target.closest(".energy-cycle-btn");
       if (energyCycleBtn) {
         e.stopPropagation();
@@ -454,7 +480,7 @@ export const PlannerActionController = {
         return;
       }
 
-      // 8. TOGGLE TEMPLATE USE BUTTON HANDLER
+      // TOGGLE TEMPLATE USE BUTTON HANDLER
       const useTemplateBtn = target.closest(".use-template-btn");
       if (useTemplateBtn) {
         e.stopPropagation();
@@ -500,7 +526,7 @@ export const PlannerActionController = {
         return;
       }
 
-      // 9. TOGGLE TEMPLATE FAVORITE
+      // TOGGLE TEMPLATE FAVORITE
       const favoriteBtn = target.closest(".favorite-btn");
       if (favoriteBtn) {
         e.stopPropagation();
@@ -511,7 +537,7 @@ export const PlannerActionController = {
         return;
       }
 
-      // 10. EDIT MODAL TRIGGER
+      // EDIT MODAL TRIGGER
       const editBtn = target.closest(".edit-btn");
       if (editBtn) {
         if (
@@ -530,7 +556,7 @@ export const PlannerActionController = {
         return;
       }
 
-      // 11. DELETE MODAL TRIGGER
+      // DELETE MODAL TRIGGER
       const deleteBtn = target.closest(".delete-btn");
       if (deleteBtn) {
         if (
@@ -549,7 +575,7 @@ export const PlannerActionController = {
         return;
       }
 
-      // 12. DIRECT DELETE ITEM HANDLER
+      // DIRECT DELETE ITEM HANDLER
       const directDeleteBtn = target.closest(".direct-delete-btn");
       if (directDeleteBtn) {
         e.stopPropagation();

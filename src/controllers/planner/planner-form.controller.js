@@ -6,7 +6,12 @@ import {
   OBJECTIVE_UNITS,
   PLAN_STATES,
 } from "@/utils/constants/options-value.constants.js";
-import { generateId, todayISO } from "@/utils/helpers.js";
+import {
+  formatNumberWithCommas,
+  generateId,
+  parseFormattedNumber,
+  todayISO,
+} from "@/utils/helpers.js";
 
 import { AutocompleteComponent } from "@/components/ui/autocomplete.component.js";
 import { DatePickerComponent } from "@/components/ui/date-picker.component.js";
@@ -96,6 +101,32 @@ export const PlannerFormController = {
     } else if (activeTab === "templates") {
       btnTextSpan.textContent = "Add Template";
       if (toggleTitleSpan) toggleTitleSpan.textContent = "Create New Template";
+    }
+  },
+
+  updateInputStyleByUnit(inputElement, unit, type = "objective") {
+    if (!inputElement) return;
+
+    const isCurrency = unit === "currency";
+
+    if (type === "objective") {
+      inputElement.maxLength = isCurrency ? 15 : 7;
+      if (isCurrency) {
+        inputElement.classList.remove("w-20");
+        inputElement.classList.add("w-35");
+      } else {
+        inputElement.classList.remove("w-35");
+        inputElement.classList.add("w-20");
+      }
+    } else if (type === "metric") {
+      inputElement.maxLength = isCurrency ? 15 : 7;
+      if (isCurrency) {
+        inputElement.classList.remove("w-20");
+        inputElement.classList.add("w-35");
+      } else {
+        inputElement.classList.remove("w-35");
+        inputElement.classList.add("w-20");
+      }
     }
   },
 
@@ -252,6 +283,8 @@ export const PlannerFormController = {
     const valInput = document.getElementById("new-metric-val");
     const actionsContainer = document.getElementById("metric-form-actions");
 
+    this.updateInputStyleByUnit(valInput, "count", "metric");
+
     if (keyInput) keyInput.value = "";
     if (valInput) valInput.value = "1";
     if (editMetricUnitAutocomplete)
@@ -284,15 +317,13 @@ export const PlannerFormController = {
       return;
     }
 
-    const sanitizedValue = this.sanitizeTargetValue(
-      valInput?.value || "1",
-      true,
-    );
-    const value = Number(sanitizedValue);
-
     const unit = editMetricUnitAutocomplete
       ? editMetricUnitAutocomplete.getValue()
       : "count";
+
+    const rawVal = parseFormattedNumber(valInput?.value || "1");
+    const sanitizedValue = this.sanitizeTargetValue(rawVal, true, unit);
+    const value = parseFormattedNumber(sanitizedValue);
 
     if (editingMetricKey && editingMetricKey !== key) {
       delete activeModalMetrics[editingMetricKey];
@@ -313,12 +344,20 @@ export const PlannerFormController = {
       valInput.type = "text";
       valInput.setAttribute("inputmode", "decimal");
 
-      valInput.addEventListener("input", (e) => {
-        e.target.value = this.sanitizeTargetValue(e.target.value, false);
+      const updateMetricInputFormatting = (enforceMin = false) => {
+        const unit = editMetricUnitAutocomplete
+          ? editMetricUnitAutocomplete.getValue()
+          : "count";
+        const currentRaw = parseFormattedNumber(valInput.value);
+        valInput.value = this.sanitizeTargetValue(currentRaw, enforceMin, unit);
+      };
+
+      valInput.addEventListener("input", () => {
+        updateMetricInputFormatting(false);
       });
 
-      valInput.addEventListener("blur", (e) => {
-        e.target.value = this.sanitizeTargetValue(e.target.value, true);
+      valInput.addEventListener("blur", () => {
+        updateMetricInputFormatting(true);
       });
     }
 
@@ -380,18 +419,22 @@ export const PlannerFormController = {
 
         editingMetricKey = key;
         if (keyInput) keyInput.value = key;
+
+        const unitVal =
+          typeof metricData === "object" ? metricData.unit || "count" : "count";
+
+        if (editMetricUnitAutocomplete) {
+          editMetricUnitAutocomplete.setValue(unitVal);
+        }
+
         if (valInput) {
           const rawVal =
             typeof metricData === "object" ? metricData.value : metricData;
-          valInput.value = String(rawVal || 1);
-        }
-
-        if (editMetricUnitAutocomplete) {
-          const unitVal =
-            typeof metricData === "object"
-              ? metricData.unit || "count"
-              : "count";
-          editMetricUnitAutocomplete.setValue(unitVal);
+          valInput.value = this.sanitizeTargetValue(
+            rawVal || 1,
+            false,
+            unitVal,
+          );
         }
 
         if (actionsContainer) {
@@ -420,14 +463,20 @@ export const PlannerFormController = {
     });
   },
 
-  sanitizeTargetValue(inputValue, enforceMinimum = false) {
+  sanitizeTargetValue(inputValue, enforceMinimum = false, unit = "count") {
+    const isCurrency = unit === "currency";
     const MIN_TARGET_VALUE = 1;
-    const MAX_TARGET_VALUE = 9999999;
-    const MAX_TARGET_LENGTH = 7;
+    const MAX_TARGET_VALUE = isCurrency ? 999999999999 : 9999999;
+    const MAX_TARGET_LENGTH = isCurrency ? 15 : 7;
 
     let val = String(inputValue || "").replace(/[^0-9.]/g, "");
     const parts = val.split(".");
     if (parts.length > 2) val = `${parts[0]}.${parts.slice(1).join("")}`;
+
+    if (!isCurrency && parts.length > 1) {
+      val = parts[0];
+    }
+
     if (val.length > MAX_TARGET_LENGTH) val = val.slice(0, MAX_TARGET_LENGTH);
     if (Number(val) > MAX_TARGET_VALUE) val = String(MAX_TARGET_VALUE);
 
@@ -437,6 +486,11 @@ export const PlannerFormController = {
         val = String(MIN_TARGET_VALUE);
       }
     }
+
+    if (isCurrency && val) {
+      return formatNumberWithCommas(val);
+    }
+
     return val;
   },
 
@@ -459,15 +513,13 @@ export const PlannerFormController = {
       ? editObjectiveTypeAutocomplete.getValue()
       : "boolean";
 
-    const sanitizedTarget = this.sanitizeTargetValue(
-      targetInput?.value || "1",
-      true,
-    );
-    const targetValue = Number(sanitizedTarget);
-
     const unit = editObjectiveUnitAutocomplete
       ? editObjectiveUnitAutocomplete.getValue()
       : "count";
+
+    const rawTarget = parseFormattedNumber(targetInput?.value || "1");
+    const sanitizedTarget = this.sanitizeTargetValue(rawTarget, true, unit);
+    const targetValue = parseFormattedNumber(sanitizedTarget);
 
     if (editingObjectiveId) {
       const targetObj = activeModalObjectives.find(
@@ -505,16 +557,35 @@ export const PlannerFormController = {
       targetInput.type = "text";
       targetInput.setAttribute("inputmode", "decimal");
 
-      targetInput.addEventListener("input", (e) => {
-        e.target.value = this.sanitizeTargetValue(e.target.value, false);
+      const updateObjectiveInputFormatting = (enforceMin = false) => {
+        const unit = editObjectiveUnitAutocomplete
+          ? editObjectiveUnitAutocomplete.getValue()
+          : "count";
+        const currentRaw = parseFormattedNumber(targetInput.value);
+        targetInput.value = this.sanitizeTargetValue(
+          currentRaw,
+          enforceMin,
+          unit,
+        );
+      };
+
+      targetInput.addEventListener("input", () => {
+        updateObjectiveInputFormatting(false);
       });
 
-      targetInput.addEventListener("blur", (e) => {
-        e.target.value = this.sanitizeTargetValue(e.target.value, true);
+      targetInput.addEventListener("blur", () => {
+        updateObjectiveInputFormatting(true);
       });
     }
 
     input?.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        this.handleSaveObjective();
+      }
+    });
+
+    targetInput?.addEventListener("keydown", (e) => {
       if (e.key === "Enter") {
         e.preventDefault();
         this.handleSaveObjective();
@@ -573,11 +644,19 @@ export const PlannerFormController = {
         editingObjectiveId = obj.id;
 
         if (input) input.value = obj.title;
-        if (targetInput) targetInput.value = String(obj.targetValue || 1);
         if (editObjectiveTypeAutocomplete)
           editObjectiveTypeAutocomplete.setValue(obj.type || "boolean");
         if (editObjectiveUnitAutocomplete)
           editObjectiveUnitAutocomplete.setValue(obj.unit || "count");
+
+        if (targetInput) {
+          const unit = obj.unit || "count";
+          targetInput.value = this.sanitizeTargetValue(
+            obj.targetValue || 1,
+            false,
+            unit,
+          );
+        }
 
         this.toggleObjectiveNumericInputs(obj.type || "boolean");
 
@@ -612,6 +691,8 @@ export const PlannerFormController = {
     const input = document.getElementById("new-objective-input");
     const targetInput = document.getElementById("new-objective-target");
     const actionsContainer = document.getElementById("objective-form-actions");
+
+    this.updateInputStyleByUnit(targetInput, "count", "objective");
 
     if (input) input.value = "";
     if (targetInput) targetInput.value = "1";
@@ -944,6 +1025,27 @@ export const PlannerFormController = {
             itemIcon: "icon",
             placeholder: "Unit...",
             containerClass: "bg-surface!",
+            onChange: (value) => {
+              const selectedUnit = Array.isArray(value) ? value[0] : value;
+              const targetInput = document.getElementById(
+                "new-objective-target",
+              );
+
+              this.updateInputStyleByUnit(
+                targetInput,
+                selectedUnit,
+                "objective",
+              );
+
+              if (targetInput) {
+                const currentRaw = parseFormattedNumber(targetInput.value);
+                targetInput.value = this.sanitizeTargetValue(
+                  currentRaw,
+                  false,
+                  selectedUnit,
+                );
+              }
+            },
           },
         );
         editObjectiveUnitAutocomplete.setValue("count");
@@ -999,6 +1101,21 @@ export const PlannerFormController = {
             itemIcon: "icon",
             placeholder: "Unit...",
             containerClass: "bg-surface!",
+            onChange: (value) => {
+              const selectedUnit = Array.isArray(value) ? value[0] : value;
+              const valInput = document.getElementById("new-metric-val");
+
+              this.updateInputStyleByUnit(valInput, selectedUnit, "metric");
+
+              if (valInput) {
+                const currentRaw = parseFormattedNumber(valInput.value);
+                valInput.value = this.sanitizeTargetValue(
+                  currentRaw,
+                  false,
+                  selectedUnit,
+                );
+              }
+            },
           },
         );
         editMetricUnitAutocomplete.setValue("count");
