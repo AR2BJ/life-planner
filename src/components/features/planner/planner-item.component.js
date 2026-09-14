@@ -139,14 +139,16 @@ export const PlannerItemComponent = {
 
       const currentCurrency =
         localStorage.getItem("preferred_currency") || "USD";
-      const currencySymbol =
-        CURRENCY_OPTIONS.find((c) => c.value === currentCurrency)?.symbol ||
-        "$";
+      const currencyObj = CURRENCY_OPTIONS.find(
+        (c) => c.value === currentCurrency,
+      ) || { symbol: "$", position: "left" };
 
       const formattedVal =
         unit === "currency" ? formatNumberWithCommas(val) : val;
 
-      const displayUnit = unit === "currency" ? currencySymbol : unit;
+      const displayUnit = unit === "currency" ? currencyObj.symbol : unit;
+      const isSymbolLeft =
+        unit === "currency" && currencyObj.position === "left";
 
       return `
         <div
@@ -164,13 +166,7 @@ export const PlannerItemComponent = {
           </div>
           <div class="flex items-baseline gap-1 min-w-0">
             ${
-              unit === "currency" &&
-              (currentCurrency === "IRT" ||
-                currentCurrency === "AED" ||
-                currentCurrency === "SAR" ||
-                currentCurrency === "KWD" ||
-                currentCurrency === "JOD" ||
-                currentCurrency === "QAR")
+              isSymbolLeft
                 ? `<span class="text-[10px] font-semibold text-secondary/80 truncate">${displayUnit}</span>`
                 : ""
             }
@@ -179,13 +175,7 @@ export const PlannerItemComponent = {
               >${formattedVal}</span
             >
             ${
-              unit !== "currency" ||
-              (currentCurrency !== "IRT" &&
-                currentCurrency !== "AED" &&
-                currentCurrency !== "SAR" &&
-                currentCurrency !== "KWD" &&
-                currentCurrency !== "JOD" &&
-                currentCurrency !== "QAR")
+              !isSymbolLeft
                 ? `<span class="text-[10px] font-semibold text-secondary/80 truncate">${displayUnit}</span>`
                 : ""
             }
@@ -681,12 +671,17 @@ export const PlannerItemComponent = {
 
                           const currentCurrency =
                             localStorage.getItem("preferred_currency") || "USD";
-                          const currencySymbol = CURRENCY_OPTIONS.find(
+                          const currencyObj = CURRENCY_OPTIONS.find(
                             (c) => c.value === currentCurrency,
-                          ).symbol;
+                          ) || { symbol: "$", position: "left" };
 
-                          const unit =
-                            obj.unit === "currency" ? currencySymbol : obj.unit;
+                          const displayUnit =
+                            obj.unit === "currency"
+                              ? currencyObj.symbol
+                              : obj.unit;
+                          const isSymbolLeft =
+                            obj.unit === "currency" &&
+                            currencyObj.position === "left";
 
                           return `
                             <div
@@ -721,14 +716,8 @@ export const PlannerItemComponent = {
                                           class="inline-flex items-center rounded-lg border border-emerald-500/20 bg-emerald-500/10 p-0.75 overflow-hidden shadow-xs"
                                         >
                                           ${
-                                            obj.unit === "currency" &&
-                                            (currentCurrency === "IRT" ||
-                                              currentCurrency === "AED" ||
-                                              currentCurrency === "SAR" ||
-                                              currentCurrency === "KWD" ||
-                                              currentCurrency === "JOD" ||
-                                              currentCurrency === "QAR")
-                                              ? `<span class="text-emerald-500/80 font-bold mx-1 text-[10px]">${unit}</span>`
+                                            isSymbolLeft
+                                              ? `<span class="text-emerald-500/80 font-bold mx-1 text-[10px]">${displayUnit}</span>`
                                               : ""
                                           }
                                           <input
@@ -763,14 +752,9 @@ export const PlannerItemComponent = {
                                             pattern="^[0-9]*.?[0-9]*$"
                                           />
                                           ${
-                                            obj.unit !== "currency" ||
-                                            (currentCurrency !== "IRT" &&
-                                              currentCurrency !== "AED" &&
-                                              currentCurrency !== "SAR" &&
-                                              currentCurrency !== "KWD" &&
-                                              currentCurrency !== "JOD" &&
-                                              currentCurrency !== "QAR")
-                                              ? `<span class="text-emerald-500/80 font-bold ms-1 text-[10px]">${unit}</span>`
+                                            obj.unit === "currency" &&
+                                            !isSymbolLeft
+                                              ? `<span class="text-emerald-500/80 font-bold ms-1 text-[10px]">${displayUnit}</span>`
                                               : ""
                                           }
                                           <div
@@ -779,14 +763,8 @@ export const PlannerItemComponent = {
                                             <span class="opacity-40">of</span>
                                             <div class="flex items-center">
                                               ${
-                                                obj.unit === "currency" &&
-                                                (currentCurrency === "IRT" ||
-                                                  currentCurrency === "AED" ||
-                                                  currentCurrency === "SAR" ||
-                                                  currentCurrency === "KWD" ||
-                                                  currentCurrency === "JOD" ||
-                                                  currentCurrency === "QAR")
-                                                  ? `<span class="text-emerald-500/80 font-bold me-1">${unit}</span>`
+                                                isSymbolLeft
+                                                  ? `<span class="text-emerald-500/80 font-bold me-1">${displayUnit}</span>`
                                                   : ""
                                               }
                                               <span
@@ -799,14 +777,8 @@ export const PlannerItemComponent = {
                                                 }</span
                                               >
                                               ${
-                                                obj.unit !== "currency" ||
-                                                (currentCurrency !== "IRT" &&
-                                                  currentCurrency !== "AED" &&
-                                                  currentCurrency !== "SAR" &&
-                                                  currentCurrency !== "KWD" &&
-                                                  currentCurrency !== "JOD" &&
-                                                  currentCurrency !== "QAR")
-                                                  ? `<span class="text-emerald-500/80 font-bold ms-1">${unit}</span>`
+                                                !isSymbolLeft
+                                                  ? `<span class="text-emerald-500/80 font-bold ms-1">${displayUnit}</span>`
                                                   : ""
                                               }
                                             </div>

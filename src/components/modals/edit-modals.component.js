@@ -26,8 +26,10 @@ export const EditModalsComponent = {
       (c) => c.value === currentCurrency,
     );
     const currencySymbol = currencyObj ? currencyObj.symbol : "$";
+    const currencyPosition = currencyObj ? currencyObj.position : "left";
 
     const unit = obj.unit === "currency" ? currencySymbol : obj.unit;
+    const isPrefix = obj.unit === "currency" && currencyPosition === "left";
 
     return `
       <div
@@ -62,13 +64,7 @@ export const EditModalsComponent = {
                     class="h-7 sm:h-9 flex items-center gap-1.5 px-4 rounded-xl bg-surface border border-border/80 text-sm font-semibold text-color"
                   >
                     ${
-                      obj.unit === "currency" &&
-                      (currentCurrency === "IRT" ||
-                        currentCurrency === "AED" ||
-                        currentCurrency === "SAR" ||
-                        currentCurrency === "KWD" ||
-                        currentCurrency === "JOD" ||
-                        currentCurrency === "QAR")
+                      isPrefix
                         ? `<span class="text-secondary">${unit}</span>`
                         : ""
                     }
@@ -80,13 +76,7 @@ export const EditModalsComponent = {
                       }</span
                     >
                     ${
-                      obj.unit !== "currency" ||
-                      (currentCurrency !== "IRT" &&
-                        currentCurrency !== "AED" &&
-                        currentCurrency !== "SAR" &&
-                        currentCurrency !== "KWD" &&
-                        currentCurrency !== "JOD" &&
-                        currentCurrency !== "QAR")
+                      !isPrefix
                         ? `<span class="text-secondary">${unit}</span>`
                         : ""
                     }
@@ -129,8 +119,10 @@ export const EditModalsComponent = {
       (c) => c.value === currentCurrency,
     );
     const currencySymbol = currencyObj ? currencyObj.symbol : "$";
+    const currencyPosition = currencyObj ? currencyObj.position : "left";
 
     const displayUnit = unit === "currency" ? currencySymbol : unit;
+    const isPrefix = unit === "currency" && currencyPosition === "left";
     const formattedValue =
       unit === "currency" ? formatNumberWithCommas(rawValue) : rawValue;
 
@@ -148,25 +140,13 @@ export const EditModalsComponent = {
         <div class="flex items-center gap-1.5 shrink-0">
           <div class="h-7 sm:h-9 flex items-center gap-1.5 px-4 rounded-xl bg-surface border border-border/80 text-sm font-semibold text-color">
             ${
-              unit === "currency" &&
-              (currentCurrency === "IRT" ||
-                currentCurrency === "AED" ||
-                currentCurrency === "SAR" ||
-                currentCurrency === "KWD" ||
-                currentCurrency === "JOD" ||
-                currentCurrency === "QAR")
+              isPrefix
                 ? `<span class="text-secondary text-xs">${displayUnit}</span>`
                 : ""
             }
             <span class="text-brand/90 font-bold">${formattedValue}</span>
             ${
-              unit !== "currency" ||
-              (currentCurrency !== "IRT" &&
-                currentCurrency !== "AED" &&
-                currentCurrency !== "SAR" &&
-                currentCurrency !== "KWD" &&
-                currentCurrency !== "JOD" &&
-                currentCurrency !== "QAR")
+              !isPrefix
                 ? `<span class="text-secondary text-xs">${displayUnit}</span>`
                 : ""
             }
