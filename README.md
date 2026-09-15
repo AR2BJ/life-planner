@@ -24,89 +24,132 @@
 
 # Life Planner
 
-A modern, lightweight plan management web application designed to help users organize daily responsibilities, stay productive, and monitor progress through a clean and responsive interface.
+A modern productivity-oriented planner web app for organizing tasks, managing daily commitments, reviewing activity, and tracking progress through a clean and responsive interface.
 
 ## Overview
 
-Life Planner is a frontend-focused productivity app that allows users to manage plans, review their workload from different perspectives, and keep everything organized without relying on any backend service. All data is stored locally in the browser using LocalStorage, ensuring a fast and private experience.
+Life Planner is a frontend-only application focused on personal planning and daily organization. It gives users a structured way to create and manage plans, review them through a calendar and analytics view, and keep everything accessible without needing a backend service.
+
+All user data is stored locally in the browser using `LocalStorage`, making the app fast, private, and easy to use.
 
 ## Key Features
 
 - Create, edit, complete, and delete plans
-- Organize plans through a structured plan-based interface
-- Explore progress through an analytics-oriented dashboard
-- Customize the experience with settings and theme support
-- Maintain personal data locally for fast access and privacy
+- Organize plans in a structured planner flow
+- View activity in a calendar-based overview
+- Track performance with analytics and reporting views
+- Use autocomplete and combobox-based inputs for faster planning
+- Customize theme and app settings
+- Import, export, and reset saved data
+- Works responsively on desktop and mobile screens
+- Store planning data locally for a lightweight personal workflow
 
-## Project Goals
+## Core Functionalities
 
-This project was developed to demonstrate:
+### Planner and Plan Management
 
-- modular frontend architecture
-- clean separation of concerns
-- browser-based persistence
-- responsive UI design
-- practical plan-management workflows
+Users can manage daily plans through a dedicated planner interface with actions for:
+
+- adding new plans
+- editing existing entries
+- deleting or completing plans
+- organizing plan-related actions and quick updates
+
+### Calendar View
+
+The app includes a calendar layer to help users review plans by date and time, making it easier to organize long-term routines and daily schedules.
+
+### Analytics Dashboard
+
+The analytics section provides visual and summary-based insight into planning activity and progress. It helps users understand patterns in their workload and time usage.
+
+### Settings and Theme Control
+
+The app includes configuration options for:
+
+- theme switching
+- reset actions
+- import/export of saved state
+- general personal preference settings
+
+### Auto-Logging and Productivity Support
+
+The app includes productivity-related automation features such as automatic plan logging, helping reduce manual effort when tracking activity and progress.
 
 ## Technology Stack
 
 - Vite
 - Vanilla JavaScript
-- Custom CSS styling
+- Custom CSS
 - Font Awesome
 - LocalStorage for persistence
-- Feature-based frontend modularity
+- Modular frontend architecture
 
 ## Project Structure
 
 ```text
-plan-manager/
+life-planner/
 ├── public/
 │   └── picture/
 ├── src/
 │   ├── app/
+│   │   ├── app.js
+│   │   └── theme.js
 │   ├── assets/
-│   │   └── css/
+│   │   ├── css/
+│   │   └── font/
 │   ├── components/
 │   │   ├── features/
 │   │   │   ├── analytics/
-│   │   │   ├── settings/
-│   │   │   └── plans/
+│   │   │   ├── planner/
+│   │   │   └── settings/
 │   │   ├── layout/
 │   │   ├── modals/
 │   │   ├── shared/
 │   │   └── ui/
 │   ├── controllers/
+│   │   ├── planner/
+│   │   └── settings/
 │   ├── models/
 │   ├── services/
 │   ├── utils/
 │   └── views/
+│       ├── analytics/
+│       ├── calendar/
+│       └── planner/
 ├── vendor/
 │   └── fontawesome/
+├── index.html
+├── jsconfig.json
 ├── package.json
 ├── vite.config.js
-└── jsconfig.json
+├── LICENSE
+├── README.md
+├── .gitignore
+└── public/
 ```
 
 ## Architecture
 
-The application follows a structured frontend architecture based on clear separation between presentation, behavior, and state:
+The project follows a modular frontend design with responsibilities separated into clear layers:
 
-- `app/` — application bootstrap and global configuration
-- `components/` — reusable UI blocks and feature-specific modules
-- `controllers/` — event handling and workflow coordination
-- `models/` — application state and persistence layer
-- `services/` — reusable business logic and side-effect abstractions
-- `views/` — page-level rendering and visual composition
+- `app/` — app bootstrap and global theme configuration
+- `components/` — UI blocks and feature-specific modules
+- `controllers/` — user interactions, event handling, and workflow logic
+- `models/` — state and storage definitions
+- `services/` — business logic, notifications, store access, and automation
+- `views/` — rendering layers for planner, calendar, and analytics
+- `utils/` — helper functions and constants
 
-This organization improves maintainability, readability, and extensibility while preserving a lightweight implementation.
+This structure keeps the codebase clean, maintainable, and easier to extend over time.
 
 ## Demo
 
-A visual demonstration of the interface is available in:
+A visual demonstration of the app is available in:
 
 ```text
 /public/picture/demo.gif
+/public/picture/logo-2.png
 ```
 
 ## Installation
@@ -115,7 +158,7 @@ Clone the repository:
 
 ```bash
 git clone <repository-url>
-cd plan-manager
+cd life-planner
 ```
 
 Install dependencies:
@@ -146,25 +189,37 @@ npm run preview
 
 ## Usage
 
-1. Launch the application in a browser.
-2. Create and organize the plans you need to manage.
-3. Use the analytics dashboard to monitor your progress.
-4. Adjust the app settings and theme according to your preference.
+1. Open the app in your browser.
+2. Create your plans and commitments.
+3. Review them in the calendar and planner views.
+4. Use analytics to understand your progress and activity.
+5. Customize settings and theme based on your preference.
+
+## Data Storage
+
+The application stores data locally in the browser using `LocalStorage`, including:
+
+- plans
+- app state
+- settings
+- theme preferences
+- saved local data for planning workflow
 
 ## Roadmap
 
-Potential future enhancements include:
+Potential future improvements include:
 
-- richer analytics and progress insights
-- plan filtering and search improvements
+- richer analytics and insights
+- advanced plan filtering and search
 - drag-and-drop plan organization
 - reminders and notifications
-- data import/export support
+- improved import/export workflows
+- expanded customization options
 
 ## License
 
-This project is licensed under the [MIT license](https://github.com/AR2BJ/plan-manager/blob/dev/LICENSE).
+This project is licensed under the [MIT License](https://github.com/AR2BJ/life-planner/blob/dev/LICENSE).
 
 ## Contributing
 
-Contributions are welcome. If you would like to improve the UI, extend analytics, or refine the system architecture, please feel free to open a pull request or submit an issue.
+Contributions are welcome. If you want to improve the planner UX, extend analytics, refine the calendar flow, or optimize the architecture, feel free to open a pull request or submit an issue.
