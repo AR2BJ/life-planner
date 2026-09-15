@@ -13,6 +13,11 @@ export const HELP_SHORTCUTS = [
         keys: [["Shift", "A"]],
       },
       {
+        label: "Go to Calendar View",
+        icon: "fa-calendar",
+        keys: [["Shift", "C"]],
+      },
+      {
         label: "Go to Settings View",
         icon: "fa-gear",
         keys: [["Shift", "S"]],
@@ -80,6 +85,11 @@ export const HELP_SHORTCUTS = [
       {
         label: "Switch Chart Views (Analytics)",
         icon: "fa-chart-column",
+        keys: [["Alt", "1 - 3"]],
+      },
+      {
+        label: "Switch Calendar View (Daily / Monthly / Yearly)",
+        icon: "fa-calendar-days",
         keys: [["Alt", "1 - 3"]],
       },
       {

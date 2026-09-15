@@ -21,7 +21,7 @@ export function normalizePlan(data = {}) {
           type: obj.type ? String(obj.type) : "boolean", // "boolean" | "numeric" | "milestone"
           targetValue: Number(obj.targetValue) || 1,
           currentValue: Number(obj.currentValue) || 0,
-          unit: obj.unit ? String(obj.unit) : "step",
+          unit: obj.unit ? String(obj.unit) : "count",
           completed: Boolean(obj.completed),
         }))
       : [],
@@ -38,7 +38,7 @@ export function normalizeLog(data = {}) {
     date: data.date || todayISO(),
     planId: data.planId ? String(data.planId) : null,
     energy: Number(data.energy) || 3,
-    mood: data.mood || "stable",
+    mood: data.mood || "neutral",
     metrics: data.metrics || {},
     createdAt: data.createdAt || todayISO(),
     updatedAt: data.updatedAt || todayISO(),

@@ -61,6 +61,12 @@ class StoreService {
     eventBus.emit("store:changed", { key: "activeTab", value: tab });
   }
 
+  setCalendarMode(mode) {
+    StateManager.setCalendarMode(mode);
+    eventBus.emit("ui:calendar:mode:changed", mode);
+    eventBus.emit("store:changed", { key: "calendarMode", value: mode });
+  }
+
   setLifeAreaFilter(lifeAreaId) {
     StateManager.setLifeAreaFilter(lifeAreaId);
     eventBus.emit("ui:filter:lifeArea", lifeAreaId);

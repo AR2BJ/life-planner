@@ -7,7 +7,10 @@ export const DesktopNavComponent = {
       >
         <div class="flex flex-col items-center gap-6 w-full px-3">
           <div class="w-13.5 h-13.5 flex flex-row justify-center items-center">
-            <a href="/" class="w-13.5 h-13.5 flex flex-row justify-center items-center">
+            <a
+              href="/"
+              class="w-13.5 h-13.5 flex flex-row justify-center items-center"
+            >
               <img
                 id="logo"
                 src="/picture/logo.png"
@@ -34,6 +37,14 @@ export const DesktopNavComponent = {
             title="Analytics"
           >
             <i class="fa-regular fa-chart-line text-xl"></i>
+          </button>
+
+          <button
+            id="nav-calendar"
+            class="nav-item justify-center"
+            title="Calendar"
+          >
+            <i class="fa-regular fa-calendar text-lg"></i>
           </button>
         </div>
 

@@ -4,6 +4,7 @@ import { GlobalLoaderService } from "@/services/loader.service";
 import { NotificationService } from "@/services/notification.service.js";
 import { PlannerController } from "../planner.controller.js";
 import { STORAGE_KEY } from "@/models/storage.model.js";
+import { SettingsController } from "../settings.controller.js";
 import { renderPlannerList } from "@/views/planner/planner-list.renderer.js";
 
 export const SettingsResetController = {
@@ -71,6 +72,7 @@ export const SettingsResetController = {
 
   executeApplicationReset() {
     const previousPayload = localStorage.getItem(STORAGE_KEY);
+    const previousCurrency = localStorage.getItem("preferred_currency");
     const previousPlans = StateManager.getPlans().map((plan) => ({ ...plan }));
     const previousLogs = StateManager.getLogs().map((log) => ({
       ...log,
@@ -86,6 +88,7 @@ export const SettingsResetController = {
     setTimeout(() => {
       try {
         localStorage.removeItem(STORAGE_KEY);
+        localStorage.removeItem("preferred_currency");
 
         state.plans = [];
         state.logs = [];
@@ -98,6 +101,8 @@ export const SettingsResetController = {
         PlannerController.handleTabSwitch("plans");
 
         PlannerController.refreshUI();
+
+        SettingsController.bindCurrencyEvents();
 
         NotificationService.show({
           type: "error",
@@ -114,6 +119,12 @@ export const SettingsResetController = {
                   localStorage.setItem(STORAGE_KEY, previousPayload);
                 } else {
                   localStorage.removeItem(STORAGE_KEY);
+                }
+
+                if (previousCurrency) {
+                  localStorage.setItem("preferred_currency", previousCurrency);
+                } else {
+                  localStorage.removeItem("preferred_currency");
                 }
 
                 StateManager.save({
@@ -137,6 +148,8 @@ export const SettingsResetController = {
                 );
 
                 PlannerController.refreshUI();
+
+                SettingsController.bindCurrencyEvents();
               } finally {
                 GlobalLoaderService.hide();
               }

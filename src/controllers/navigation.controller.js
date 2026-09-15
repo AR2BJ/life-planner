@@ -1,6 +1,7 @@
 import { StateManager, state } from "@/models/state.model.js";
 
 import { AnalyticsController } from "./analytics.controller.js";
+import { CalendarController } from "./calendar.controller.js";
 import { GlobalLoaderService } from "@/services/loader.service.js";
 import { PlannerController } from "./planner.controller.js";
 
@@ -22,6 +23,9 @@ export class NavigationController {
     document.getElementById("nav-analytics")?.addEventListener("click", () => {
       this.setActiveTab("analytics");
     });
+    document.getElementById("nav-calendar")?.addEventListener("click", () => {
+      this.setActiveTab("calendar");
+    });
     document.getElementById("nav-settings")?.addEventListener("click", () => {
       this.setActiveTab("settings");
     });
@@ -33,6 +37,11 @@ export class NavigationController {
       .getElementById("mobile-analytics")
       ?.addEventListener("click", () => {
         this.setActiveTab("analytics");
+      });
+    document
+      .getElementById("mobile-calendar")
+      ?.addEventListener("click", () => {
+        this.setActiveTab("calendar");
       });
     document
       .getElementById("mobile-settings")
@@ -49,13 +58,16 @@ export class NavigationController {
     if (tabType === "planner") {
       PlannerController.refreshUI();
       PlannerController.updateTabStyles(state.activeTab);
+    } else if (tabType === "calendar") {
+      CalendarController.dispatchRender();
+      CalendarController.updateTabStyles(state.calendarMode);
     } else if (tabType === "analytics") {
       AnalyticsController.dispatchRender(StateManager.getPlans());
     }
   }
 
   static updateNavigationDOM() {
-    const views = ["planner", "analytics", "settings"];
+    const views = ["planner", "analytics", "calendar", "settings"];
     const currentView = state.currentView;
 
     views.forEach((v) => {
@@ -169,13 +181,33 @@ export class NavigationController {
               setTimeout(() => targetButton.click(), 10);
             }
           }
+
+          if (currentSection.id === "calendar-view") {
+            const calendarTabs = [
+              document.getElementById("btn-calendar-day"),
+              document.getElementById("btn-calendar-month"),
+              document.getElementById("btn-calendar-year"),
+            ];
+
+            const targetBtn = calendarTabs[parseInt(event.key, 10) - 1];
+            if (targetBtn) {
+              event.preventDefault();
+              setTimeout(() => targetBtn.click(), 10);
+            }
+          }
         }
       }
 
-      if (event.shiftKey && ["p", "a", "s"].includes(key)) {
+      if (event.shiftKey && ["p", "a", "c", "s"].includes(key)) {
         event.preventDefault();
         const targetTab =
-          key === "p" ? "planner" : key === "a" ? "analytics" : "settings";
+          key === "p"
+            ? "planner"
+            : key === "a"
+              ? "analytics"
+              : key === "c"
+                ? "calendar"
+                : "settings";
         this.setActiveTab(targetTab);
         return;
       }
@@ -194,7 +226,9 @@ export class NavigationController {
 
       if (event.key === "?") return dispatchAsyncClick("help-toggle");
 
-      if (["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"].includes(event.key)) {
+      if (
+        ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"].includes(event.key)
+      ) {
         const currentSection = document.querySelector("section:not(.hidden)");
         if (currentSection?.id === "planner-view") {
           event.preventDefault();

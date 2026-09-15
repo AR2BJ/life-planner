@@ -1,5 +1,6 @@
 import "@/vendor/fontawesome/js/all";
 
+import { CalendarController } from "@/controllers/calendar.controller";
 import { GlobalLoaderService } from "@/services/loader.service";
 import { NavigationController } from "@/controllers/navigation.controller.js";
 import { PlannerController } from "@/controllers/planner.controller.js";
@@ -21,6 +22,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     NavigationController.init();
     PlannerController.init();
+    CalendarController.init();
     SettingsController.init();
 
     TooltipController.init();

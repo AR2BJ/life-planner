@@ -9,6 +9,8 @@ import { StateManager, state } from "@/models/state.model.js";
 import { AnalyticsController } from "./analytics.controller.js";
 import { AnalyticsView } from "@/views/analytics-view.js";
 import { AutocompleteComponent } from "@/components/ui/autocomplete.component.js";
+import { CalendarController } from "./calendar.controller.js";
+import { CalendarView } from "@/views/calendar-view.js";
 import { DeleteModalsComponent } from "@/components/modals/delete-modals.component.js";
 import { DesktopNavComponent } from "@/components/layout/desktop-nav.component.js";
 import { EditModalsComponent } from "@/components/modals/edit-modals.component.js";
@@ -265,6 +267,7 @@ export const PlannerController = {
       "mobile-nav-container": MobileNavComponent.render,
       "planner-view-container": PlannerView.render,
       "analytics-view-container": AnalyticsView.render,
+      "calendar-view-container": CalendarView.render,
       "settings-view-container": SettingsViewComponent.render,
       "help-modal-container": InfoModalComponent.render,
       "edit-modals-container": EditModalsComponent.render,
@@ -375,6 +378,7 @@ export const PlannerController = {
 
     renderPlannerList(filteredData, state.activeTab);
     AnalyticsController.dispatchRender(allPlans);
+    CalendarController.dispatchRender();
     NavigationController.updateNavigationDOM();
     PlannerFormController.refreshUI();
 
@@ -560,7 +564,7 @@ export const PlannerController = {
     );
 
     // 4. Navigation Views
-    const navButtons = ["planner", "analytics", "settings"];
+    const navButtons = ["planner", "analytics", "calendar", "settings"];
     navButtons.forEach((v) => {
       const desktopBtn = document.getElementById(`nav-${v}`);
       const mobileBtn = document.getElementById(`mobile-${v}`);

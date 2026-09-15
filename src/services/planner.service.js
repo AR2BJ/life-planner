@@ -29,7 +29,7 @@ export const PlannerService = {
             type: String(obj.type || "boolean"), // "boolean" | "numeric" | "milestone"
             targetValue: Number(obj.targetValue) || 1,
             currentValue: Number(obj.currentValue) || 0,
-            unit: String(obj.unit || "step"),
+            unit: String(obj.unit || "count"),
             completed: Boolean(obj.completed),
           }))
         : [],
@@ -70,7 +70,7 @@ export const PlannerService = {
               type: String(obj.type || "boolean"),
               targetValue: Number(obj.targetValue) || 1,
               currentValue: Number(obj.currentValue) || 0,
-              unit: String(obj.unit || "step"),
+              unit: String(obj.unit || "count"),
               completed: Boolean(obj.completed),
             }))
           : p.objectives,

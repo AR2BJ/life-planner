@@ -280,7 +280,7 @@ export const SettingsImportController = {
                 ? planIdMatch[1].trim()
                 : null,
             energy: energyMatch ? parseInt(energyMatch[1], 10) : 3,
-            mood: moodMatch ? moodMatch[1].trim() : "stable",
+            mood: moodMatch ? moodMatch[1].trim() : "neutral",
             description:
               descMatch && descMatch[1] !== "N/A" ? descMatch[1].trim() : "",
             metrics: parsedMetrics,
@@ -438,7 +438,7 @@ export const SettingsImportController = {
             date: date || todayISO(),
             planId: planId || null,
             energy: Number(energy) || 3,
-            mood: mood || "stable",
+            mood: mood || "neutral",
             metrics,
             createdAt: createdAt || todayISO(),
             updatedAt: updatedAt || todayISO(),

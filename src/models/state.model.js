@@ -14,6 +14,7 @@ export const state = {
   templates: [],
   activeTab: "plans", // "plans" | "logs" | "templates"
   currentView: "planner",
+  calendarMode: "day",
   plansUI: {
     selectedLifeArea: "all",
     filterBy: "all", // "all" | "active" | "paused" | "completed" | "has_end_date" | "no_end_date" | "has_objectives" | "objectives_pending"
@@ -323,6 +324,12 @@ export const StateManager = {
   setView(view) {
     state.currentView = view;
     eventBus.emit("ui:view:changed", view);
+    eventBus.emit("store:changed", state);
+  },
+
+  setCalendarMode(mode) {
+    state.calendarMode = mode;
+    eventBus.emit("ui:calendar:mode:changed", mode);
     eventBus.emit("store:changed", state);
   },
 
