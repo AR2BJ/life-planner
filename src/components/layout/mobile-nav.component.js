@@ -22,13 +22,10 @@ export const MobileNavComponent = {
 
         <button
           id="mobile-calendar"
-          class="mobile-nav-btn snap-center shrink-0 flex flex-col items-center justify-center gap-1.5 text-secondary w-[23vw] max-w-21.25 xs:w-auto xs:max-w-none xs:flex-1 py-1"
+          class="mobile-nav-btn flex flex-col items-center justify-center gap-2 text-secondary"
         >
-          <i class="fa-regular fa-calendar text-xl xs:text-2xl"></i>
-          <span
-            class="text-[10px] xs:text-xs font-medium tracking-wide whitespace-nowrap"
-            >Calendar</span
-          >
+          <i class="fa-regular fa-calendar text-2xl"></i>
+          <span class="text-xs font-medium tracking-wide">Calendar</span>
         </button>
 
         <button

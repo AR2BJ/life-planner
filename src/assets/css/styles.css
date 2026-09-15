@@ -236,7 +236,7 @@ textarea {
 .nav-item.active {
   background-color: color-mix(in oklab, var(--color-brand) 80%, transparent);
   color: var(--color-btn-primary-text);
-  border-radius: 0.75rem;
+  border-radius: 16px;
   transition: all 0.3s ease;
 }
 
