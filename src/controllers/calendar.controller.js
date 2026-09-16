@@ -105,14 +105,18 @@ export class CalendarController {
     const config = this.calendarConfigs[mode] || this.calendarConfigs.day;
 
     if (titleEl) {
-      titleEl.innerHTML = `<i class="fa-regular ${config.icon} text-brand/80"></i> ${config.title}`;
+      const newTitleHtml = `<i class="fa-regular ${config.icon} text-brand/80"></i> ${config.title}`;
+      if (titleEl.innerHTML !== newTitleHtml) {
+        titleEl.innerHTML = newTitleHtml;
+      }
     }
 
     if (descEl) {
-      descEl.textContent = config.description;
+      if (descEl.textContent !== config.description) {
+        descEl.textContent = config.description;
+      }
     }
   }
-
   static updateTabStyles(mode) {
     const indicator = document.getElementById("calendar-tab-indicator");
     const btnDay = document.getElementById("btn-calendar-day");
@@ -220,34 +224,39 @@ export class CalendarController {
     const dateOptionsMonth = { month: "long", year: "numeric" };
 
     if (labelEl) {
+      let newLabel = "";
       if (mode === "day") {
-        labelEl.textContent = this.currentDate.toLocaleDateString(
-          "en-US",
-          dateOptionsDay,
-        );
+        newLabel = this.currentDate.toLocaleDateString("en-US", dateOptionsDay);
       } else if (mode === "month") {
-        labelEl.textContent = this.currentDate.toLocaleDateString(
+        newLabel = this.currentDate.toLocaleDateString(
           "en-US",
           dateOptionsMonth,
         );
       } else {
-        labelEl.textContent = this.currentDate.getFullYear();
+        newLabel = this.currentDate.getFullYear().toString();
+      }
+      if (labelEl.textContent !== newLabel) {
+        labelEl.textContent = newLabel;
       }
     }
 
     if (labelElMobile) {
+      let newLabelMobile = "";
       if (mode === "day") {
-        labelElMobile.textContent = this.currentDate.toLocaleDateString(
+        newLabelMobile = this.currentDate.toLocaleDateString(
           "en-US",
           dateOptionsDay,
         );
       } else if (mode === "month") {
-        labelElMobile.textContent = this.currentDate.toLocaleDateString(
+        newLabelMobile = this.currentDate.toLocaleDateString(
           "en-US",
           dateOptionsMonth,
         );
       } else {
-        labelElMobile.textContent = this.currentDate.getFullYear();
+        newLabelMobile = this.currentDate.getFullYear().toString();
+      }
+      if (labelElMobile.textContent !== newLabelMobile) {
+        labelElMobile.textContent = newLabelMobile;
       }
     }
 
@@ -277,7 +286,6 @@ export class CalendarController {
 
     requestAnimationFrame(() => {
       this.updateTabStyles(mode);
-      this.updateHeaderData(mode);
     });
   }
 }

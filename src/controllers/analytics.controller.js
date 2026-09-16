@@ -7,8 +7,6 @@ import {
 import { DashboardComponent } from "@/components/features/analytics/dashboard.component";
 import { StateManager } from "@/models/state.model.js";
 
-let currentHeatmapView = "weekly";
-
 export const AnalyticsController = {
   init() {
     DashboardComponent.initTabSwitcher();
@@ -16,29 +14,28 @@ export const AnalyticsController = {
   },
 
   bindStaticEvents() {
-    const switcher = document.getElementById("chart-view-switcher");
-    if (!switcher) return;
-
-    ["view-btn-weekly", "view-btn-monthly", "view-btn-yearly"].forEach((id) => {
-      const btn = document.getElementById(id);
+    document.addEventListener("click", (e) => {
+      const btn = e.target.closest("[data-view]");
       if (!btn) return;
 
-      const newBtn = btn.cloneNode(true);
-      btn.parentNode.replaceChild(newBtn, btn);
-
-      const viewType = id.replace("view-btn-", "");
-      newBtn.addEventListener("click", () => this.handleTabSwitch(viewType));
+      const viewType = btn.dataset.view;
+      if (viewType) {
+        this.handleTabSwitch(viewType);
+      }
     });
   },
 
   handleTabSwitch(tab) {
-    if (tab === currentHeatmapView) return;
-    currentHeatmapView = tab;
+    const currentView = StateManager.getHeatmapView();
+    if (tab === currentView) return;
+
+    StateManager.setHeatmapView(tab);
 
     updateTabStyles(tab);
 
     const plans = StateManager.getPlans ? StateManager.getPlans() : [];
     const logs = StateManager.getLogs ? StateManager.getLogs() : [];
+
     updateHeatmapChart(plans, logs, tab);
   },
 
@@ -48,7 +45,8 @@ export const AnalyticsController = {
     const templates = StateManager.getTemplates
       ? StateManager.getTemplates()
       : [];
+    const currentView = StateManager.getHeatmapView();
 
-    renderAnalyticsCharts(plans, logs, templates, currentHeatmapView);
+    renderAnalyticsCharts(plans, logs, templates, currentView);
   },
 };

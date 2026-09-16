@@ -1,11 +1,5 @@
 import { StateManager, state } from "@/models/state.model.js";
 import { generateId, todayISO } from "@/utils/helpers";
-import {
-  normalizeLog,
-  normalizePlan,
-  normalizeTemplate,
-  saveToStorage,
-} from "@/models/storage.model.js";
 
 import { GlobalLoaderService } from "@/services/loader.service";
 import { NotificationService } from "@/services/notification.service.js";
@@ -104,26 +98,16 @@ export const SettingsImportController = {
             throw new Error("No structured data could be extracted");
           }
 
-          const normalizedPlans = importedPlans.map(normalizePlan);
-          const normalizedLogs = importedLogs.map(normalizeLog);
-          const normalizedTemplates = importedTemplates.map(normalizeTemplate);
-
-          saveToStorage({
-            plans: normalizedPlans,
-            logs: normalizedLogs,
-            templates: normalizedTemplates,
+          StateManager.save({
+            plans: importedPlans,
+            logs: importedLogs,
+            templates: importedTemplates,
           });
-
-          if (typeof StateManager.load === "function") {
-            StateManager.load();
-          }
 
           state.activeTab = "plans";
           state.currentView = "planner";
 
-          if (typeof PlannerController.refreshUI === "function") {
-            PlannerController.refreshUI();
-          }
+          PlannerController.refreshUI();
 
           NotificationService.show({
             type: "success",

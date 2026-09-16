@@ -15,6 +15,9 @@ export const state = {
   activeTab: "plans", // "plans" | "logs" | "templates"
   currentView: "planner",
   calendarMode: "day",
+  analyticsUI: {
+    heatmapView: "weekly", // 'weekly' | 'monthly' | 'yearly'
+  },
   plansUI: {
     selectedLifeArea: "all",
     filterBy: "all", // "all" | "active" | "paused" | "completed" | "has_end_date" | "no_end_date" | "has_objectives" | "objectives_pending"
@@ -68,23 +71,20 @@ export const StateManager = {
     eventBus.emit("store:plans:changed", state.plans);
     eventBus.emit("store:logs:changed", state.logs);
     eventBus.emit("store:templates:changed", state.templates);
+    eventBus.emit("ui:tab:changed", state.activeTab);
     eventBus.emit("store:changed", state);
   },
 
   setupReactiveEngine() {
     window.addEventListener("storage", (event) => {
       if (event.key === STORAGE_KEY) {
-        this.reloadFromStorage(true);
+        try {
+          this.reloadFromStorage(true);
+        } catch (error) {
+          console.error("Error syncing cross-tab storage:", error);
+        }
       }
     });
-
-    setInterval(() => {
-      const currentRaw = localStorage.getItem(STORAGE_KEY) || "";
-      if (currentRaw !== this._rawCache) {
-        this._rawCache = currentRaw;
-        this.reloadFromStorage(true);
-      }
-    }, 300);
   },
 
   // --- GETTERS ---
@@ -115,6 +115,10 @@ export const StateManager = {
   getActiveUIState() {
     const key = `${state.activeTab}UI`;
     return state[key] || {};
+  },
+
+  getHeatmapView() {
+    return state.analyticsUI?.heatmapView || "weekly";
   },
 
   getFilteredDataForActiveTab() {
@@ -339,6 +343,12 @@ export const StateManager = {
       eventBus.emit("ui:tab:changed", tab);
       eventBus.emit("store:changed", state);
     }
+  },
+
+  setHeatmapView(view) {
+    if (!state.analyticsUI) state.analyticsUI = {};
+    state.analyticsUI.heatmapView = view;
+    eventBus.emit("store:changed", state);
   },
 
   setLifeAreaFilter(lifeAreaId) {

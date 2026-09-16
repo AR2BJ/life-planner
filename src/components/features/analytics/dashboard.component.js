@@ -44,7 +44,7 @@ export const DashboardComponent = {
               (acc, curr) => acc + (Number(curr.energy) || 0),
               0,
             ) / safeLogs.length
-          ).toFixed(1)
+          ).toFixed(0)
         : "0";
 
     const favoriteTemplates = safeTemplates.filter((t) => t.isFavorite).length;
