@@ -384,7 +384,11 @@ export function renderAnalyticsCharts(
     },
     yaxis: {
       labels: {
-        style: { colors: axisTextColor, fontSize: "12px", fontWeight: 700 },
+        style: {
+          colors: axisTextColor,
+          fontSize: "12px",
+          fontWeight: 700,
+        },
       },
     },
     grid: {
@@ -459,16 +463,34 @@ export function renderAnalyticsCharts(
     dataLabels: {
       enabled: true,
       offsetY: -18,
-      style: { colors: [axisTextColor], fontSize: "11px", fontWeight: "bold" },
+      style: {
+        colors: [axisTextColor],
+        fontSize: "11px",
+        fontWeight: "bold",
+      },
     },
     xaxis: {
       categories: moodData.categories,
       labels: {
-        style: { colors: axisTextColor, fontSize: "11px", fontWeight: 600 },
+        style: {
+          colors: axisTextColor,
+          fontSize: "11px",
+          fontWeight: 600,
+        },
       },
     },
-    yaxis: { labels: { style: { colors: axisTextColor, fontSize: "11px" } } },
-    grid: { borderColor: isDark ? "#334155" : "#e2e8f0", strokeDashArray: 4 },
+    yaxis: {
+      labels: {
+        style: {
+          colors: axisTextColor,
+          fontSize: "11px",
+        },
+      },
+    },
+    grid: {
+      borderColor: isDark ? "#334155" : "#e2e8f0",
+      strokeDashArray: 4,
+    },
     tooltip: { theme: isDark ? "dark" : "light" },
   };
 
@@ -495,16 +517,34 @@ export function renderAnalyticsCharts(
     dataLabels: {
       enabled: true,
       offsetY: -18,
-      style: { colors: [axisTextColor], fontSize: "11px", fontWeight: "bold" },
+      style: {
+        colors: [axisTextColor],
+        fontSize: "11px",
+        fontWeight: "bold",
+      },
     },
     xaxis: {
       categories: energyData.categories,
       labels: {
-        style: { colors: axisTextColor, fontSize: "11px", fontWeight: 600 },
+        style: {
+          colors: axisTextColor,
+          fontSize: "11px",
+          fontWeight: 600,
+        },
       },
     },
-    yaxis: { labels: { style: { colors: axisTextColor, fontSize: "11px" } } },
-    grid: { borderColor: isDark ? "#334155" : "#e2e8f0", strokeDashArray: 4 },
+    yaxis: {
+      labels: {
+        style: {
+          colors: axisTextColor,
+          fontSize: "11px",
+        },
+      },
+    },
+    grid: {
+      borderColor: isDark ? "#334155" : "#e2e8f0",
+      strokeDashArray: 4,
+    },
     tooltip: { theme: isDark ? "dark" : "light" },
   };
 

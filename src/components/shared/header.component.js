@@ -48,7 +48,7 @@ export const HeaderComponent = {
 
           <button
             id="theme-toggle"
-            class="flex h-9 w-9 flex-row items-center justify-center rounded-xl border border-border bg-surface text-color transition cursor-pointer hover:bg-yellow-600/10 sm:h-10 sm:w-10 shadow-sm"
+            class="flex h-9 w-9 flex-row items-center justify-center rounded-xl border border-border bg-surface text-color transition cursor-pointer hover:bg-orange-600/10 sm:h-10 sm:w-10 shadow-sm"
             title="Theme Toggle"
           >
             <i class="fa-regular fa-sun text-orange-500/80"></i>

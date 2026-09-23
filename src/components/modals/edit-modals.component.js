@@ -180,10 +180,10 @@ export const EditModalsComponent = {
     return `
       <div
         id="edit-modal"
-        class="fixed inset-0 z-50 hidden items-end lg:items-center justify-center p-0 lg:p-4 bg-black/60 backdrop-blur-sm animate-fade-in"
+        class="fixed inset-0 z-400 hidden items-center justify-center p-0 lg:p-4 bg-black/60 backdrop-blur-sm animate-fade-in"
       >
         <div
-          class="bg-surface xs:rounded-t-3xl lg:rounded-2xl p-4 lg:p-6 max-w-3xl w-full h-dvh xs:h-[96.5dvh] sm:h-[95dvh] lg:h-auto lg:max-h-[90vh] shadow-2xl flex flex-col border border-border overflow-hidden"
+          class="bg-surface rounded-2xl p-4 lg:p-6 max-w-3xl w-full h-auto shadow-2xl flex flex-col border border-border overflow-hidden"
         >
           <div
             class="flex items-center justify-between border-b border-border pb-4 shrink-0"
@@ -264,7 +264,7 @@ export const EditModalsComponent = {
                     id="edit-item-title"
                     type="text"
                     placeholder="Enter title..."
-                    class="h-10 lg:h-11 w-full rounded-xl border border-border bg-surface px-4 text-sm text-color placeholder:text-secondary/70 transition focus:border-brand/80 focus:outline-none"
+                    class="h-11 w-full rounded-xl border border-border bg-surface px-4 text-sm text-color placeholder:text-secondary/70 transition focus:border-brand/80 focus:outline-none"
                   />
                 </div>
 
@@ -420,7 +420,7 @@ export const EditModalsComponent = {
                 <div class="flex items-center gap-2 lg:gap-3">
                   <span
                     id="objective-progress-badge"
-                    class="text-[10px] lg:text-xs text-secondary px-2 lg:px-3 py-1 rounded-lg bg-surface border border-border shrink-0"
+                    class="hidden xs:flex text-[10px] lg:text-xs text-secondary px-2 lg:px-3 py-1 rounded-lg bg-surface border border-border shrink-0"
                   >
                     0/0 Done
                   </span>
@@ -436,7 +436,7 @@ export const EditModalsComponent = {
                     id="new-objective-input"
                     type="text"
                     placeholder="Objective title..."
-                    class="w-full h-10 lg:h-11 rounded-xl border border-border bg-surface px-3 text-xs lg:text-sm text-color placeholder:text-secondary/70 focus:border-brand/80 focus:outline-none"
+                    class="w-full h-11 rounded-xl border border-border bg-surface px-3 text-sm text-color placeholder:text-secondary/70 focus:border-brand/80 focus:outline-none"
                   />
 
                   <div
@@ -447,7 +447,7 @@ export const EditModalsComponent = {
 
                 <div
                   id="objective-numeric-field"
-                  class="flex items-center gap-2 w-full mt-3.5"
+                  class="flex items-center gap-2 w-full mt-2"
                 >
                   <div class="flex-1 min-w-0">
                     <div
@@ -465,7 +465,7 @@ export const EditModalsComponent = {
                     maxlength="7"
                     min="1"
                     pattern="^[0-9]*.?[0-9]*$"
-                    class="w-20 shrink-0 h-10 lg:h-11 rounded-xl border border-border bg-surface px-3 text-xs lg:text-sm text-center text-color placeholder:text-secondary/70 focus:border-brand/80 focus:outline-none transition-all duration-200"
+                    class="w-20 shrink-0 h-11 rounded-xl border border-border bg-surface px-3 text-sm text-center text-color placeholder:text-secondary/70 focus:border-brand/80 focus:outline-none transition-all duration-200"
                   />
                 </div>
 
@@ -582,7 +582,7 @@ export const EditModalsComponent = {
                       id="new-metric-key"
                       type="text"
                       placeholder="Metric key (e.g. sleep_hours)..."
-                      class="w-full h-10 lg:h-11 rounded-xl border border-border bg-surface px-3 text-xs lg:text-sm text-color placeholder:text-secondary/70 focus:border-brand/80 focus:outline-none"
+                      class="w-full h-11 rounded-xl border border-border bg-surface px-3 text-sm text-color placeholder:text-secondary/70 focus:border-brand/80 focus:outline-none"
                     />
                   </div>
 
@@ -595,7 +595,7 @@ export const EditModalsComponent = {
                     maxlength="7"
                     min="1"
                     pattern="^[0-9]*.?[0-9]*$"
-                    class="w-20 shrink-0 h-10 lg:h-11 rounded-xl border border-border bg-surface px-3 text-xs lg:text-sm text-center text-color placeholder:text-secondary/70 focus:border-brand/80 focus:outline-none field-sizing-content transition-all duration-200"
+                    class="w-20 shrink-0 h-11 rounded-xl border border-border bg-surface px-3 text-sm text-center text-color placeholder:text-secondary/70 focus:border-brand/80 focus:outline-none field-sizing-content transition-all duration-200"
                   />
 
                   <div class="flex-1 min-w-0">
@@ -669,7 +669,7 @@ export const EditModalsComponent = {
                       id="edit-template-baseline"
                       type="text"
                       placeholder="e.g. Minimum acceptable standard"
-                      class="h-10 lg:h-11 w-full rounded-xl border border-border bg-surface px-4 text-sm text-color placeholder:text-secondary/70 focus:border-brand/80 focus:outline-none"
+                      class="h-11 w-full rounded-xl border border-border bg-surface px-4 text-sm text-color placeholder:text-secondary/70 focus:border-brand/80 focus:outline-none"
                     />
                   </div>
                   <div class="w-full flex flex-col">
@@ -683,7 +683,7 @@ export const EditModalsComponent = {
                       id="edit-template-optimal"
                       type="text"
                       placeholder="e.g. Best performance target"
-                      class="h-10 lg:h-11 w-full rounded-xl border border-border bg-surface px-4 text-sm text-color placeholder:text-secondary/70 focus:border-brand/80 focus:outline-none"
+                      class="h-11 w-full rounded-xl border border-border bg-surface px-4 text-sm text-color placeholder:text-secondary/70 focus:border-brand/80 focus:outline-none"
                     />
                   </div>
                 </div>
@@ -691,7 +691,7 @@ export const EditModalsComponent = {
             </div>
 
             <div
-              class="grid grid-cols-2 gap-3 pt-3 border-t border-border shrink-0 w-full bg-surface mt-auto"
+              class="grid grid-cols-2 gap-3 pt-3 border-t border-border shrink-0 w-full bg-surface"
             >
               <button
                 id="cancel-edit"

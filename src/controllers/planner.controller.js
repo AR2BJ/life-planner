@@ -333,8 +333,8 @@ export const PlannerController = {
         data-life-area="all"
         class="life-area-filter-btn h-8 shrink-0 whitespace-nowrap rounded-lg px-3.5 text-xs font-semibold transition cursor-pointer ${
           activeLifeArea === "all"
-            ? "bg-brand/80 text-white shadow-brand/10"
-            : "bg-surface-2 hover:bg-surface-3 text-secondary hover:text-color"
+            ? "bg-brand/80 text-white shadow-brand/10 shadow-sm"
+            : "bg-surface border border-border text-secondary hover:text-color hover:bg-surface-2"
         }"
       >
         All ${currentTab.charAt(0).toUpperCase() + currentTab.slice(1)}
@@ -345,8 +345,8 @@ export const PlannerController = {
       .map((cat) => {
         const isActive = String(activeLifeArea) === String(cat.id);
         const activeClasses = isActive
-          ? "bg-brand/80 text-white shadow-brand/10"
-          : "bg-surface-2 hover:bg-surface-3 text-secondary hover:text-color";
+          ? "bg-brand/80 text-white shadow-brand/10 shadow-sm"
+          : "bg-surface border border-border text-secondary hover:text-color hover:bg-surface-2";
 
         let iconClass = cat.icon
           ? cat.icon.replace("fa-solid", "fa-regular")

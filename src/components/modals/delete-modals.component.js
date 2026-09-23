@@ -13,9 +13,9 @@ export const DeleteModalsComponent = {
           </div>
 
           <div class="text-center flex flex-col gap-1">
-            <h3 class="text-lg font-bold text-color">Delete Plan</h3>
+            <h3 class="text-lg font-bold text-color">Delete Item</h3>
             <p class="text-sm text-secondary">
-              Are you sure you want to delete this plan?
+              Are you sure you want to delete this item?
             </p>
           </div>
 

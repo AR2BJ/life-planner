@@ -242,14 +242,14 @@ export const PlannerFormController = {
     }
 
     container.innerHTML = `
-    <div
-      class="w-full h-full max-h-40 sm:max-h-35 lg:max-h-33 overflow-y-auto scrollbar-thumb-surface-2 scrollbar-thin bg-surface rounded-2xl border border-border/60 p-2.5 flex flex-col justify-start gap-2.5"
-    >
-      ${activeModalObjectives
-        .map((obj) => EditModalsComponent.renderObjectiveItem(obj))
-        .join("")}
-    </div>
-  `;
+      <div
+        class="w-full h-full max-h-40 sm:max-h-35 lg:max-h-33 overflow-y-auto scrollbar-thumb-surface-2 scrollbar-thin bg-surface rounded-2xl border border-border/60 p-2.5 flex flex-col justify-start gap-2.5"
+      >
+        ${activeModalObjectives
+          .map((obj) => EditModalsComponent.renderObjectiveItem(obj))
+          .join("")}
+      </div>
+    `;
   },
 
   renderModalMetrics() {

@@ -7,6 +7,24 @@ import {
 
 import { StateManager } from "@/models/state.model";
 
+const emptyStateConfig = {
+  plans: {
+    icon: "<i class='fa-regular fa-compass text-brand/60'></i>",
+    title: "No operational plans found",
+    description: "Create structured execution plans for your life areas.",
+  },
+  logs: {
+    icon: "<i class='fa-regular fa-calendar-day text-brand/60'></i>",
+    title: "No log entries",
+    description: "Log energy, mood, and progress alignment.",
+  },
+  templates: {
+    icon: "<i class='fa-regular fa-layer-group text-brand/60'></i>",
+    title: "No templates saved",
+    description: "Save baseline and optimal performance strategies.",
+  },
+};
+
 export const DashboardComponent = {
   render(plans = [], logs = [], templates = []) {
     const safePlans = Array.isArray(plans) ? plans : [];
@@ -629,11 +647,13 @@ export const DashboardComponent = {
   },
 
   renderPlansList(plans) {
+    const currentEmpty = emptyStateConfig["plans"];
+
     if (!Array.isArray(plans) || plans.length === 0) {
-      return `<div
-        class="p-12 text-center text-secondary text-sm border border-dashed border-border/80 rounded-2xl bg-surface/30"
-      >
-        No execution plans registered in current state repository.
+      return `<div class="min-h-72 bg-surface border border-dashed border-border rounded-2xl p-12 text-center flex flex-col items-center justify-center">
+        <div class="text-5xl mb-4 text-brand/70">${currentEmpty.icon}</div>
+        <h2 class="text-xl font-bold text-color">${currentEmpty.title}</h2>
+        <p class="mt-2 text-sm text-secondary max-w-sm mx-auto">${currentEmpty.description}</p>
       </div>`;
     }
     return plans
@@ -744,11 +764,13 @@ export const DashboardComponent = {
   },
 
   renderLogsList(logs) {
+    const currentEmpty = emptyStateConfig["logs"];
+
     if (!Array.isArray(logs) || logs.length === 0) {
-      return `<div
-        class="p-12 text-center text-secondary text-sm border border-dashed border-border/80 rounded-2xl bg-surface/30"
-      >
-        No execution logs or reflections recorded yet.
+      return `<div class="min-h-72 bg-surface border border-dashed border-border rounded-2xl p-12 text-center flex flex-col items-center justify-center">
+        <div class="text-5xl mb-4 text-brand/70">${currentEmpty.icon}</div>
+        <h2 class="text-xl font-bold text-color">${currentEmpty.title}</h2>
+        <p class="mt-2 text-sm text-secondary max-w-sm mx-auto">${currentEmpty.description}</p>
       </div>`;
     }
     return logs
@@ -834,11 +856,13 @@ export const DashboardComponent = {
   },
 
   renderTemplatesList(templates) {
+    const currentEmpty = emptyStateConfig["templates"];
+
     if (!Array.isArray(templates) || templates.length === 0) {
-      return `<div
-        class="p-12 text-center text-secondary text-sm border border-dashed border-border/80 rounded-2xl bg-surface/30"
-      >
-        No execution templates/blueprints configured.
+      return `<div class="min-h-72 bg-surface border border-dashed border-border rounded-2xl p-12 text-center flex flex-col items-center justify-center">
+        <div class="text-5xl mb-4 text-brand/70">${currentEmpty.icon}</div>
+        <h2 class="text-xl font-bold text-color">${currentEmpty.title}</h2>
+        <p class="mt-2 text-sm text-secondary max-w-sm mx-auto">${currentEmpty.description}</p>
       </div>`;
     }
 
