@@ -1,5 +1,3 @@
-import "@/vendor/fontawesome/js/all";
-
 import { CalendarController } from "@/controllers/calendar.controller";
 import { GlobalLoaderService } from "@/services/loader.service";
 import { NavigationController } from "@/controllers/navigation.controller.js";

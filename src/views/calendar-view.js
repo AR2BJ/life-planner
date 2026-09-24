@@ -85,7 +85,7 @@ export const CalendarView = {
                 aria-label="Previous Period"
                 class="w-6 h-6 xs:w-8 xs:h-8 rounded-md xs:rounded-lg bg-surface border border-border flex items-center justify-center text-secondary hover:text-color transition cursor-pointer"
               >
-                <i class="fa-regular fa-chevron-left text-[10px] xs:text-xs"></i>
+                <i class="ti ti-chevron-left text-xs lg:text-sm"></i>
               </button>
 
               <button
@@ -93,7 +93,7 @@ export const CalendarView = {
                 aria-label="Next Period"
                 class="w-6 h-6 xs:w-8 xs:h-8 rounded-md xs:rounded-lg bg-surface border border-border flex items-center justify-center text-secondary hover:text-color transition cursor-pointer"
               >
-                <i class="fa-regular fa-chevron-right text-[10px] xs:text-xs"></i>
+                <i class="ti ti-chevron-right text-xs lg:text-sm"></i>
               </button>
             </div>
           </div>

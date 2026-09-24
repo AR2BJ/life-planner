@@ -45,7 +45,7 @@ export const PlannerView = {
             <span
               class="absolute inset-y-0 left-0 flex items-center ps-3.5 pointer-events-none text-muted"
             >
-              <i class="fa-regular fa-magnifying-glass text-sm"></i>
+              <i class="ti ti-search text-lg"></i>
             </span>
             <input
               type="text"
@@ -62,13 +62,14 @@ export const PlannerView = {
                 class="hidden opacity-0 scale-75 h-5 w-5 cursor-pointer items-center justify-center rounded-full border border-border bg-surface-2 hover:bg-surface-4 text-secondary hover:text-color transition-all duration-200"
                 title="Clear Search"
               >
-                <i class="fa-regular fa-xmark text-[10px]"></i>
+                <i class="ti ti-x text-[11px]"></i>
               </button>
 
               <kbd class="flex items-center pointer-events-none">
                 <span
-                  class="px-1.5 py-1.25 text-[10px] bg-surface-2 border border-border text-muted rounded-md shadow-2xs flex flex-row justify-center items-center"
-                ><i class="fa-regular fa-slash-forward"></i></span>
+                  class="px-1.5 py-1.25 text-xs bg-surface-2 border border-border text-muted rounded-md shadow-2xs flex flex-row justify-center items-center"
+                  ><i class="ti ti-slash"></i
+                ></span>
               </kbd>
             </div>
           </div>
@@ -86,7 +87,7 @@ export const PlannerView = {
               class="w-full px-5 py-4 flex flex-row items-center justify-between text-left font-bold text-slate-500/80 hover:bg-surface-2/40 transition cursor-pointer"
             >
               <div class="flex items-center gap-2">
-                <i class="fa-regular fa-square-plus text-brand/80"></i>
+               <i class="ti ti-square-rounded-plus text-brand/80 text-lg"></i>
                 <span
                   id="form-toggle-title"
                   class="text-sm font-medium"
@@ -96,8 +97,8 @@ export const PlannerView = {
                 id="form-chevron"
                 class="flex items-center"
               >
-                <i
-                  class="fa-regular fa-chevron-down text-secondary text-sm transition-transform duration-300"
+               <i
+                  class="ti ti-chevron-down text-secondary text-lg transition-transform duration-300"
                 ></i>
               </div>
             </button>
@@ -277,14 +278,16 @@ export const PlannerView = {
                 class="flex flex-col gap-3 border-t border-border pt-4 sm:flex-row sm:items-center sm:justify-between"
               >
                 <p class="flex items-center gap-1.5 text-xs text-secondary">
-                  <i class="fa-regular fa-circle-info text-brand/80"></i>
+                  <i
+                    class="ti ti-info-square-rounded text-brand/80 text-base"
+                  ></i>
                   Manage your life areas and operational plans effectively.
                 </p>
                 <button
                   id="add-plan-btn"
                   class="flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-brand/80 px-5 text-sm font-semibold text-white shadow-lg shadow-brand/10 transition hover:bg-(--color-brand-hover) cursor-pointer sm:w-auto"
                 >
-                  <i class="fa-regular fa-plus"></i>
+                  <i class="ti ti-plus text-base"></i>
                   <span id="add-plan-btn-text">Add Plan</span>
                 </button>
               </div>
@@ -309,7 +312,7 @@ export const PlannerView = {
                 type="button"
                 class="absolute left-0 z-20 hidden h-7 w-7 items-center justify-center rounded-lg border border-border bg-surface/95 backdrop-blur-xl shadow-2xl text-secondary hover:text-color transition-all cursor-pointer"
               >
-                <i class="fa-regular fa-chevron-left text-xs"></i>
+                <i class="ti ti-chevron-left text-sm"></i>
               </button>
 
               <div
@@ -322,7 +325,7 @@ export const PlannerView = {
                 type="button"
                 class="absolute right-0 z-20 hidden h-7 w-7 items-center justify-center rounded-lg border border-border bg-surface/95 backdrop-blur-xl shadow-2xl text-secondary hover:text-color transition-all cursor-pointer"
               >
-                <i class="fa-regular fa-chevron-right text-xs"></i>
+                <i class="ti ti-chevron-right text-sm"></i>
               </button>
             </div>
           </div>
