@@ -2,7 +2,7 @@ export const HeaderComponent = {
   render() {
     return `
       <header class="mb-8 flex flex-row gap-4 sm:mb-12 justify-between">
-        <div class="flex min-w-0 items-center gap-3">
+        <div class="flex min-w-0 items-center gap-4">
           <button
             id="menu-toggle"
             class="hidden h-10 w-10 flex-row items-center justify-center rounded-xl border border-border bg-surface text-color transition cursor-pointer hover:bg-slate-600/10 lg:flex shadow-sm"
@@ -13,7 +13,10 @@ export const HeaderComponent = {
           <div
             class="w-10 h-10 lg:hidden flex flex-row justify-center items-center"
           >
-            <a href="/" class="w-10 h-10 flex flex-row justify-center items-center">
+            <a
+              href="/"
+              class="w-10 h-10 flex flex-row justify-center items-center"
+            >
               <img
                 id="logo"
                 src="/picture/logo.png"
@@ -51,7 +54,10 @@ export const HeaderComponent = {
             class="flex h-9 w-9 flex-row items-center justify-center rounded-xl border border-border bg-surface text-color transition cursor-pointer hover:bg-orange-600/10 sm:h-10 sm:w-10 shadow-sm overflow-hidden group"
             title="Theme Toggle"
           >
-            <i id="btn-sun" class="ti ti-sun text-orange-500/80 text-lg lg:text-xl transition-transform duration-300 ease-in-out"></i>
+            <i
+              id="btn-sun"
+              class="ti ti-sun text-orange-500/80 text-lg lg:text-xl transition-transform duration-300 ease-in-out"
+            ></i>
           </button>
         </div>
       </header>
