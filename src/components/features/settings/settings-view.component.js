@@ -49,7 +49,7 @@ export const SettingsViewComponent = {
             >
               <div
                 id="theme-tab-indicator"
-                class="absolute top-1 left-1 h-[calc(50%-4px)] w-[calc(100%-8px)] rounded-lg bg-brand/80 transition-all duration-300 xs:h-[calc(100%-8px)] xs:w-[calc(50%-4px)] ${
+                class="absolute top-1 left-1 h-[calc(50%-4px)] w-[calc(100%-8px)] rounded-lg bg-amber-400/80 transition-all duration-300 xs:h-[calc(100%-8px)] xs:w-[calc(50%-4px)] ${
                   isDark
                     ? "translate-y-full xs:translate-x-full"
                     : "translate-y-0 xs:translate-x-0"
@@ -174,14 +174,14 @@ export const SettingsViewComponent = {
               </div>
               <div
                 id="sett-dropzone"
-                class="border-2 border-dashed border-border hover:border-brand/60 rounded-xl p-4 sm:p-5 flex flex-col items-center justify-center gap-2 bg-surface-2/40 hover:bg-surface-2 transition cursor-pointer group text-center"
+                class="border-2 border-dashed border-border hover:border-violet-500/60 rounded-xl p-4 sm:p-5 flex flex-col items-center justify-center gap-2 bg-surface-2/40 hover:bg-surface-2 transition cursor-pointer group text-center"
               >
                 <i
-                  class="ti ti-cloud-upload text-lg sm:text-xl text-secondary group-hover:text-brand/80 transition animate-pulse"
+                  class="ti ti-cloud-upload text-lg sm:text-xl text-secondary group-hover:text-violet-500/80 transition animate-pulse"
                 ></i>
                 <span class="text-xs font-semibold text-color px-2">
                   Drag & drop file here or
-                  <span class="text-brand/80 font-bold"
+                  <span class="text-violet-500/80 font-bold"
                     >browse local files</span
                   >
                 </span>
