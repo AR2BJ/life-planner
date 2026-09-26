@@ -180,7 +180,7 @@ export const DashboardComponent = {
           class="col-span-2 md:col-span-1 relative overflow-hidden bg-surface-2 border border-border/70 hover:-translate-y-1 hover:border-sky-500/30 rounded-2xl p-6 transition-all duration-300 flex flex-col justify-between min-h-36 group"
         >
           <i
-            class="ti ti-stack-2-filled absolute -right-4 -bottom-6 text-[11rem] text-sky-500 opacity-[0.04] dark:opacity-[0.06] rotate-15 pointer-events-none group-hover:scale-110 group-hover:rotate-5 transition-transform duration-500"
+            class="ti ti-stack-2-filled absolute -right-4 -bottom-6 text-[12rem] text-sky-500 opacity-[0.04] dark:opacity-[0.06] rotate-15 pointer-events-none group-hover:scale-110 group-hover:rotate-5 transition-transform duration-500"
           ></i>
           <div class="flex items-center justify-between z-10">
             <span

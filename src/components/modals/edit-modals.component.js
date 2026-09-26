@@ -190,7 +190,7 @@ export const EditModalsComponent = {
           >
             <div class="flex items-center gap-3 min-w-0">
               <div
-                class="w-10 h-10 lg:w-11 lg:h-11 rounded-xl lg:rounded-2xl bg-brand/10 text-brand/80 flex items-center justify-center text-base lg:text-lg shrink-0"
+                class="w-10 h-10 lg:w-11 lg:h-11 rounded-xl lg:rounded-2xl bg-brand/10 text-brand/80 flex items-center justify-center text-lg lg:text-xl shrink-0"
               >
                 <i class="ti ti-edit-circle"></i>
               </div>
@@ -211,7 +211,7 @@ export const EditModalsComponent = {
               type="button"
               class="w-8 h-8 lg:w-9 lg:h-9 rounded-lg lg:rounded-xl bg-surface-2 hover:bg-red-600/10 border border-border text-secondary hover:text-color flex items-center justify-center transition cursor-pointer shrink-0"
             >
-              <i class="ti ti-x text-sm"></i>
+              <i class="ti ti-x text-sm lg:text-base"></i>
             </button>
           </div>
 

@@ -67,7 +67,7 @@ export const PlannerView = {
 
               <kbd class="flex items-center pointer-events-none">
                 <span
-                  class="px-1.5 py-1.25 text-xs bg-surface-2 border border-border text-muted rounded-md shadow-2xs flex flex-row justify-center items-center"
+                  class="px-1.25 py-1 text-xs bg-surface-2 border border-border text-muted rounded-md shadow-2xs flex flex-row justify-center items-center"
                   ><i class="ti ti-slash"></i
                 ></span>
               </kbd>

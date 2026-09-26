@@ -452,7 +452,7 @@ export const PlannerFormController = {
               type="button"
               class="h-10 rounded-xl bg-blue-600/20 border border-blue-500/30 text-blue-400 hover:bg-blue-600/30 font-semibold text-xs lg:text-sm flex items-center justify-center gap-1.5 transition cursor-pointer"
             >
-              <i class="ti ti-floppy-device"></i> Save Metric
+              <i class="ti ti-device-floppy"></i> Save Metric
             </button>
           </div>
         `;
@@ -675,7 +675,7 @@ export const PlannerFormController = {
               type="button"
               class="h-10 rounded-xl bg-blue-600/20 border border-blue-500/30 text-blue-400 hover:bg-blue-600/30 font-semibold text-xs lg:text-sm flex items-center justify-center gap-1.5 transition cursor-pointer"
             >
-              <i class="ti ti-floppy-device"></i> Save Objective
+              <i class="ti ti-device-floppy"></i> Save Objective
             </button>
           </div>
         `;
