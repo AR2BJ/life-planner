@@ -87,17 +87,18 @@ export const PlannerView = {
               class="w-full px-5 py-4 flex flex-row items-center justify-between text-left font-bold text-slate-500/80 hover:bg-surface-2/40 transition cursor-pointer"
             >
               <div class="flex items-center gap-2">
-               <i class="ti ti-square-rounded-plus text-brand/80 text-lg"></i>
+                <i class="ti ti-square-rounded-plus text-brand/80 text-lg"></i>
                 <span
                   id="form-toggle-title"
                   class="text-sm font-medium"
-                >Create New Plan</span>
+                  >Create New Plan</span
+                >
               </div>
               <div
                 id="form-chevron"
                 class="flex items-center"
               >
-               <i
+                <i
                   class="ti ti-chevron-down text-secondary text-lg transition-transform duration-300"
                 ></i>
               </div>
@@ -134,7 +135,8 @@ export const PlannerView = {
                 <label
                   for="create-item-desc"
                   class="mb-1.5 block ps-3 text-xs font-semibold text-secondary"
-                >Description</label>
+                  >Description</label
+                >
                 <textarea
                   id="create-item-desc"
                   rows="2"
@@ -223,7 +225,8 @@ export const PlannerView = {
                     <label
                       for="create-template-baseline"
                       class="mb-1.5 block ps-3 text-xs font-semibold text-secondary"
-                    >Baseline Strategy</label>
+                      >Baseline Strategy</label
+                    >
                     <input
                       id="create-template-baseline"
                       type="text"
@@ -235,7 +238,8 @@ export const PlannerView = {
                     <label
                       for="create-template-optimal"
                       class="mb-1.5 block ps-3 text-xs font-semibold text-secondary"
-                    >Optimal Strategy</label>
+                      >Optimal Strategy</label
+                    >
                     <input
                       id="create-template-optimal"
                       type="text"
@@ -268,7 +272,8 @@ export const PlannerView = {
                       ></div>
                       <span
                         class="text-xs font-semibold text-secondary whitespace-nowrap"
-                      >Mark as Favorite</span>
+                        >Mark as Favorite</span
+                      >
                     </label>
                   </div>
                 </div>
@@ -335,11 +340,17 @@ export const PlannerView = {
           >
             <div class="w-full flex flex-col xs:flex-row items-center gap-3">
               <div class="w-full flex items-center gap-2 min-w-35">
-                <div id="filter-autocomplete-wrapper" class="w-full"></div>
+                <div
+                  id="filter-autocomplete-wrapper"
+                  class="w-full"
+                ></div>
               </div>
 
               <div class="w-full flex items-center gap-2 min-w-35">
-                <div id="sort-autocomplete-wrapper" class="w-full"></div>
+                <div
+                  id="sort-autocomplete-wrapper"
+                  class="w-full"
+                ></div>
               </div>
             </div>
 
