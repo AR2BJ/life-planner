@@ -218,7 +218,7 @@ Potential future improvements include:
 
 ## License
 
-This project is licensed under the [MIT License](https://github.com/AR2BJ/life-planner/blob/dev/LICENSE).
+This project is licensed under the [MIT License](https://github.com/AR2BJ/life-planner/blob/master/LICENSE).
 
 ## Contributing
 
